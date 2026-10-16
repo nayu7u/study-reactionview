@@ -47,7 +47,7 @@
     <span class="feature-tag">機能⑥ palette型モーダル（window句 / Esc / outside）</span>
     <div class="feature-head">
       <h2>コマンドパレット</h2>
-      <button data-herb-set="keydown.meta+k@window->palette_open=true"><kbd>⌘K</kbd> で開く</button>
+      <button data-herb-set="click->palette_open=true keydown.meta+k@window->palette_open=true"><kbd>⌘K</kbd> で開く</button>
     </div>
     <p><kbd>Esc</kbd> と外側クリックで閉じます。入力はpresence束縛：文字数と「検索中」表示が即時追随します。</p>
     <div data-herb-set="mouseenter->preview=true mouseleave->preview=false" class="lib-hover">
@@ -67,7 +67,7 @@
     <p class="char-hint"><%= draft.length %> 文字 <% if ready %>・送信準備OK<% end %></p>
     <div class="toolbar">
       <button disabled="<%= !ready %>">送信（雰囲気）</button>
-      <button data-herb-reset="keydown.esc->draft">Escでクリア</button>
+      <button data-herb-reset="draft">クリア</button>
       <button class="btn btn-ghost" data-herb-action="$refresh">🔄 同期（サーバーから再描画）</button>
     </div>
   </section>

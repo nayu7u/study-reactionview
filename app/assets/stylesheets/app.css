@@ -178,6 +178,10 @@ kbd {
 .feature[data-feature="server-reads"] .feature-tag { --tag: #2563eb; }
 .feature[data-feature="fine-grained"] .feature-tag { --tag: #0e9f6e; }
 .feature[data-feature="drawer"] .feature-tag { --tag: #d97706; }
+.feature[data-feature="tabs"] .feature-tag { --tag: #6d28d9; }
+.feature[data-feature="counter"] .feature-tag { --tag: #0891b2; }
+.feature[data-feature="palette"] .feature-tag { --tag: #c2410c; }
+.feature[data-feature="switch"] .feature-tag { --tag: #0d9488; }
 
 .feature-tag {
   display: inline-block;
@@ -499,6 +503,88 @@ input[name="search"] { flex: 1 1 12rem; }
 
 .switch:checked { background: var(--accent); }
 .switch:checked::after { transform: translateX(1.1rem); }
+
+/* ---------- lab extras: badge, palette modal, hover cell, dots ---------- */
+
+.seg-dot {
+  display: inline-block;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 0.45rem;
+  vertical-align: 0.08em;
+}
+
+.badge {
+  font-size: 1.5rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-ink);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 999px;
+  min-width: 2.4rem;
+  padding: 0.15rem 0.6rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+
+.lib-hover {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  text-align: center;
+  color: var(--muted);
+  cursor: crosshair;
+  transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+}
+
+.lib-hover:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pill {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.25rem 0.85rem;
+  display: inline-block;
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.modal {
+  position: fixed;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(30rem, 92vw);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.4rem 1.5rem;
+  z-index: 41;
+  animation: pop-in 180ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+@keyframes pop-in { from { opacity: 0; transform: translateX(-50%) scale(0.97); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 
 /* ---------- footer ---------- */
 

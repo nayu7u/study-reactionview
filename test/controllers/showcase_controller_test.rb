@@ -13,7 +13,7 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     assert_select 'button[data-herb-increment="unread"][data-herb-by="2"]'
     assert_select 'button[data-herb-decrement="unread"]'
     assert_select 'button[data-herb-reset]'
-    assert_select 'button[data-herb-set="keydown.meta+k@window->palette_open=true"]'
+    assert_select 'button[data-herb-set*="keydown.meta+k@window->palette_open=true"]'
     assert_select 'input.switch', count: 1
     assert_select 'div[data-herb-set*="mouseenter->preview=true"]'
     assert_select '[data-herb-action="$refresh"]'
