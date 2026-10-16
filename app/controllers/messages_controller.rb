@@ -3,6 +3,9 @@ class MessagesController < ApplicationController
     direction = herb_state("order", "oldest") == "newest" ? :desc : :asc
 
     @messages = Message.order(created_at: direction)
+
+    term = herb_state("query", "")
+    @messages = @messages.where("body LIKE ?", "%#{term}%") if term.present?
   end
 
   def create

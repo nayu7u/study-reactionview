@@ -1,5 +1,5 @@
 <%# herb:slots server %>
-<%# herb:state (composing: false, order: "oldest", draft: "") %>
+<%# herb:state (composing: false, order: "oldest", query: "", draft: "") %>
 
 <h1>Messages</h1>
 
@@ -8,7 +8,11 @@
   <option value="newest">Newest first</option>
 </select>
 
+<input name="filter" value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="250" autocomplete="off" placeholder="Filter bodies">
+
 <p><% if order == "newest" %>Newest messages first<% else %>Oldest messages first<% end %></p>
+
+<p><% if query.empty? %>Showing all messages<% else %>Showing messages matching "<%= query %>"<% end %></p>
 
 <ul data-herb-name="messages">
   <% @messages.each do |message| %>
@@ -28,4 +32,4 @@
   </form>
 <% end %>
 
-<p>The composer form you see above was inserted without a page load. Sorting asks the server — the browser cannot run Ruby.</p>
+<p>The composer form you see above was inserted without a page load. Sorting and filtering ask the server — the browser cannot run Ruby.</p>
