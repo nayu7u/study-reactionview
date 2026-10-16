@@ -1,8 +1,14 @@
 # frozen_string_literal: true
 
 ReActionView.configure do |config|
-  # Intercept .html.erb templates and process them with `Herb::Engine` for enhanced features
-  # config.intercept_erb = true
+  # Process all *.html.erb templates with Herb::Engine instead of Rails' ERB handler
+  config.intercept_erb = true
+
+  # Enable reactive templates (states, actions, slots)
+  config.slots = true
+
+  # The slots dev server runs inside bin/rails server in development
+  config.dev_server = Rails.env.development?
 
   # Enable debug mode in development (adds debug attributes to HTML)
   config.debug_mode = Rails.env.development?
