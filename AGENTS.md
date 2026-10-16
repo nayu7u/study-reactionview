@@ -2,10 +2,12 @@
 
 ## 目的
 
-このリポジトリは ReActionView の検証アプリ。Kaigi on Rails 2026 での発表に基づき、
-ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現するという主張を
-実際にインストール・動作確認している。ReActionView 0.6.0 + herb 0.11.0
-（リアクティブテンプレート要求バージョンに一致）。
+このリポジトリは ReActionView の検証アプリ。Kaigi on Rails 2026（Marco Roth: "Herb in Rails 8.2"）の
+主張 — **ERB のみで Phoenix LiveView 的な細粒度リアクティビティ** — を、実用的なアプリ風の
+機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.0。
+
+2画面構成: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）と
+`Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette）。
 
 ## 作業規約（必ず守る）
 
@@ -48,10 +50,12 @@ ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現�
 - `POST …?format=slots` は **201** で新規行のみを返す（楽観的追加の差し替え用）
 - `herb:slots server` 時、textarea は `data-herb-slot="N:raw_text"`、補間属性は `…:attribute:name` として分岐外のスロットへ載る
 - client mode では未描画ブランチが `<template data-herb-region="app/views/<テンプレート>:<version>">` に
-  `<!--herb-branch:<番号>:<腕>-->"` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
-  `states.declarations`（kind/derived/scope）、`reads`、`conditionals`、`presence`（boolean属性束縛と `.blank?` 等）、
-  `computed`（`.length` 等）、そして client-mode の証拠として `server: {branches: {}, reads: {}}`。
-  サーバーモードでは同一テンプレートでも server マップが埋まる
+  `<!--herb-branch:<番号>:<腕>-->` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
+  `states.declarations`（kind/derived/scope）、`reads`、`conditionals`（条件の腕）、`presence`（boolean属性束縛）、
+  `computed`（`.length` 等の変換）、`server`
+- `server` マップ（`server.branches` / `server.reads`）: serverモード・client mode の**両方**で実測は空。
+  モード判別には使えない（当初「serverモードで埋まる」と記録したが誤り。少なくとも本プロジェクトの
+  テンプレート群では常に空。用途は別にある：埋まるのは部分パーシャル束縛や任意のサーバー読みスロットのとき）
 
 ## テストにまつわる実測の教訓
 
@@ -63,6 +67,27 @@ ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現�
   fixtureを明示的データで書き換えるのが早い
 - test環境では debug span（`data-herb-debug-*`）が付かない（debug_mode = development?）ため、
   マーカー正規表現は開発環境と別形になる
+
+## テンプレートにまつわる実測の教訓
+
+- **`case` + `when` を1つのERBタグに詰めない**: Herb はパース不能として ErrorInTemplate。
+  `<% case x %><% when "a" %>…<% when "b" %>…<% else %>…<% end %>` と各々別タグにする
+- **コレクションを `<% if @tasks.any? %>` 等の分岐で包むな**: slots応答が items/order 形式ではなく
+  分岐の statics として全体が返り、鍵付き差分適用が壊れる。コレクションは必ずレベルを保つ
+- **行クラスの状態補間（`class="<%= … if done %>"` など）を書かない**: `attribute_interpolation` スロット =
+  サーバー読み＝チェックのたびに往復。presence 束縛（`checked`）+ CSS `:has(input:checked)` で即時描画に寄せる
+- slots応答の slots 値は**スカラー（数値/真偽/文字列）が混ざる**。Hashと決め打ちしない
+  （hero の合計はスカラー、presence束縛は真偽値、分岐は Hash{branch, statics, slots}）
+- create 応答はコントローラーが絞ったスコープで一式を再計算する。
+  「全件の合計」を `@tasks.size` で出すと一瞬 1件表示になるため、合計は `Task.count` のように独立に取る
+- `herb_state` をコントローラーから呼ばないと、ビュー側だけ state を読んでいてもフィルターは効かない
+ （Toolbarが様になってにもかかわらず、起きた）。ビューとコントローラー両方が設計側物として読む必要がある
+
+## 調査ツール
+
+- debug-mcp（Kaigi on Rails 2026・riraさんの講演）は **adopt-on-demand**: 実行時状態に依存するバグで
+  tests+curl+ブラウザで説明がつかない局面で導入する。手順は `docs/debug-mcp-runbook.md`
+  （stdio MCP・opencode.json に local 登録・`RUBY_DEBUG_OPEN=true bin/rails server` で attach）
 
 ## やらないこと（Why not 付き）
 
