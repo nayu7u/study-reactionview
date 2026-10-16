@@ -1,11 +1,8 @@
 Rails.application.routes.draw do
-  root "messages#index"
-
-  resources :messages, only: [:index, :create]
-
-  get "/notes", to: "notes#index"
+  root "tasks#index"
 
   resources :tasks, only: [:index, :create]
+
   get "/board", to: "tasks#index"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
