@@ -1,0 +1,31 @@
+<%# herb:slots server %>
+<%# herb:state (composing: false, order: "oldest", draft: "") %>
+
+<h1>Messages</h1>
+
+<select data-herb-set="order=$value">
+  <option value="oldest">Oldest first</option>
+  <option value="newest">Newest first</option>
+</select>
+
+<p><% if order == "newest" %>Newest messages first<% else %>Oldest messages first<% end %></p>
+
+<ul data-herb-name="messages">
+  <% @messages.each do |message| %>
+    <%# herb:key message.id %>
+    <li><strong data-herb-name="author"><%= message.author %></strong> <span data-herb-name="body"><%= message.body %></span></li>
+  <% end %>
+</ul>
+
+<button data-herb-toggle="composing">New message</button>
+
+<% if composing %>
+  <form action="<%= messages_path %>" method="post" data-herb-into="messages">
+    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+    <textarea name="message[body]"><%= draft %></textarea>
+    <p><%= draft.length %> characters</p>
+    <button>Send</button>
+  </form>
+<% end %>
+
+<p>The composer form you see above was inserted without a page load. Sorting asks the server — the browser cannot run Ruby.</p>
