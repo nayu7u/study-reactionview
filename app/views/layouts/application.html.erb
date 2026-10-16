@@ -24,6 +24,16 @@
   </head>
 
   <body>
-    <%= yield %>
+    <header class="site-header">
+      <span class="site-brand">🌿 Study ReActionView</span>
+      <nav class="site-nav">
+        <%= link_to "Messages", messages_path %>
+        <%= link_to "Notes", notes_path %>
+        <%= link_to "Board", board_path %>
+      </nav>
+    </header>
+    <main class="page">
+      <%= yield %>
+    </main>
   </body>
 </html>
