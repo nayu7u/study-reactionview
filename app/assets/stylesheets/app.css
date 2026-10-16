@@ -378,11 +378,21 @@ input[type="checkbox"]:checked {
   white-space: nowrap;
 }
 
+/* the status text can NOT be a server-mode conditional: browser-owned row
+ * state can never drive a parked branch swap here (the arms are not
+ * stocked, and steering never ships per-item states — check the folding
+ * note in AGENTS.md). Both labels ride along; :has() picks one. */
+.task-status .pill-done { display: none; color: var(--ok); }
+.task-status .pill-open { color: var(--muted); }
+
 .task-list li:has(input:checked) .task-status {
   color: var(--ok);
   border-color: color-mix(in srgb, var(--ok) 45%, transparent);
   background: color-mix(in srgb, var(--ok) 10%, transparent);
 }
+
+.task-list li:has(input:checked) .pill-done { display: inline; }
+.task-list li:has(input:checked) .pill-open { display: none; }
 
 .task-note {
   margin: 0;

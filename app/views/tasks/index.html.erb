@@ -41,11 +41,11 @@
             <input type="checkbox" checked="<%= done %>">
             <span class="task-title" data-herb-name="title"><%= task.title %></span>
           </label>
-          <span class="task-status"><% if done %>✔ 完了<% else %>未完了<% end %></span>
+          <span class="task-status"><span class="pill-done">✔ 完了</span><span class="pill-open">未完了</span></span>
         </li>
       <% end %>
     </ul>
-    <p class="task-stat" aria-live="polite"><% if done_count.zero? %>まだ1件も完了していません<% else %><%= done_count %>件完了<% if done_count > 3 %> — 好調！<% end %><% end %></p>
+    <p class="task-stat" aria-live="polite"><%= done_count %>/<%= Task.count %> 件完了</p>
     <p class="task-note">取り消し線は presence 束縛＋CSS で即時。<code>done_count</code> fold が統計を即時に動かし、行の文言は同じ往復の答えで追随します。</p>
   </section>
 

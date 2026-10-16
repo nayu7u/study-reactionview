@@ -53,9 +53,10 @@
   `<!--herb-branch:<番号>:<腕>-->` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
   `states.declarations`（kind/derived/scope）、`reads`、`conditionals`（条件の腕）、`presence`（boolean属性束縛）、
   `computed`（`.length` 等の変換）、`server`
-- `server` マップ（`server.branches` / `server.reads`）: serverモード・client mode の**両方**で実測は空。
-  モード判別には使えない（当初「serverモードで埋まる」と記録したが誤り。少なくとも本プロジェクトの
-  テンプレート群では常に空。用途は別にある：埋まるのは部分パーシャル束縛や任意のサーバー読みスロットのとき）
+- `server` マップ（`server.branches` / `server.reads`）: 平常時（GET初期描画・全client-evaluable）は
+  serverモード・client mode の**両方**で空。埋まるのは「分岐の腕に server-read（任意のRuby/ループデータ）が
+  混ざったとき」— client mode でメンション腕に `.select` ループを置いたら `branches` に node_path が列挙された。
+  「serverモードで埋まる」説は撤回（モード判別には使えない）
 
 ## テストにまつわる実測の教訓
 
@@ -76,6 +77,24 @@
   分岐の statics として全体が返り、鍵付き差分適用が壊れる。コレクションは必ずレベルを保つ
 - **行クラスの状態補間（`class="<%= … if done %>"` など）を書かない**: `attribute_interpolation` スロット =
   サーバー読み＝チェックのたびに往復。presence 束縛（`checked`）+ CSS `:has(input:checked)` で即時描画に寄せる
+- **計数foldの公式形は3タグ**: `<% if done %><% done_count += 1 %><% end %>` をキー付きitem body内に。
+  `done_count += 1 if done`（修飾子if）は fold_increment が1文としてパースできず、
+  「client never sees a server-side write」という紛らわしいエラーになる。
+  counted state は **ループより前で読むな**（heroの統計文はリスト直下へ移動した）。
+  マニフェストには declarations[i].count = {collection, when, by} として現れる
+- **aria-pressedはpresence束縛でなく文字列補間**: `aria-pressed="<%= tab == "all" %>"` は
+  "true"/"false" の文字列属性として出る（checked/selected/disabled の boolean属性束縛とは別物）。
+  client mode では純状態比較なのでクライアント評価＝往復なし。CSSは `[aria-pressed="true"]` で引く
+- **serverモードではブラウザ所有statesを条件にした分岐を書くな**: 腕がparkedされずクライアントに
+  materializeできず → switchBranch失敗 → refetch が追加されるが、steeringにitem状態(done)や
+  counted(done_count)は載らないのでサーバー回答が常に行禁化→要求storm。見た目は presence＋CSSで、
+  数値はREAD slot（`<%= done_count %>`）で置く。行の文言ピルも同様（両方の文言をDOMに置き
+  `:has(input:checked)` で切替）
+- **POST 201 の応答で適用されるのは collection のspliceのみ**: region級のサーバー読み（`Task.count` 等）は
+  GET応答でしか適用されない（検索の往復ではバッジが動くのに、追加直後には動かない — 実測）。
+  追加直後は `$refresh`（または次のGET）でheroが追いつく。GIF／レポートではこの手順を見せる
+- **create応答のspliceはquery/filter状態を無視して入る**（コントローラーのcreateスコープに
+  フィルターが無いため）。検索中に追加すると絞り込まれていない行が差し込まれる
 - slots応答の slots 値は**スカラー（数値/真偽/文字列）が混ざる**。Hashと決め打ちしない
   （hero の合計はスカラー、presence束縛は真偽値、分岐は Hash{branch, statics, slots}）
 - create 応答はコントローラーが絞ったスコープで一式を再計算する。
