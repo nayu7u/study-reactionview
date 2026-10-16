@@ -1,0 +1,91 @@
+<%# herb:slots client %>
+<%# herb:state (tab: "all", unread: 3, palette_open: false, preview: false, mute: false, draft: "", ready: draft != "") %>
+
+<section class="hero">
+  <div class="hero-badge">Client mode — サーバー往復0</div>
+  <h1>Client Lab</h1>
+  <p class="hero-sub">このページの未描画ブランチは <code>&lt;template data-herb-region&gt;</code> に格納済み。開閉・切替・カウントはすべてブラウザ内で完結します。<code>$refresh</code> だけが意図的な脱出口です。</p>
+</section>
+
+<div class="feature-grid">
+
+  <section class="feature" data-feature="tabs">
+    <span class="feature-tag">機能④ client mode 分岐とセグメント切替</span>
+    <h2>通知タブ</h2>
+    <nav class="seg" role="tablist">
+      <button class="seg-btn" data-herb-set="tab=all"><% if tab == "all" %><span class="seg-dot"></span><% end %>すべて</button>
+      <button class="seg-btn" data-herb-set="tab=mentions"><% if tab == "mentions" %><span class="seg-dot"></span><% end %>メンション</button>
+    </nav>
+    <p class="toolbar-note"><% case tab %><% when "all" %>全通知を表示中<% when "mentions" %>メンション中<% else %>フィルタなし<% end %></p>
+    <ul class="task-list">
+      <% @notifications.each do |n| %>
+        <%# herb:key n[:id] %>
+        <li class="task-item">
+          <span class="task-title"><%= n[:title] %></span>
+          <span class="task-status"><%= n[:detail] %></span>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section class="feature" data-feature="counter">
+    <span class="feature-tag">機能⑤ カウンタ（increment / decrement / reset）</span>
+    <div class="feature-head">
+      <h2>未読バッジ</h2>
+      <span class="badge"><%= unread %></span>
+    </div>
+    <p>数字はブラウザ所有の Integer 状態。<code>data-herb-by</code> で一度に加減できます。</p>
+    <div class="toolbar">
+      <button data-herb-increment="unread" data-herb-by="2">+2</button>
+      <button data-herb-decrement="unread">-1</button>
+      <button data-herb-reset="unread">リセット</button>
+      <button data-herb-reset>全部戻す</button>
+    </div>
+  </section>
+
+  <section class="feature" data-feature="palette">
+    <span class="feature-tag">機能⑥ palette型モーダル（window句 / Esc / outside）</span>
+    <div class="feature-head">
+      <h2>コマンドパレット</h2>
+      <button data-herb-set="keydown.meta+k@window->palette_open=true"><kbd>⌘K</kbd> で開く</button>
+    </div>
+    <p><kbd>Esc</kbd> と外側クリックで閉じます。入力はpresence束縛：文字数と「検索中」表示が即時追随します。</p>
+    <div data-herb-set="mouseenter->preview=true mouseleave->preview=false" class="lib-hover">
+      👀 ここにホバー
+    </div>
+    <% if preview %><p class="pill">プレビュー表示中</p><% end %>
+  </section>
+
+  <section class="feature" data-feature="switch">
+    <span class="feature-tag">機能⑦ switch束縛と派生状態（ready: draft != ""）</span>
+    <h2>オンオフとライブ入力</h2>
+    <div class="switch-row">
+      <input type="checkbox" class="switch" checked="<%= mute %>">
+      <span><% if mute %>🔕 通知オフ<% else %>🔔 通知オン<% end %></span>
+    </div>
+    <textarea class="field" placeholder="下書きを入力…"><%= draft %></textarea>
+    <p class="char-hint"><%= draft.length %> 文字 <% if ready %>・送信準備OK<% end %></p>
+    <div class="toolbar">
+      <button disabled="<%= !ready %>">送信（雰囲気）</button>
+      <button data-herb-reset="keydown.esc->draft">Escでクリア</button>
+      <button class="btn btn-ghost" data-herb-action="$refresh">🔄 同期（サーバーから再描画）</button>
+    </div>
+  </section>
+
+</div>
+
+<% if palette_open %>
+  <div class="drawer-backdrop">
+    <div class="modal" data-herb-set="click@outside->palette_open=false keydown.esc@window->palette_open=false">
+      <input class="field" value="<%= draft %>" placeholder="コマンドを検索…" autocomplete="off">
+      <p class="char-hint"><%= draft.length %> 文字 — ⌘K / Esc / outside のすべてがクライアント処理です</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" data-herb-reset="palette_open draft">閉じてクリア</button>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<footer class="page-meta">
+  Client mode は Response に <code>&lt;template data-herb-region&gt;</code> を含みます。DevToolsで確認できます。
+</footer>
