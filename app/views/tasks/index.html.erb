@@ -1,44 +1,84 @@
 <%# herb:slots server %>
-<%# herb:state (open: false, title: "", done_count: 0) %>
+<%# herb:state (drawer_open: false, query: "", order: "oldest", title: "", done_count: 0) %>
 
-<header class="board-header">
-  <h1>Task Board</h1>
-  <p class="task-stats"><% if done_count.zero? %>Nothing done yet — <%= @tasks.size %> tasks waiting<% else %><%= done_count %> done<% if done_count > 3 %> — on a roll!<% end %><% end %></p>
-  <button class="btn btn-primary" data-herb-toggle="open">＋ New task</button>
-</header>
+<section class="hero">
+  <div class="hero-badge"><%= Task.count %> tasks on the sprint board</div>
+  <h1>Sprint Hub</h1>
+  <p class="hero-sub">ReActionView 0.6.0 — この画面のすべては <code>.html.erb</code> です。Reactもなし、ビルドもなし。</p>
+  <p class="hero-stats"><% if done_count.zero? %>まだ1件も完了していません<% else %><%= done_count %>件完了<% if done_count > 3 %> — 好調！<% end %><% end %></p>
+</section>
 
-<ul class="task-list" data-herb-name="tasks">
-  <% @tasks.each do |task| %>
-    <%# herb:key task.id %>
-    <%# herb:state (done: false) %>
-    <li class="task-item">
-      <label class="task-check">
-        <input type="checkbox" checked="<%= done %>">
-        <span class="task-title"><%= task.title %></span>
-      </label>
-      <span class="task-status"><% if done %>✓ Done<% else %>Open<% end %></span>
-    </li>
-  <% end %>
-</ul>
+<div class="feature-grid">
 
-<% if open %>
-  <div class="modal-backdrop">
-    <div class="modal" data-herb-set="click@outside->open=false keydown.esc@window->open=false">
-      <div class="modal-head">
-        <h2>New task</h2>
-        <button class="btn btn-ghost" data-herb-reset="open">✕</button>
+  <section class="feature" data-feature="server-reads">
+    <span class="feature-tag">機能① サーバーが答える読み取り（herb_state / debounce / $refresh）</span>
+    <h2>Sprintの検索と並び替え</h2>
+    <p>検索とソートはDBを引くので、ブラウザが状态を送り、同じアクションが答えます。</p>
+    <div class="toolbar">
+      <input class="field" name="search" value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="220" placeholder="タスクを検索…" autocomplete="off">
+      <button class="btn btn-ghost" data-herb-reset="query">クリア</button>
+      <select class="select" data-herb-set="order=$value" aria-label="並び替え">
+        <option value="oldest" selected="<%= order == "oldest" %>">古い順</option>
+        <option value="newest" selected="<%= order == "newest" %>">新しい順</option>
+      </select>
+      <button class="btn btn-ghost" data-herb-action="$refresh">🔄 同期</button>
+    </div>
+    <p class="toolbar-note"><% if query.empty? %>全件表示<% else %>「<%= query %>」の結果（サーバーで絞り込み済み）<% end %></p>
+  </section>
+
+  <section class="feature" data-feature="fine-grained">
+    <span class="feature-tag">機能② 細粒度更新＋楽観的追加（key / data-herb-into / 計数fold）</span>
+    <div class="feature-head">
+      <h2>タスク一覧</h2>
+      <button class="btn btn-primary" data-herb-toggle="drawer_open">＋ 新規タスク</button>
+    </div>
+    <ul class="task-list" data-herb-name="tasks">
+      <% @tasks.each do |task| %>
+        <%# herb:key task.id %>
+        <%# herb:state (done: false) %>
+        <li class="task-item">
+          <label class="task-check">
+            <input type="checkbox" checked="<%= done %>">
+            <span class="task-title" data-herb-name="title"><%= task.title %></span>
+          </label>
+          <span class="task-status"><% if done %>✔ 完了<% else %>未完了<% end %></span>
+        </li>
+      <% end %>
+    </ul>
+    <p class="task-note">完了チェックはブラウザ所有の行ステート。<code>done_count</code> fold がヘッダーの統計を即時更新します。</p>
+  </section>
+
+  <section class="feature" data-feature="drawer">
+    <span class="feature-tag">機能③ ドロワーとフォーム束縛（presence束縛 / 派生は無しでもdisabledで担保） </span>
+    <h2>作成ドロワーの動き</h2>
+    <p>「＋ 新規タスク」でスライドイン。backdropクリック・<kbd>Esc</kbd>で閉じます。文字数は往復なしで更新、空なら送信ボタンが無効化されます。</p>
+    <div class="drawer-demo-hint" data-herb-set="keydown.meta+b@window->drawer_open=true">💡 <kbd>⌘B</kbd> でも開けます</div>
+  </section>
+
+</div>
+
+<% if drawer_open %>
+  <div class="drawer-backdrop">
+    <aside class="drawer" data-herb-set="click@outside->drawer_open=false keydown.esc@window->drawer_open=false">
+      <div class="drawer-head">
+        <h2>新規タスク</h2>
+        <button class="btn btn-ghost" data-herb-reset="drawer_open" aria-label="閉じる">✕</button>
       </div>
       <form action="<%= tasks_path %>" method="post" data-herb-into="tasks">
         <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-        <input class="field" name="task[title]" placeholder="What needs doing?" autocomplete="off" value="<%= title %>">
-        <p class="char-hint"><%= title.length %> characters</p>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" data-herb-reset="title open">Clear</button>
-          <button class="btn btn-primary" disabled="<%= title.blank? %>">Add task</button>
+        <label class="field-label" for="task_title">タイトル</label>
+        <input class="field" id="task_title" name="task[title]" autocomplete="off" placeholder="何をやる？" value="<%= title %>">
+        <p class="char-hint"><%= title.length %> 文字</p>
+        <div class="drawer-actions">
+          <button type="button" class="btn btn-ghost" data-herb-reset="title">クリア</button>
+          <button class="btn btn-primary" disabled="<%= title.blank? %>">追加</button>
         </div>
       </form>
-    </div>
+      <p class="drawer-note">送信はオプティミスティック: 追加ボタンを押すと、サーバーの応答を待たずに行が入ります。</p>
+    </aside>
   </div>
 <% end %>
 
-<p class="board-note">The modal opens with a server-fetched branch (server mode), closes on backdrop or Esc with none, and new tasks land in the list before the POST answers. Checking a row only flips the browser-owned <code>done</code> state — the counter and badges update without any request.</p>
+<footer class="page-meta">
+  Dev環境では右上にHerbバッジが出ます。意図的にタグを壊すと、ファイル名・行番号付きのオーバーレイが出ます。
+</footer>

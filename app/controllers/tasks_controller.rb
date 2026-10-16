@@ -1,6 +1,11 @@
 class TasksController < ApplicationController
   def index
-    @tasks = Task.order(:id)
+    direction = herb_state("order", "oldest") == "newest" ? :desc : :asc
+
+    @tasks = Task.order(created_at: direction)
+
+    term = herb_state("query", "")
+    @tasks = @tasks.where("title LIKE ?", "%#{term}%") if term.present?
   end
 
   def create
@@ -16,7 +21,7 @@ class TasksController < ApplicationController
       end
 
       # No-JavaScript fallback: the modal form posts like any other form.
-      format.html { redirect_to board_path }
+      format.html { redirect_to root_path }
     end
   end
 end

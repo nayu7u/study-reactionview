@@ -1,5 +1,11 @@
 one:
-  title: Read the ReActionView quick start
+  title: ReActionViewのスロットを読む
+  created_at: <%= 3.hours.ago %>
 
 two:
-  title: Open the composer without a page load
+  title: Client modeの分岐を確かめる
+  created_at: <%= 2.hours.ago %>
+
+three:
+  title: テンプレートを壊してオーバーレイを見る
+  created_at: <%= 1.hour.ago %>

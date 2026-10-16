@@ -1,76 +1,115 @@
 require "test_helper"
 
-# What is covered here: the board's React-style staples — the modal branch,
-# the optimistic add contract, keyed task rows with row-scoped state, the
-# counting fold, and the CSS-anchored presence binding.
+# What is covered here: the Sprint Hub contract — the feature-organized
+# dashboard that shows off ReActionView's abilities: server reads through
+# herb_state (debounced input, sort select, $refresh), keyed optimistic
+# rows, the drawer branch answered by the server, and the compiled
+# manifest marking this template as server mode.
 class TasksFlowTest < ActionDispatch::IntegrationTest
-  test "index renders the keyed task list" do
-    get board_path
-
-    assert_response :success
-    assert_select "h1", "Task Board"
-    assert_select 'button[data-herb-toggle="open"]'
-    assert_select 'ul[data-herb-name="tasks"]' do
-      assert_select "li", 2
-    end
+  # HTTP header values must stay ASCII, so multi-byte state values travel
+  # as JSON \uXXXX escapes — exactly how a browser client must send them.
+  def herb_state_header(template:, state:)
+    JSON.generate({ template => state }).gsub(/[^ -~]/) { |c| "\\u#{c.ord.to_s(16).rjust(4, "0")}" }
   end
 
-  test "the modal branch answers a state change through the server" do
-    get board_path(format: "slots"), headers: {
+  test "index renders the feature-organized dashboard" do
+    get root_path
+
+    assert_response :success
+    assert_select "h1", "Sprint Hub"
+    assert_select "section.feature", count: 3
+    assert_select 'input[data-herb-set="query=$value"][data-herb-debounce="220"]'
+    assert_select 'select[data-herb-set="order=$value"]'
+    assert_select '[data-herb-action="$refresh"]'
+    assert_select 'button[data-herb-toggle="drawer_open"]'
+
+    # Keyed rows with row-scoped state and named parts for the splice
+    assert_select 'ul[data-herb-name="tasks"]' do
+      assert_select "li", 3
+      assert_select 'span[data-herb-name="title"]'
+    end
+    assert_select 'input[type="checkbox"]', count: 3
+  end
+
+  test "a typed query filters server-side through herb_state" do
+    get root_path(format: "slots"), headers: {
       "Accept" => "application/vnd.herb.slots+json",
-      "Herb-State" => { "app/views/tasks/index.html.erb" => { "open" => true } }.to_json
+      "Herb-State" => herb_state_header(
+        template: "app/views/tasks/index.html.erb",
+        state: { "query" => "スロット", "order" => "oldest" }
+      )
     }
 
     assert_response :success
-
     payload = JSON.parse(response.body)
-    modal = payload["slots"].values.find { |slot| slot["statics"]&.include?("modal-backdrop") }
-    assert modal, "opening parks the modal until open flips, then the server renders it"
-    assert_match(%r{name="task\[title\]"}, modal["statics"])
+    collection = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["order"] }
+    assert_equal [tasks(:one).id.to_s], collection["order"], "only the matching row is served"
+    assert_includes collection["items"].values.first.values, "ReActionViewのスロットを読む"
+
+    note = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("サーバーで絞り込み済み") }
+    assert note, "the toolbar note reports the server-side filter"
+    assert_includes note["slots"].values, "スロット"
   end
 
-  test "create answers a slots add with the new keyed task row" do
+  test "the drawer branch is answered by the server with the full form" do
+    get root_path(format: "slots"), headers: {
+      "Accept" => "application/vnd.herb.slots+json",
+      "Herb-State" => { "app/views/tasks/index.html.erb" => { "drawer_open" => true } }.to_json
+    }
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    drawer = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("drawer-backdrop") }
+    assert drawer, "opening renders the drawer through the same action"
+    assert_match(%r{name="task\[title\]"}, drawer["statics"])
+    assert drawer["statics"].include?("char-hint"), "the live character count rides along"
+  end
+
+  test "create answers a slots add with the new keyed row" do
     post tasks_path(format: "slots"),
-      params: { task: { title: "Optimistically appended task." } },
+      params: { task: { title: "GIF用にボードを撮る" } },
       headers: { "Accept" => "application/vnd.herb.slots+json" }
 
     assert_response :created
-
     payload = JSON.parse(response.body)
-    collection = payload["slots"].values.find { |slot| slot["items"] }
+    collection = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["items"] }
     assert_equal 1, collection["items"].size
-    assert_includes collection["items"].values.first.values, "Optimistically appended task."
+    assert_includes collection["items"].values.first.values, "GIF用にボードを撮る"
 
-    # The counter's statics ride along with the row so the "N tasks waiting"
-    # sentence can follow the insert.
-    stats = payload["slots"].values.find { |slot| slot["statics"]&.include?("tasks waiting") }
-    assert stats, "the stats sentence is part of the payload"
+    # The hero badge is a scalar slot whose value is the fresh total
+    assert_equal Task.count.to_s, payload["slots"]["0"], "the hero count recomputes on add"
   end
 
   test "create redirects without JavaScript" do
     post tasks_path, params: { task: { title: "Plain form post." } }
 
-    assert_redirected_to board_path
+    assert_redirected_to root_path
   end
 
-  test "row state and counting fold compile into the manifest" do
-    get board_path
+  test "the compiled manifest marks server mode and row state" do
+    get root_path
 
     assert_response :success
-
     json = response.body[/<template data-herb-manifests[^>]*>(\{.*?\})<\/template>/m, 1]
-    assert json, "the board carries its client manifest"
+    assert json
     manifest = JSON.parse(json).values.first
 
-    declarations = manifest.dig("states", "declarations")
-    assert_includes declarations.map { |d| d["name"] }, "open"
-    done = declarations.find { |d| d["name"] == "done" }
-    assert done, "each keyed row declares its own done state"
-    assert_kind_of Integer, done["scope"]
-    assert_equal "integer", declarations.find { |d| d["name"] == "done_count" }["kind"]
+    names = manifest.dig("states", "declarations").map { |d| d["name"] }
+    assert_includes names, "drawer_open"
+    assert_includes names, "done_count"
 
-    keys = manifest.dig("states", "keys") || manifest.dig("states", "collections")
-    # Presence: the checkbox binds the row state; :has(input:checked) styles off it.
-    assert manifest.dig("states", "presence").values.any? { |p| p.is_a?(Array) && p[0] == "done" }
+    # The drawer branch is registered as a conditional read, not parked (server mode)
+    conditionals = manifest.dig("states", "conditionals")
+    assert conditionals.values.any? { |c| Array(c["arms"]).any? { |a| a["condition"]&.first == "drawer_open" } },
+      "the drawer conditional is compiled into the manifest"
+
+    presence = manifest.dig("states", "presence")
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "done" }, "checkbox binds the row state"
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "title" && p[2] == "blank" },
+      "the submit button's disabled binding compiles as a presence read"
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "order" },
+      "select option selected= is a presence read on the order state"
+    assert manifest.dig("states", "computed").values.any? { |c| c[3] == "length" },
+      "the character count is a computed read on title"
   end
 end
