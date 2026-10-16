@@ -1,0 +1,44 @@
+<%# herb:slots server %>
+<%# herb:state (open: false, title: "", done_count: 0) %>
+
+<header class="board-header">
+  <h1>Task Board</h1>
+  <p class="task-stats"><% if done_count.zero? %>Nothing done yet — <%= @tasks.size %> tasks waiting<% else %><%= done_count %> done<% if done_count > 3 %> — on a roll!<% end %><% end %></p>
+  <button class="btn btn-primary" data-herb-toggle="open">＋ New task</button>
+</header>
+
+<ul class="task-list" data-herb-name="tasks">
+  <% @tasks.each do |task| %>
+    <%# herb:key task.id %>
+    <%# herb:state (done: false) %>
+    <li class="task-item">
+      <label class="task-check">
+        <input type="checkbox" checked="<%= done %>">
+        <span class="task-title"><%= task.title %></span>
+      </label>
+      <span class="task-status"><% if done %>✓ Done<% else %>Open<% end %></span>
+    </li>
+  <% end %>
+</ul>
+
+<% if open %>
+  <div class="modal-backdrop">
+    <div class="modal" data-herb-set="click@outside->open=false keydown.esc@window->open=false">
+      <div class="modal-head">
+        <h2>New task</h2>
+        <button class="btn btn-ghost" data-herb-reset="open">✕</button>
+      </div>
+      <form action="<%= board_path %>" method="post" data-herb-into="tasks">
+        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+        <input class="field" name="task[title]" placeholder="What needs doing?" autocomplete="off" value="<%= title %>">
+        <p class="char-hint"><%= title.length %> characters</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-herb-reset="title open">Clear</button>
+          <button class="btn btn-primary" disabled="<%= title.blank? %>">Add task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<% end %>
+
+<p class="board-note">The modal opens with a server-fetched branch (server mode), closes on backdrop or Esc with none, and new tasks land in the list before the POST answers. Checking a row only flips the browser-owned <code>done</code> state — the counter and badges update without any request.</p>
