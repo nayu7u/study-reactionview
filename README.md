@@ -16,8 +16,12 @@ Kaigi on Rails 2026 の発表（Marco Roth: "Herb in Rails 8.2" / ReActionView�
 | 文字数カウンタ（クライアント評価） | `<textarea><%= draft %></textarea>` + `<%= draft.length %> characters` | 往復なしで更新 |
 | リストの鍵 | `<%# herb:key message.id %>` + `data-herb-name` | 行は再構築されず移動/差し替えされる |
 | 楽観的追加 | `<form ... data-herb-into="messages">` | POST応答を待たず行を追加し、応答で実キーと差し替え |
+| テキストフィルター | `<input value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="250">` | 入力をdebounceして`herb_state("query")`でWHERE |
+| Stimulus連携 | `composer_controller.js` の `useState(this)` | `composingChanged` でstate読み書き、テンプレートと単一ソース |
 
 JavaScriptはゼロ（`import "reactionview"` のクライアントランタイムのみ）。ReactもStimulusコントローラも自作なし。
+
+`/notes` は **client mode**（`herb:slots client`）の検証ページ。未描画ブランチが `<template data-herb-region>` に格納され、タブ・カウンタ・パレット・コンポーザーが**サーバー往復ゼロ**で動く（`$refresh`だけが意図的な例外）。hover復帰、`keydown.meta+k@window`、Escリセット、行ごとの `<%# herb:state (done: false) %>`、計数fold（`done_count += 1`）、presence束縛（`checked=`/`disabled=`）、派生状態（`busy: composing`）を実装済み。
 
 ## セットアップと起動
 

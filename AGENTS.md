@@ -47,6 +47,22 @@ ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現�
     — React流の鍵付き照合で、クライアントは行を再構築せず移動・差し替えする
 - `POST …?format=slots` は **201** で新規行のみを返す（楽観的追加の差し替え用）
 - `herb:slots server` 時、textarea は `data-herb-slot="N:raw_text"`、補間属性は `…:attribute:name` として分岐外のスロットへ載る
+- client mode では未描画ブランチが `<template data-herb-region="app/views/<テンプレート>:<version>">` に
+  `<!--herb-branch:<番号>:<腕>-->"` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
+  `states.declarations`（kind/derived/scope）、`reads`、`conditionals`、`presence`（boolean属性束縛と `.blank?` 等）、
+  `computed`（`.length` 等）、そして client-mode の証拠として `server: {branches: {}, reads: {}}`。
+  サーバーモードでは同一テンプレートでも server マップが埋まる
+
+## テストにまつわる実測の教訓
+
+- `response.media_type` は charset を含まない（パラメータは別途）
+- スロット/パート番号はテンプレートの変更で**再番号付けされる**。アサートはインデックス番号でなく
+  「items を持つスロットを探す」等の形で引くこと
+- JSON本文中のstaticsはエスケープされる（`\"`）。文字マッチはpayloadをparseして読む
+- fixtureはテストごとに自動ロードされる。生成デフォルト（one/two）が漏れていると比較が形骸化や着火するので、
+  fixtureを明示的データで書き換えるのが早い
+- test環境では debug span（`data-herb-debug-*`）が付かない（debug_mode = development?）ため、
+  マーカー正規表現は開発環境と別形になる
 
 ## やらないこと（Why not 付き）
 
