@@ -31,9 +31,22 @@ ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現�
 
 ## 動作確認コマンド
 
-- サーバー: `bin/rails server`（dev でスロット用開発サーバーが内蔵起動し、アドレスを表示）
+- サーバー: `bin/rails server`（dev でスロット用開発サーバーが内蔵起動し、アドレスを表示。
+  アセットを追加・リネームしたら再起動すること — Propshaft は起動時にロードパスを確定させ、
+  実測では旧プロセスが app.css を見失い 500 を返し続けた）
 - 設定出力: `bin/rails runner 'c = ReActionView.config; puts [c.intercept_erb, c.slots, c.default_slot_mode, c.dev_server_enabled?].inspect'`
 - seed: `bin/rails db:setup`（schema 缶詰後は `bin/rails db:seed`）
+- 統合テスト: `bin/rails test`（reactive 契約 = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
+
+## 実測済みのスロット・ワイヤ形式（0.6.0）
+
+- 応答ヘッダ: `content-type: application/vnd.herb.slots+json; charset=utf-8`、`Cache-Control: no-store`
+- 本体: `{"template": "...", "version": "...", "occurrence": 0, "slots": {<番号>: {...}}}`
+  - 分岐は `{"branch": 0|1|…|null, "statics": "<マークアップ>", "slots": {...}}`
+  - コレクションは `{"items": {"<実ID>": {"<パート番号>": "<値>"}}, "order": ["<ID>", …], "statics": "<行テンプレート>"}`
+    — React流の鍵付き照合で、クライアントは行を再構築せず移動・差し替えする
+- `POST …?format=slots` は **201** で新規行のみを返す（楽観的追加の差し替え用）
+- `herb:slots server` 時、textarea は `data-herb-slot="N:raw_text"`、補間属性は `…:attribute:name` として分岐外のスロットへ載る
 
 ## やらないこと（Why not 付き）
 
