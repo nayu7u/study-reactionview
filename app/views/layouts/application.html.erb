@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
   <head>
     <title><%= content_for(:title) || "Study Reactionview" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -24,14 +24,18 @@
   </head>
 
   <body>
+    <a href="#main" class="skip-link">本文へスキップ</a>
     <header class="site-header">
       <span class="site-brand">🌿 Study ReActionView</span>
-      <nav class="site-nav">
+      <nav class="site-nav" aria-label="メイン">
         <%= link_to "Sprint Hub", root_path %>
         <%= link_to "Client Lab", lab_path %>
       </nav>
     </header>
-    <main class="page">
+    <main class="page" id="main">
+      <% if notice %>
+        <p class="flash" role="status"><%= notice %></p>
+      <% end %>
       <%= yield %>
     </main>
   </body>

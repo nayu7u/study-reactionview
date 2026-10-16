@@ -5,7 +5,6 @@
   <div class="hero-badge"><%= Task.count %> tasks on the sprint board</div>
   <h1>Sprint Hub</h1>
   <p class="hero-sub">ReActionView 0.6.0 — この画面のすべては <code>.html.erb</code> です。Reactもなし、ビルドもなし。</p>
-  <p class="hero-stats"><% if done_count.zero? %>まだ1件も完了していません<% else %><%= done_count %>件完了<% if done_count > 3 %> — 好調！<% end %><% end %></p>
 </section>
 
 <div class="feature-grid">
@@ -13,9 +12,9 @@
   <section class="feature" data-feature="server-reads">
     <span class="feature-tag">機能① サーバーが答える読み取り（herb_state / debounce / $refresh）</span>
     <h2>Sprintの検索と並び替え</h2>
-    <p>検索とソートはDBを引くので、ブラウザが状态を送り、同じアクションが答えます。</p>
+    <p>検索とソートはDBを引くので、ブラウザが状態を送り、同じアクションが答えます。</p>
     <div class="toolbar">
-      <input class="field" name="search" value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="220" placeholder="タスクを検索…" autocomplete="off">
+      <input class="field" name="search" value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="220" aria-label="タスクを検索" placeholder="タスクを検索…" autocomplete="off">
       <button class="btn btn-ghost" data-herb-reset="query">クリア</button>
       <select class="select" data-herb-set="order=$value" aria-label="並び替え">
         <option value="oldest" selected="<%= order == "oldest" %>">古い順</option>
@@ -37,6 +36,7 @@
         <%# herb:key task.id %>
         <%# herb:state (done: false) %>
         <li class="task-item">
+          <% if done %><% done_count += 1 %><% end %>
           <label class="task-check">
             <input type="checkbox" checked="<%= done %>">
             <span class="task-title" data-herb-name="title"><%= task.title %></span>
@@ -45,29 +45,32 @@
         </li>
       <% end %>
     </ul>
-    <p class="task-note">完了チェックはブラウザ所有の行ステート。<code>done_count</code> fold がヘッダーの統計を即時更新します。</p>
+    <p class="task-stat" aria-live="polite"><% if done_count.zero? %>まだ1件も完了していません<% else %><%= done_count %>件完了<% if done_count > 3 %> — 好調！<% end %><% end %></p>
+    <p class="task-note">取り消し線は presence 束縛＋CSS で即時。<code>done_count</code> fold が統計を即時に動かし、行の文言は同じ往復の答えで追随します。</p>
   </section>
 
   <section class="feature" data-feature="drawer">
     <span class="feature-tag">機能③ ドロワーとフォーム束縛（presence束縛 / 派生は無しでもdisabledで担保） </span>
     <h2>作成ドロワーの動き</h2>
-    <p>「＋ 新規タスク」でスライドイン。backdropクリック・<kbd>Esc</kbd>で閉じます。文字数は往復なしで更新、空なら送信ボタンが無効化されます。</p>
-    <div class="drawer-demo-hint" data-herb-set="keydown.meta+b@window->drawer_open=true">💡 <kbd>⌘B</kbd> でも開けます</div>
+    <p>「＋ 新規タスク」でスライドイン。<kbd>⌘B</kbd>/<kbd>Ctrl+B</kbd> でも開けます。backdropクリック・<kbd>Esc</kbd>で閉じる。送信成功で閉じ、打ち込んだtitleもリセットされます。</p>
+    <div class="drawer-demo-hint" data-herb-set="keydown.meta+b@window->drawer_open=true keydown.ctrl+b@window->drawer_open=true">💡 <kbd>⌘B</kbd> / <kbd>Ctrl+B</kbd> でも開けます</div>
   </section>
 
 </div>
 
 <% if drawer_open %>
   <div class="drawer-backdrop">
-    <aside class="drawer" data-herb-set="click@outside->drawer_open=false keydown.esc@window->drawer_open=false">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-label="新規タスク作成" data-herb-set="click@outside->drawer_open=false keydown.esc@window->drawer_open=false">
       <div class="drawer-head">
         <h2>新規タスク</h2>
         <button class="btn btn-ghost" data-herb-reset="drawer_open" aria-label="閉じる">✕</button>
       </div>
-      <form action="<%= tasks_path %>" method="post" data-herb-into="tasks">
+      <form action="<%= tasks_path %>" method="post" data-herb-into="tasks"
+        data-herb-set="submit->drawer_open=false"
+        data-herb-reset="submit->title">
         <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
         <label class="field-label" for="task_title">タイトル</label>
-        <input class="field" id="task_title" name="task[title]" autocomplete="off" placeholder="何をやる？" value="<%= title %>">
+        <input class="field" id="task_title" name="task[title]" autocomplete="off" placeholder="何をやる？" value="<%= title %>" data-herb-debounce="180">
         <p class="char-hint"><%= title.length %> 文字</p>
         <div class="drawer-actions">
           <button type="button" class="btn btn-ghost" data-herb-reset="title">クリア</button>

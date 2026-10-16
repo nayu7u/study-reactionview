@@ -23,6 +23,11 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     assert_select '[data-herb-action="$refresh"]'
     assert_select 'button[data-herb-toggle="drawer_open"]'
 
+    # The drawer's closers and the window shortcut compile as bindings
+    assert_select 'div[data-herb-set*="keydown.meta+b@window->drawer_open=true"]'
+    assert_select 'div[data-herb-set*="keydown.ctrl+b@window->drawer_open=true"]'
+    assert_select 'input[data-herb-debounce="220"][aria-label="タスクを検索"]'
+
     # Keyed rows with row-scoped state and named parts for the splice
     assert_select 'ul[data-herb-name="tasks"]' do
       assert_select "li", 3
@@ -63,6 +68,10 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     assert drawer, "opening renders the drawer through the same action"
     assert_match(%r{name="task\[title\]"}, drawer["statics"])
     assert drawer["statics"].include?("char-hint"), "the live character count rides along"
+    assert drawer["statics"].include?("click@outside->drawer_open=false"), "the backdrop close compiles"
+    assert drawer["statics"].include?("keydown.esc@window->drawer_open=false"), "the Esc close compiles"
+    assert drawer["statics"].include?("submit->drawer_open=false"), "a successful submit closes the drawer"
+    assert drawer["statics"].include?("role=\"dialog\""), "the drawer announces itself as a dialog"
   end
 
   test "create answers a slots add with the new keyed row" do
@@ -76,8 +85,9 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     assert_equal 1, collection["items"].size
     assert_includes collection["items"].values.first.values, "GIF用にボードを撮る"
 
-    # The hero badge is a scalar slot whose value is the fresh total
-    assert_equal Task.count.to_s, payload["slots"]["0"], "the hero count recomputes on add"
+    # The hero badge is a scalar slot whose value is the fresh total, found
+    # by content rather than slot index (indexes shift on template changes)
+    assert_includes payload["slots"].values, Task.count.to_s, "the hero count recomputes on add"
   end
 
   test "create redirects without JavaScript" do
@@ -111,5 +121,9 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
       "select option selected= is a presence read on the order state"
     assert manifest.dig("states", "computed").values.any? { |c| c[3] == "length" },
       "the character count is a computed read on title"
+
+    fold = manifest.dig("states", "declarations").find { |d| d["name"] == "done_count" }
+    assert_equal 1, fold.dig("count", "by"), "the fold counts one step per row"
+    assert_equal "done", fold.dig("count", "when", 0), "the fold is conditioned on the row state"
   end
 end

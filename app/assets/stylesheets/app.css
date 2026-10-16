@@ -15,7 +15,6 @@
   --accent-soft: #efeffd;
   --ok: #14934a;
   --ok-soft: #e8f7ee;
-  --warn: #b45309;
   --radius: 14px;
   --radius-sm: 9px;
   --shadow: 0 1px 2px rgb(18 22 33 / 5%), 0 10px 30px rgb(18 22 33 / 7%);
@@ -222,7 +221,8 @@ kbd {
 
 .btn:active { transform: translateY(1px); }
 
-.btn:focus-visible, .field:focus-visible, select:focus-visible, .switch:focus-visible {
+.btn:focus-visible, .field:focus-visible, select:focus-visible, .switch:focus-visible,
+input[type="checkbox"]:focus-visible, textarea:focus-visible {
   outline: none;
   box-shadow: var(--ring);
 }
@@ -318,7 +318,6 @@ input[type="checkbox"]:checked {
 }
 
 .toolbar .field { max-width: 14.5rem; }
-input[name="search"] { flex: 1 1 12rem; }
 
 .toolbar-note {
   margin: 0.75rem 0 0;
@@ -388,6 +387,13 @@ input[name="search"] { flex: 1 1 12rem; }
 .task-note {
   margin: 0;
   font-size: 0.85rem;
+}
+
+.task-stat {
+  margin: 0 0 0.45rem;
+  font-weight: 620;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- drawer ---------- */
@@ -507,14 +513,17 @@ input[name="search"] { flex: 1 1 12rem; }
 /* ---------- lab extras: badge, palette modal, hover cell, dots ---------- */
 
 .seg-dot {
-  display: inline-block;
-  width: 0.45rem;
-  height: 0.45rem;
+  display: none;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: var(--accent);
   margin-right: 0.45rem;
   vertical-align: 0.08em;
 }
+
+/* the dot exists in every arm; presence-bound aria-pressed reveals it */
+.seg-btn[aria-pressed="true"] .seg-dot { display: inline-block; }
 
 .badge {
   font-size: 1.5rem;
@@ -585,6 +594,32 @@ input[name="search"] { flex: 1 1 12rem; }
 }
 
 @keyframes pop-in { from { opacity: 0; transform: translateX(-50%) scale(0.97); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+
+/* ---------- skip link & flash ---------- */
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 60;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.4rem 0.9rem;
+  border-radius: 0 0 var(--radius-sm) 0;
+  border: 1px solid var(--line);
+}
+
+.skip-link:focus { left: 0; color: var(--accent); }
+
+.flash {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.9rem;
+  color: var(--ok);
+  background: var(--ok-soft);
+  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+  border-radius: var(--radius-sm);
+}
 
 /* ---------- footer ---------- */
 

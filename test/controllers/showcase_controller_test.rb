@@ -12,8 +12,14 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     assert_select 'button[data-herb-set="tab=mentions"]'
     assert_select 'button[data-herb-increment="unread"][data-herb-by="2"]'
     assert_select 'button[data-herb-decrement="unread"]'
-    assert_select 'button[data-herb-reset]'
+    assert_select 'button[data-herb-reset="unread"]'
+    assert_select 'button[data-herb-reset="draft"]'
     assert_select 'button[data-herb-set*="keydown.meta+k@window->palette_open=true"]'
+    assert_select 'button[data-herb-set*="keydown.ctrl+k@window->palette_open=true"]'
+    # the boolean interpolation lands as "true"/"false" strings: exactly one
+    # active tab per render, the client re-evaluates it on tab set
+    assert_select 'button.seg-btn[aria-pressed="true"]', count: 1
+    assert_select 'button.seg-btn[aria-pressed="false"]', count: 1
     assert_select 'input.switch', count: 1
     assert_select 'div[data-herb-set*="mouseenter->preview=true"]'
     assert_select '[data-herb-action="$refresh"]'
@@ -35,7 +41,8 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     assert_match(/<template data-herb-region=/, response.body, "client mode parks unrendered branches")
 
     server = manifest.dig("states", "server")
-    assert_empty server["branches"], "nothing on the lab needs the server to build a branch"
+    assert server["branches"].present?,
+      "the mentions arm holds server-read rows, so parked rebuilds know which slots the server fills"
 
     presence = manifest.dig("states", "presence")
     assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "mute" }, "the switch binds a boolean state"

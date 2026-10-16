@@ -2,10 +2,15 @@ class TasksController < ApplicationController
   def index
     direction = herb_state("order", "oldest") == "newest" ? :desc : :asc
 
-    @tasks = Task.order(created_at: direction)
+    # A raw % or _ in the query would widen the match beyond what the
+    # toolbar showed, so escape them and declare the escape char as a bind
+    # param (keeps one backslash literal without double-escaping mazes).
+    esc = "\\"
+    term = herb_state("query", "").gsub(/[%_\\]/) { "#{esc}#{$&}" }
+    where = term.blank? ? nil : ["title LIKE ? ESCAPE ?", "%#{term}%", esc]
 
-    term = herb_state("query", "")
-    @tasks = @tasks.where("title LIKE ?", "%#{term}%") if term.present?
+    @tasks = Task.order(created_at: direction)
+    @tasks = @tasks.where(*where) if where
   end
 
   def create
@@ -21,7 +26,10 @@ class TasksController < ApplicationController
       end
 
       # No-JavaScript fallback: the modal form posts like any other form.
-      format.html { redirect_to root_path }
+      format.html do
+        flash[:notice] = "タスクを追加しました"
+        redirect_to root_path
+      end
     end
   end
 end
