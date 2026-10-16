@@ -21,15 +21,17 @@
   <% end %>
 </ul>
 
-<button data-herb-toggle="composing">New message</button>
+<div data-controller="composer">
+  <button data-herb-toggle="composing">New message</button>
 
-<% if composing %>
-  <form action="<%= messages_path %>" method="post" data-herb-into="messages">
-    <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
-    <textarea name="message[body]"><%= draft %></textarea>
-    <p><%= draft.length %> characters</p>
-    <button>Send</button>
-  </form>
-<% end %>
+  <% if composing %>
+    <form action="<%= messages_path %>" method="post" data-herb-into="messages">
+      <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+      <textarea name="message[body]"><%= draft %></textarea>
+      <p><%= draft.length %> characters</p>
+      <button>Send</button>
+    </form>
+  <% end %>
+</div>
 
 <p>The composer form you see above was inserted without a page load. Sorting and filtering ask the server — the browser cannot run Ruby.</p>
