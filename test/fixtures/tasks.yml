@@ -1,7 +1,5 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  title: MyString
+  title: Read the ReActionView quick start
 
 two:
-  title: MyString
+  title: Open the composer without a page load

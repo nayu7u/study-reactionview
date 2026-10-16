@@ -28,7 +28,7 @@
         <h2>New task</h2>
         <button class="btn btn-ghost" data-herb-reset="open">✕</button>
       </div>
-      <form action="<%= board_path %>" method="post" data-herb-into="tasks">
+      <form action="<%= tasks_path %>" method="post" data-herb-into="tasks">
         <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
         <input class="field" name="task[title]" placeholder="What needs doing?" autocomplete="off" value="<%= title %>">
         <p class="char-hint"><%= title.length %> characters</p>
