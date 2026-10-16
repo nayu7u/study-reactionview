@@ -23,6 +23,8 @@ JavaScriptはゼロ（`import "reactionview"` のクライアントランタイ�
 
 `/notes` は **client mode**（`herb:slots client`）の検証ページ。未描画ブランチが `<template data-herb-region>` に格納され、タブ・カウンタ・パレット・コンポーザーが**サーバー往復ゼロ**で動く（`$refresh`だけが意図的な例外）。hover復帰、`keydown.meta+k@window`、Escリセット、行ごとの `<%# herb:state (done: false) %>`、計数fold（`done_count += 1`）、presence束縛（`checked=`/`disabled=`）、派生状態（`busy: composing`）を実装済み。
 
+**`/board` は「Reactでやってきた機能」比率のまとめページ**（サーバーモード）: モーダル（backdropクリックと `Esc` で閉じる `click@outside` / `keydown.esc@window` 句）、モーダル内からの楽観的追加（`data-herb-into`）、行ごとの `done` 状態+計数foldによる統計・分岐（`done_count.zero?`）。完了行の見た目は `:has(input:checked)` のCSSで、0 スロット・即時に追随（クラス補間スロットは往復の起点になるため削除）。共有ヘッダーとデザインは `app/assets/stylesheets/app.css` のみ。
+
 ## セットアップと起動
 
 ```bash

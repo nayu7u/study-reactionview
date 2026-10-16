@@ -69,3 +69,10 @@ ERB のみで Phoenix LiveView 的な細粒度リアクティビティを実現�
 - Rails 8.2 / `config.action_view.html_erb_implementation` には手を出さない
   → rubygems 上の最新リリースは 8.1.4 であり、8.1 では intercept_erb が Herb 経由化の正攻法だから
 - Node/yarn の導入をしない → importmap で完結する。追加ツールはこの検証の主題と無関係な摩擦を増やすだけ
+- Tailwind / PostCSS / あらゆるビルドパイプラインをスタイルで導入しない
+  → ビルドステップゼロがデモの前提。app.css に素のCSS（デザイントークン含む）で書く
+- 行クラスのstate補間（`class="<%= … if done %>"` のようなもの）を戻さない
+  → 属性補間はサーバー読みスロットになりチェックごとに往復する。
+  見た目の状態は presence 束縛（`checked`）+ CSS `:has(input:checked)` で即時追随させる
+- モーダルフォームを `board_path` にPOSTさせない → board はGETルートのみ。CRUDの入口は
+  `tasks_path`（正攻法の分離）。`data-herb-into` はスプライス先コレクションの名前指定に過ぎない
