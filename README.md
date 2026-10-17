@@ -1,53 +1,127 @@
 # Study ReActionView
 
-Kaigi on Rails 2026 の発表（Marco Roth: "Herb in Rails 8.2" / ReActionView）の主張、
-**ERB のみで React / Phoenix LiveView 的な細粒度リアクティビティが実現できる**
-を、このRailsアプリで実際にインストール・動作確認するための検証リポジトリです。
+**ReActionView 0.6.0 + Herb 0.11.0 の検証ショーケース** — Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
+すなわち **ERB だけで React 的な細粒度リアクティビティが成立する** ことを、二つの実用的な画面で実演・検証する。
 
-## 実装済みデモ（`/messages`）
+- React / Stimulus / Node / yarn / ビルドパイプライン: **一切なし**。`app/javascript/application.js` は
+  `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
+- 細粒度の更新は Herb の **slots** が担う: state 変化に対して、HTML ではなく**値**の JSON
+  （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
 
-`app/views/messages/index.html.erb` 1枚のテンプレートに、以下のリアクティブ要素が全部入っています。
+## 2つの画面
 
-| 要素 | 記法 | 動き |
+| 画面 | 宣言 | 見せていること |
 |---|---|---|
-| 宣言的状態 | `<%# herb:state (composing: false, order: "oldest", draft: "") %>` | ブラウザが状態を所有 |
-| 出し入れトグル | `<button data-herb-toggle="composing">` | フォームが再読込なしで開閉 |
-| ソート※サーバー応答 | `<select data-herb-set="order=$value">` + `herb_state("order", "oldest")` | コントローラが同じ `index` で答え、行が鍵付きで移動 |
-| 文字数カウンタ（クライアント評価） | `<textarea><%= draft %></textarea>` + `<%= draft.length %> characters` | 往復なしで更新 |
-| リストの鍵 | `<%# herb:key message.id %>` + `data-herb-name` | 行は再構築されず移動/差し替えされる |
-| 楽観的追加 | `<form ... data-herb-into="messages">` | POST応答を待たず行を追加し、応答で実キーと差し替え |
-| テキストフィルター | `<input value="<%= query %>" data-herb-set="query=$value" data-herb-debounce="250">` | 入力をdebounceして`herb_state("query")`でWHERE |
-| Stimulus連携 | `composer_controller.js` の `useState(this)` | `composingChanged` でstate読み書き、テンプレートと単一ソース |
+| **Sprint Hub** `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、楽観的追加 |
+| **Client Lab** `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロの UI |
 
-JavaScriptはゼロ（`import "reactionview"` のクライアントランタイムのみ）。ReactもStimulusコントローラも自作なし。
-
-`/notes` は **client mode**（`herb:slots client`）の検証ページ。未描画ブランチが `<template data-herb-region>` に格納され、タブ・カウンタ・パレット・コンポーザーが**サーバー往復ゼロ**で動く（`$refresh`だけが意図的な例外）。hover復帰、`keydown.meta+k@window`、Escリセット、行ごとの `<%# herb:state (done: false) %>`、計数fold（`done_count += 1`）、presence束縛（`checked=`/`disabled=`）、派生状態（`busy: composing`）を実装済み。
-
-**`/board` は「Reactでやってきた機能」比率のまとめページ**（サーバーモード）: モーダル（backdropクリックと `Esc` で閉じる `click@outside` / `keydown.esc@window` 句）、モーダル内からの楽観的追加（`data-herb-into`）、行ごとの `done` 状態+計数foldによる統計・分岐（`done_count.zero?`）。完了行の見た目は `:has(input:checked)` のCSSで、0 スロット・即時に追随（クラス補間スロットは往復の起点になるため削除）。共有ヘッダーとデザインは `app/assets/stylesheets/app.css` のみ。
-
-## セットアップと起動
-
-```bash
-bundle install
-bin/rails db:setup            # migrate + seed
-bin/rails server              # http://localhost:3000/messages
+```console
+$ bin/rails db:setup   # または db:seed
+$ bin/rails server     # http://localhost:3000
 ```
 
-ReActionView の設定は `config/initializers/reactionview.rb`
-（`intercept_erb = true` ですべての `.html.erb` を `Herb::Engine` で処理、`slots = true` でリアクティブテンプレート有効）。
+## Sprint Hub — server モード（`/`）
 
-## 検証済みの動き（curlでも再現可能）
+検索・並び替え・追加のすべてが「サーバー側の世界」。state はリクエストごとにブラウザからサーバーへ渡り、
+同じアクションが HTML ではなく値で応える。
 
-1. `GET /messages` → 200（通常のERBのようにレンダリング）
-2. `GET /messages?format=slots` + `Accept: application/vnd.herb.slots+json` + `Herb-State: {"app/views/messages/index.html.erb":{"order":"newest"}}`
-   → `content-type: application/vnd.herb.slots+json`、`Cache-Control: no-store`、
-   ソート分岐と鍵付き行の並び（`order: ["12","11","10","9"]` のように実ID順）がJSONで返る
-3. `POST /messages?format=slots`（`message[body]=…` + CSRF + セッションCookie）
-   → **201**。新規行だけが鍵（実ID）付きの要素としてスロットに載って返る —
-   楽観的追加の裏側（クライアントが仮の行を実キーへ差し替える）
+<div><img src="docs/media/hub-light.png" alt="Sprint Hub (light)" width="49%"/> <img src="docs/media/hub-dark.png" alt="Sprint Hub (dark)" width="49%"/></div>
 
-`bin/rails test` に上記契約の統合テスト（`test/controllers/messages_controller_test.rb`）があります。
+### 機能① サーバーが答える読み取り（herb_state / debounce / `$refresh`）
 
----
+![検索・並び替えはサーバーが絞り込む](docs/media/01-server-reads.gif)
 
-This README would normally document whatever specifications you consider necessary (Rails 8.1.4 / Ruby 4.0.7 / sqlite3 / importmap-rails + propshaft / Puma / Turbo + Stimulus).
+- 検索語・並び順は `herb_state("query")` / `herb_state("order")` としてコントローラーでも宣言し、
+  **ビューとコントローラーの両方が**同じ名前で読む。これで最初の描画から filter が効く。
+- 入力は `data-herb-debounce="220"`。打鍵のたびの往復を 220ms にまとめて、同じ `GET /?format=slots` が答える。
+- リストの行は `<%# herb:key %>` 付き → 応答は `{items, order}` の鍵付き照合になり、行は**移動**する
+  （再構築しない）。並び替え GIF で行がアニメーションせず“その場で並び替わる”のは、鍵の功績。
+- `$refresh`（🔄 同期）だけが明示的な「サーバーに全部聞き直す」出口。
+
+### 機能② 細粒度更新＋計数fold（key / presence 束縛 / `done_count`）
+
+![行のチェックは往復なし、統計はfoldで即時](docs/media/02-row-state.gif)
+
+- 取り消し線・行の文言ピルは **presence 束縛**（`checked="<%= done %>"`）＋ CSS `:has(input:checked)`
+  で即時描写。ピルは「✔ 完了」「未完了」の両方を DOM に積んで CSS で表示を切り替えている。
+  server モードでブラウザ所有 state を分岐の条件には**書けない**（未描画側が格納されず refetch storm になる）。
+- 統計「N/M 件完了」は **計数fold**: `<% if done %><% done_count += 1 %><% end %>`（をキー付き行の中に置く
+  **3 タグ公式形**）。manifest には `count: {by: 1, when: ["done"]}` として落ち、チェックのたびに
+  サーバー往復なしで client が計算し直す。
+- 「行の見た目を属性値の補間で表現しない」（`class="<%= … if done %>"` を書かない）のが原則 —
+  属性補間はサーバー読みスロットになり、チェックのたびの往復を生む。見た目は CSS、数値は read slot、の分担。
+
+### 機能③ 楽観的追加（ドロワー / data-herb-into / no-JS フォールバック）
+
+![追加は 201 の新規行だけで入り、同期で確定](docs/media/03-optimistic-add.gif)
+
+- 「＋ 新規タスク」でスライドインする backdrop ドロワー。分岐は**サーバー描画のまま**答える。
+- 送信は楽観的: ボタンを押すと応答を待たずに行がスプライスされる（`data-herb-into="tasks"`）。
+  応答は **201** で**新規行だけ**を返し、クライアントは `items` の splice で受ける。
+- 送信に成功するとドロワーは閉じ、打ち込んだ title もリセットされる
+  (`data-herb-set="submit->drawer_open=false"` と `data-herb-reset="submit->title"` の二本立て)。
+- hero の合計（`Task.count`）は **GET 応答では更新されるが、POST splice ではされない**。
+  0.6.0 のクライアントが 201 で適用するのは collection だけ。だからシーンの最後で 🔄 同期を押して
+  「楽観 → 確認」の流れを見せている（実測の制約は AGENTS.md）。
+- JS を切っても成立: hidden token 付きのふつうの `<form method="post">` として POST → flash 付き redirect。
+
+### 機能④ window 句（⌘B / Ctrl+B で開く）
+
+![⌘B で開き、Esc で閉じる](docs/media/04-window-clauses.gif)
+
+- `data-herb-set="keydown.meta+b@window->drawer_open=true"` — 要素の外（window）にリスナーを張る句。
+  `modifier AND match` の設計上、`meta+b` と `ctrl+b` は別句にする（1 行では OR にできない）。
+- 閉じる側は `click@outside->…=false` と `keydown.esc@window->…=false` の複合。
+
+## Client Lab — client モード（`/lab`）
+
+この画面の未描画の分岐（タブの裏側・モーダル・hover の表示）は、**初回 HTML に `<template data-herb-region>`
+として格納済み**。開閉・切替・カウントはすべてブラウザ内で完結して、`$refresh` だけが意図的な脱出口。
+
+<div><img src="docs/media/lab-light.png" alt="Client Lab (light)" width="49%"/> <img src="docs/media/lab-dark.png" alt="Client Lab (dark)" width="49%"/></div>
+
+### 機能⑤ 分岐の格納とセグメント切替
+
+![タブの切替は往復ゼロ](docs/media/05-client-mode.gif)
+
+- `tab` の両側（すべて / メンション）は、client モードでも**サーバーが初回に両方描いて格納する**。
+  切替はクライアントが格納済みの分岐を採用するだけ。メンション側は
+  `@notifications.select { |n| n[:kind] == "mention" }` の行データとして別に格納してある。
+- `aria-pressed="<%= tab == "all" %>"` は文字列 "true"/"false" の属性補間として出る
+  （checked/selected の boolean 属性束縛とは別物）。client モードでは純状態比較だからクライアント評価＝往復なし。
+  CSS は `[aria-pressed="true"]` で引く。
+
+### 機能⑥ カウンタとコマンドパレット（increment / decrement / reset）
+
+![⌘Kパレットも往復ゼロ](docs/media/06-palette.gif)
+
+- `data-herb-increment / decrement / reset`。`data-herb-by="2"` で一度に ±2。
+- ⌘K（Ctrl+K）＋click で開く palette 型モーダル。Esc と backdrop クリックで閉じる。入力の文字数表示は即時。
+- `data-herb-reset`（引数なし）は全 states を既定値へ戻す「全部戻す」。
+
+### 機能⑦ switch 束縛と派生状態（`ready: draft != ""`）
+
+![switchと派生のready](docs/media/07-derived.gif)
+
+- `checked="<%= mute %>"` の switch は presence 束縛。🔕/🔔 の文言も両方置いて CSS で切替（機能②と同じ理屈）。
+- `<%# herb:state (draft: "", ready: draft != "") %>` — **派生宣言**。`draft` が空でなければ `ready` が真になり、
+  文字数表示の即時化と `disabled="<%= !ready %>"` の送信ボタンの有効化がクライアント内で完結する。
+
+## 検証の進め方
+
+- **統合テスト: `bin/rails test`** — `tasks_controller_test` / `showcase_controller_test` が契約を検証する:
+  HTML レンダ / `herb_state` による並び替え・絞り込み / slots 応答の形状（items+order / 分岐 / スカラー混在）/
+  201 splice / no-JS フォールバック / fold が manifest に落ちていること。テストは **What** を、
+  コードは **How** を、コミットログは **Why** を書く約束。
+- **manifest の読み方**: 初期 HTML に `<template data-herb-manifests>` としてクライアントへの命令書が載る
+  （`states.declarations` / `reads` / `conditionals` / `presence` / `computed` / `server`）。DevTools で覗くと
+  「何が往復せず動くか」が読める。
+- **dev モードのバッジ**: 右上の Herb バッジ。テンプレートタグをわざと壊すとファイル名＋行番号付きの
+  エラーオーバーレイが出る（各 footer に案内あり）。tests + curl + ブラウザで説明がつかない局面では
+  `docs/debug-mcp-runbook.md`（debug-mcp の adopt-on-demand 手順）。
+
+## テンプレートの実測メモ
+
+この検証で判明したエンジンの事実 — fold の公式形、server モードと client モードの制約、slots ワイヤの形、
+「`<%# herb:state %>`を controller でも宣言する必要性」等 — は **[AGENTS.md](AGENTS.md)** に随時記録している。
+テンプレートを改変する前には必ずそこを当たること（境界を意図的に押して壊した記録が多い）。

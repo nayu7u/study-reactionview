@@ -354,7 +354,7 @@ input[type="checkbox"]:checked {
   min-width: 0;
 }
 
-.task-title { font-weight: 520; overflow-wrap: anywhere; }
+.task-title { flex: 1 1 auto; font-weight: 520; overflow-wrap: anywhere; }
 
 /* the done visual hangs purely on the presence-bound checkbox */
 .task-list li:has(input:checked) {
