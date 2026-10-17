@@ -20,7 +20,7 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     # active tab per render, the client re-evaluates it on tab set
     assert_select 'button.seg-btn[aria-pressed="true"]', count: 1
     assert_select 'button.seg-btn[aria-pressed="false"]', count: 1
-    assert_select 'input.switch', count: 1
+    assert_select "input.switch", count: 1
     assert_select 'div[data-herb-set*="mouseenter->preview=true"]'
     assert_select '[data-herb-action="$refresh"]'
   end

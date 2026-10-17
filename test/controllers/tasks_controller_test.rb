@@ -48,7 +48,7 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     payload = JSON.parse(response.body)
     collection = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["order"] }
-    assert_equal [tasks(:one).id.to_s], collection["order"], "only the matching row is served"
+    assert_equal [ tasks(:one).id.to_s ], collection["order"], "only the matching row is served"
     assert_includes collection["items"].values.first.values, "ReActionViewのスロットを読む"
 
     note = payload["slots"].values.find { |slot| slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("サーバーで絞り込み済み") }

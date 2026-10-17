@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   root "tasks#index"
 
-  resources :tasks, only: [:index, :create]
+  resources :tasks, only: [ :index, :create ]
 
   get "/board", to: "tasks#index"
   get "/lab", to: "showcase#lab"
