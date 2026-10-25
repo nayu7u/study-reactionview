@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hotwire を使わずともよい — ReActionView 対比ノート</title>
+<style>
+  /* デザイントークンは app/assets/stylesheets/app.css と同じ系統。ビルドなし・依存なし。 */
+  :root {
+    --bg: #f5f6fa;
+    --surface: #ffffff;
+    --surface-2: #fbfbfe;
+    --ink: #171a26;
+    --ink-2: #5c6070;
+    --line: #e4e6ee;
+    --accent: #5552d6;
+    --accent-2: #8b7bf0;
+    --accent-soft: #efeffd;
+    --code-bg: #14161f;
+    --code-ink: #e7e9f2;
+    --hot: #c2410c;
+    --hot-soft: #fff3ec;
+    --ok: #1a7f5c;
+    --ok-soft: #ecf9f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1118;
+      --surface: #161923;
+      --surface-2: #12141d;
+      --ink: #e7e9f2;
+      --ink-2: #9aa0b4;
+      --line: #262a38;
+      --accent: #7a76f2;
+      --accent-2: #9d8ffb;
+      --accent-ink: #10101f;
+      --accent-soft: #1e1d39;
+      --code-bg: #0c0e15;
+      --code-ink: #dcdff0;
+      --hot: #f0a06c;
+      --hot-soft: #2a1d12;
+      --ok: #6fd8ab;
+      --ok-soft: #0f2a20;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    font-size: 15px;
+    line-height: 1.75;
+    background:
+      radial-gradient(1100px 420px at 12% -12%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 60%),
+      radial-gradient(900px 380px at 88% -18%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 55%),
+      var(--bg);
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 72px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, pre, kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Noto Sans Mono", monospace;
+    font-size: 0.92em;
+  }
+  :not(pre) > code {
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.08em 0.38em;
+  }
+  kbd { background: var(--surface-2); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 0.4em; }
+
+  header.hero {
+    padding: 56px 0 8px;
+  }
+  .hero-badge {
+    display: inline-block;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 999px;
+    padding: 3px 12px;
+  }
+  h1 {
+    font-size: 34px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    margin: 14px 0 6px;
+  }
+  .hero-sub { color: var(--ink-2); margin: 0 0 22px; max-width: 760px; }
+  .hero-sub strong { color: var(--ink); }
+
+  nav.toc {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    font-size: 13.5px;
+  }
+  nav.toc span { color: var(--ink-2); }
+
+  section { margin-top: 52px; }
+  h2 {
+    font-size: 22px;
+    line-height: 1.35;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+  h2 .num {
+    color: var(--accent);
+    font-family: ui-monospace, monospace;
+    font-size: 0.82em;
+    margin-right: 10px;
+  }
+  .lede { color: var(--ink-2); margin: 0 0 18px; max-width: 780px; }
+  p { margin: 0 0 12px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 14px; }
+  .mini { font-size: 13px; color: var(--ink-2); }
+  .flag { display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 999px; padding: 1px 10px; vertical-align: 1px; }
+  .flag-r { color: var(--ok); background: var(--ok-soft); border: 1px solid color-mix(in srgb, var(--ok) 34%, transparent); }
+  .flag-h { color: var(--hot); background: var(--hot-soft); border: 1px solid color-mix(in srgb, var(--hot) 34%, transparent); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; font-size: 13.8px; }
+  thead th { text-align: left; background: var(--surface-2); color: var(--ink-2); font-weight: 600; }
+  th, td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td code { white-space: nowrap; }
+  .tbl-scroll { overflow-x: auto; border-radius: 14px; }
+
+  /* コードペア */
+  .duo {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  @media (min-width: 900px) {
+    .duo { grid-template-columns: 1.1fr 0.9fr; }
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
+    font-size: 13px;
+  }
+  .panel-head .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .panel.hot .panel-head .dot { background: var(--hot); }
+  .panel.rv  .panel-head .dot { background: var(--accent); }
+  .panel-head .grow { flex: 1; color: var(--ink-2); }
+  .panel pre {
+    margin: 0;
+    padding: 14px 16px 16px;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    overflow-x: auto;
+    font-size: 12.8px;
+    line-height: 1.62;
+    flex: 1;
+  }
+  .panel-foot { border-top: 1px solid var(--line); padding: 10px 14px; font-size: 12.8px; color: var(--ink-2); background: var(--surface); }
+  .panel-foot b { color: var(--ink); font-weight: 600; }
+  .rv .panel-foot b { color: var(--accent); }
+
+  pre code .c-cmt { color: #7f8696; font-style: italic; }
+  pre code .c-erb { color: #8bd1ff; }
+  pre code .c-attr { color: #c3b7ff; }
+  pre code .c-str { color: #ffd08e; }
+  pre code .c-kw { color: #ff9db1; }
+  pre code .c-tag { color: #8bd1ff; }
+  pre code .c-dim { color: #9aa0b4; }
+
+  ul.tight { margin: 8px 0; padding-left: 22px; }
+  ul.tight li { margin: 5px 0; }
+
+  .asc { padding-left: 14px; border-left: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); color: var(--ink-2); }
+  .asc b { color: var(--ink); }
+
+  footer.page {
+    margin-top: 64px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="hero-badge">docs — Hotwire 対比ノート</span>
+  <h1>Hotwire を使わずともよい、を体感する</h1>
+  <p class="hero-sub">
+    ReActionView 0.6.0 + herb 0.11.1 の検証リポジトリ（Kaigi on Rails 2026 の主題検証）。
+    このページは<strong>静的HTML</strong> — ビルドもJSもなしで開けます。
+    本リポジトリの主張「ERB のみで Phoenix LiveView 的な細粒度リアクティビティ」を、
+    <strong>Hotwire（Turbo + Stimulus）が担っていた役割ごとに分解して</strong>、実コードで対比します。
+  </p>
+  <nav class="toc" aria-label="目次">
+    <span>目次:</span>
+    <a href="#claim">① 主張の分解</a>
+    <a href="#screens">② 証明マップ（4画面）</a>
+    <a href="#pairs">③ 実コード対比</a>
+    <a href="#map">④ 概念読替表</a>
+    <a href="#wire">⑤ 往復はいつ飛ぶか</a>
+    <a href="#bounds">⑥ 正直な境界</a>
+    <a href="#next">⑦ 次に足すなら</a>
+  </nav>
+</header>
+
+<!-- ============================================================ -->
+<section id="claim">
+  <h2><span class="num">①</span>主張の分解 — Hotwire の2層を、モード2つで置き換える</h2>
+  <p class="lede">
+    「Hotwire 不要」を1文で言うと曖昧になるので、役割で2層に分解します。
+    ReActionView は各層を別々のモード（server / client）で置き換えます。モードはテンプレート冒頭のコメント1行で指定します。
+  </p>
+  <div class="grid-2">
+    <div class="card">
+      <span class="flag flag-h">Hotwire 層1</span>&nbsp;&nbsp;<span class="flag flag-r">→ ReActionView server mode</span>
+      <h3 style="font-size:15.5px; margin:8px 0 4px;">Turbo Frame / Turbo Stream / form の往復</h3>
+      <p style="font-size:13.8px;">
+        DB を引く更新（検索・ソート・ページネーション・作成）。Turbo だと form + <code>turbo-frame</code> +
+        部分テンプレート＋枠外の値（合計バッジ等）を更新する Stream まで必要になりがち。
+        ReActionView は <code>herb_state</code> と <code>data-herb-*</code> 属性だけで、
+        同じアクションが HTML を出しつつ部分更新のワイヤも返す。
+      </p>
+      <p class="mini">実装: <code>/</code>（Sprint Hub）と <code>/patterns</code>（Patterns）</p>
+    </div>
+    <div class="card">
+      <span class="flag flag-h">Hotwire 層2</span>&nbsp;&nbsp;<span class="flag flag-r">→ ReActionView client mode</span>
+      <h3 style="font-size:15.5px; margin:8px 0 4px;">Stimulus コントローラ（リアクティブUI）</h3>
+      <p style="font-size:13.8px;">
+        DB を引かない更新（文字数・妥当性・開閉・カウンタ・ステップ）。Hotwire だと Stimulus コントローラを書くこと自体が
+        「Turbo 外の生 JS 層」になった。client mode ではテンプレートが状態と分岐をコンパイル解析し、
+        クライアントへの命令書（manifest）を自動生成 — 操作は<strong>全てブラウザ内で完結（0 往復）</strong>。
+      </p>
+      <p class="mini">実装: <code>/lab</code>（Client Lab）と <code>/ui</code>（UI Kit）</p>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-top:14px;">
+    <div class="card">
+      <p style="margin:0 0 6px;"><b>JS の実体（実ファイル・全4行）</b></p>
+      <pre style="margin:0; font-size:12.8px;"><code><span class="c-cmt">// app/javascript/application.js</span>
+<span class="c-cmt">// Why not "controllers": the showcase is a zero-custom-JS demo — Stimulus</span>
+<span class="c-cmt">// wiring would only muddy the measured claim that ERB alone carries the UI.</span>
+<span class="c-kw">import</span> <span class="c-str">"reactionview"</span></code></pre>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 6px;"><b>importmap も同様</b></p>
+      <p style="font-size:13.8px;">
+        <code>import "reactionview"</code> の1-line で済み、<code>node_modules</code> もビルドも不要。
+        <code>turbo</code>/<code>stimulus</code> の pin は Rails 生成の標準配置（<code>app/javascript/controllers/</code>）には
+        <strong>1ファイルも無く</strong>、このアプリは import していない（無意味に残存するだけ）。
+        UI に必要なのは gem が自動 pin する reactionview クライアント 1本。
+      </p>
+      <p class="mini">なお本リポジトリの制約「Node/yarn を導入しない → importmap で完結」は、この訴求と同じ土台にある。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="screens">
+  <h2><span class="num">②</span>証明マップ — 4画面が消している Hotwire の部品</h2>
+  <p class="lede">
+    どの画面のどの機能が、「Hotwire では何を書かされていたか」を置き換えたかの一覧。
+    全部動くので <code>bin/rails server</code> で確認できます。
+  </p>
+  <div class="tbl-scroll">
+  <table>
+    <thead>
+      <tr><th>画面</th><th>モード</th><th>機能</th><th>Hotwire なら書かされていたもの</th><th>ReActionView での代わり</th></tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="4"><b>Sprint Hub</b><br><code>/</code></td><td rowspan="4">server</td>
+        <td>検索・並び替え</td><td>form + <code>turbo-frame</code> + 部分テンプレ ＋（文字入力単位にするなら）Stimulus debounce</td>
+        <td><code>data-herb-set="query=$value"</code> + <code>data-herb-debounce</code></td></tr>
+      <tr><td>完了チェック・統計</td><td>行の class 切替の Stimulus ＋統計の再描画</td>
+        <td>presence 束縛（<code>checked</code>）＋CSS <code>:has()</code> ＋計数 fold（<code>done_count</code>）</td></tr>
+      <tr><td>作成ドロワー</td><td>Stimulus の dialog 開閉、focus と backdrop 処理</td>
+        <td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… esc@window-&gt;…"</code></td></tr>
+      <tr><td>楽観的追加</td><td>Stimulus で先に DOM を挿入するか Turbo Stream 追従（順序・鍵の整合は自前）</td>
+        <td><code>data-herb-into="tasks"</code> → POST 201 の splice</td></tr>
+
+      <tr><td rowspan="3"><b>Patterns</b><br><code>/patterns</code></td><td rowspan="3">server</td>
+        <td>フィルタチップ</td><td>chips 用の form submit リンク、aria 状態の保守</td>
+        <td><code>data-herb-set="priority=3 page=1"</code> ＋ <code>aria-pressed</code> スロット</td></tr>
+      <tr><td>もっと見る</td><td><code>link_to … data: { turbo_stream: … }</code> ＋ append ストリーム or フレーム増設</td>
+        <td><code>data-herb-increment="page"</code> ＋ <code>$refresh</code>（鍵付き差分で既存行は動かない）</td></tr>
+      <tr><td>詳細連動</td><td>行クリック → 別フレームの再描画、選択状態の管理を Stimulus で</td>
+        <td>同じ往復が詳細の分岐と <code>data-herb-name</code> スロットに答える</td></tr>
+
+      <tr><td rowspan="3"><b>Client Lab</b><br><code>/lab</code></td><td rowspan="3">client</td>
+        <td>タブ・カウンタ・パレット</td><td>Stimulus ×3Controller（tab / unread / palette）</td>
+        <td><code>herb:state</code> 宣言 ＋ <code>data-herb-set / -increment / -reset</code></td></tr>
+      <tr><td>ライブ入力・バリデーション</td><td>文字数Controller、妥当性Controller、disabled の同期</td>
+        <td>派生宣言（<code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code>）＋presence の <code>disabled</code></td></tr>
+      <tr><td>ウィザード（3ステップ）</td><td>ステップController ＋入力ゲートController</td>
+        <td><code>step</code> 状態の分岐（未描画の腕は <code>&lt;template data-herb-region&gt;</code> に格納済み）</td></tr>
+
+      <tr><td rowspan="2"><b>UI Kit</b><br><code>/ui</code></td><td rowspan="2">client</td>
+        <td>switch・accordion 等 9コンポーネント</td><td>shadcn/ui 相当 = Stimulus の Data API、往復も発生しうる更新の配管</td>
+        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence 束縛。<strong>全操作 0 往復</strong>（実測）</td></tr>
+      <tr><td>数量ステッパー（stepper）</td><td>行ごとの qty 管理と全体合計を Stimulus に</td>
+        <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋計数 fold の <code>in_cart</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="pairs">
+  <h2><span class="num">③</span>実コード対比 — 4つの局面</h2>
+  <p class="lede">
+    右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
+    典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
+    「局所更新の配管」と「生 JS の部分」がどう消えるかを並べて読めます。
+  </p>
+
+  <!-- ================= pair 1 ================= -->
+  <h3 style="margin-top:34px;">対比 1 — 検索の絞り込み（打たれるたびに活きる、DB引きの1往復）</h3>
+  <div class="duo">
+    <div class="panel hot">
+      <div class="panel-head"><span class="dot"></span>Hotwire（Turbo Frame + Stimulus）<span class="grow">3ファイル</span></div>
+      <pre><code><span class="c-cmt">// app/javascript/controllers/search_controller.js</span>
+<span class="c-kw">import</span> { Controller } <span class="c-kw">from</span> <span class="c-str">"@hotwired/stimulus"</span>
+
+<span class="c-kw">export default class</span> <span class="c-kw">extends</span> Controller {
+  <span class="c-cmt">// Turboには「input単位の submit」が無いので自作する</span>
+  submit({ target }) {
+    <span class="c-kw">clearTimeout</span>(<span class="c-dim">this</span>.timer)
+    <span class="c-dim">this</span>.timer = <span class="c-kw">setTimeout</span>(() =&gt;
+      target.form.requestSubmit(), <span class="c-erb">220</span>)
+  }
+}</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code><span class="c-cmt">&lt;!-- app/views/tasks/index.html.erb --&gt;</span>
+&lt;<span class="c-tag">%=</span> <span class="c-erb">form_with</span> url: <span class="c-attr">tasks_path</span>, data: {
+  <span class="c-attr">turbo_frame:</span> <span class="c-str">"tasks"</span> } <span class="c-tag">do</span> <span class="c-tag">%</span>&gt;
+  &lt;<span class="c-tag">%=</span> <span class="c-erb">text_field_tag</span> :query, params[:query],
+    data: { controller: <span class="c-str">"search"</span>,
+            action: <span class="c-str">"input-&gt;search#submit"</span> } <span class="c-tag">%&gt;</span>
+&lt;<span class="c-tag">%</span> <span class="c-erb">end</span> <span class="c-tag">%</span>&gt;
+
+&lt;<span class="c-tag">turbo-frame</span> <span class="c-attr">id</span>=<span class="c-str">"tasks"</span>&gt; … &lt;/<span class="c-tag">turbo-frame</span>&gt;</code></pre>
+      <div class="panel-foot">
+        <b>置く場所が3つ</b>: Stimulus コントローラ / form＋frame / 部分テンプレ。
+        さらに枠外のバッジ（全件数）は frame の外なので、Turbo Stream か frame 増設で別途配管が必要。
+      </div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-head"><span class="dot"></span>ReActionView（実物: app/views/tasks/index.html.erb）<span class="grow">属性1つ</span></div>
+      <pre><code>&lt;<span class="c-tag">input</span> class=<span class="c-str">"field"</span> value=<span class="c-str">"&lt;%= query %&gt;"</span>
+  <span class="c-attr">data-herb-set</span>=<span class="c-str">"query=$value"</span>
+  <span class="c-attr">data-herb-debounce</span>=<span class="c-erb">"220"</span>
+  <span class="c-attr">placeholder</span>=<span class="c-str">"タスクを検索…"</span>&gt;</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code><span class="c-cmt">&lt;%# 反転する分岐が往復の「スイッチ」になる (機能①) %&gt;</span>
+<span class="c-erb">&lt;%</span> <span class="c-kw">if</span> query.empty? <span class="c-erb">%&gt;</span>全件表示<span class="c-erb">&lt;%</span> <span class="c-kw">else</span> <span class="c-erb">%&gt;</span>
+  「<span class="c-erb">&lt;%=</span> query <span class="c-erb">%&gt;</span>」の結果（サーバーで絞り込み済み）
+<span class="c-erb">&lt;%</span> <span class="c-kw">end</span> <span class="c-erb">%&gt;</span>
+
+<span class="c-cmt">&lt;%# app/controllers/tasks_controller.rb — 同じアクションが応答する %&gt;</span>
+<span class="c-erb">term =</span> <span class="c-attr">herb_state</span>(<span class="c-str">"query"</span>, <span class="c-str">""</span>)
+<span class="c-erb">@tasks =</span> Task.order(<span class="c-attr">created_at:</span> direction)
+             .where(...) <span class="c-dim">if</span> term.present?</code></pre>
+      <div class="panel-foot">
+        <b>オプション1行</b>＋「<code>if query.empty?</code> の反転」が往復のトリガ。
+        行もバッジも同じ往復の slots ワイヤで一体に更新されるので、部分更新の配管を複数作らない。
+        文字入力中は腕が反転しない限り通信なし — debounce は属性備え付け。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= pair 2 ================= -->
+  <h3 style="margin-top:34px;">対比 2 — 楽観的追加（押した瞬間に行が入る）</h3>
+  <div class="duo">
+    <div class="panel hot">
+      <div class="panel-head"><span class="dot"></span>Hotwire（Stimulus 楽観挿入 + Turbo Stream 正）<span class="grow">2ファイル</span></div>
+      <pre><code><span class="c-cmt">// 楽観的に置くには Stimulus で先に DOM を作る —</span>
+<span class="c-cmt">// 差し込み口・順序・鍵の整合は自前管理になる</span>
+<span class="c-kw">export default class</span> <span class="c-kw">extends</span> Controller {
+  <span class="c-kw">static</span> targets = [<span class="c-str">"list"</span>, <span class="c-str">"row"</span>]
+  submit(event) {
+    event.preventDefault()
+    <span class="c-kw">const</span> li = <span class="c-dim">this</span>.rowTarget.content
+      .firstElementChild.cloneNode(<span class="c-erb">true</span>)
+    li.querySelector(<span class="c-str">"[data-title]"</span>).textContent =
+      event.target.querySelector(<span class="c-str">"[name='task[title]']"</span>).value
+    <span class="c-dim">this</span>.listTarget.prepend(li)
+  }
+}</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code><span class="c-cmt">&lt;!-- 後から「正」が届く配管は別 — 例: Turbo Stream --&gt;</span>
+<span class="c-cmt">&lt;!-- app/views/tasks/create.turbo_stream.erb --&gt;</span>
+&lt;<span class="c-tag">%=</span> <span class="c-erb">turbo_stream</span>.prepend <span class="c-str">"tasks"</span>, <span class="c-attr">@task</span> <span class="c-tag">%&gt;</span></code></pre>
+      <div class="panel-foot">
+        <b>楽観側と正側が別の仕組みに別れがち</b>。順序や重複、鍵照合は手で管理する領分。
+        （もっと手軽に Turbo Frame で送るなら、それは<strong>往復待ちの描画</strong>になり楽観でなくなる）
+      </div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-head"><span class="dot"></span>ReActionView（実物: app/views/tasks/index.html.erb）<span class="grow">属性3つ</span></div>
+      <pre><code>&lt;<span class="c-tag">form</span> action=<span class="c-str">"&lt;%= tasks_path %&gt;"</span> method=<span class="c-str">"post"</span>
+  <span class="c-attr">data-herb-into</span>=<span class="c-str">"tasks"</span>
+  <span class="c-attr">data-herb-set</span>=<span class="c-str">"submit-&gt;drawer_open=false"</span>
+  <span class="c-attr">data-herb-reset</span>=<span class="c-str">"submit-&gt;title"</span>&gt;</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code><span class="c-cmt">&lt;%# app/controllers/tasks_controller.rb — 201で新規「行」だけ届ける %&gt;</span>
+<span class="c-erb">format.slots</span> <span class="c-kw">do</span>
+  <span class="c-attr">@tasks =</span> Task.where(<span class="c-attr">id:</span> task.id)
+  render <span class="c-str">:index</span>, <span class="c-attr">status:</span> <span class="c-str">:created</span>  <span class="c-cmt"># 201 + 行のstatics</span>
+<span class="c-kw">end</span>
+
+<span class="c-cmt">&lt;%# no-JS の従来フォールバックも同じコントローラで %&gt;</span>
+<span class="c-erb">format.html</span> <span class="c-kw">do</span> redirect_to <span class="c-attr">root_path</span>, <span class="c-attr">notice:</span> … <span class="c-kw">end</span></code></pre>
+      <div class="panel-foot">
+        <b>201 応答の collection splice</b>。クライアントは鍵付き照合で新規行だけ差し込み（既存行は動かない）、
+        その行の statics は GET と同じテンプレーコンパイルから出るので整合が取れている。
+        ドロワーを閉じる/クリアする <code>data-herb-set</code>/<code>-reset</code> も form と同時発火。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= pair 3 ================= -->
+  <h3 style="margin-top:34px;">対比 3 — ライブ入力とバリデーション（ここが Stimulus の独壇場だったはず）</h3>
+  <div class="duo">
+    <div class="panel hot">
+      <div class="panel-head"><span class="dot"></span>Hotwire（Stimulus）<span class="grow">2ファイル</span></div>
+      <pre><code><span class="c-cmt">// app/javascript/controllers/char_count_controller.js</span>
+<span class="c-kw">export default class</span> <span class="c-kw">extends</span> Controller {
+  <span class="c-kw">static</span> targets = [<span class="c-str">"input"</span>, <span class="c-str">"count"</span>, <span class="c-str">"submit"</span>]
+  connect() { <span class="c-dim">this</span>.update() }
+  update() {
+    <span class="c-kw">const</span> v = <span class="c-dim">this</span>.inputTarget.value
+    <span class="c-dim">this</span>.countTarget.textContent = <span class="c-str">`${v.length} 文字`</span>
+    <span class="c-dim">this</span>.countTarget.classList.toggle(<span class="c-str">"over"</span>, v.length &gt; <span class="c-erb">60</span>)
+    <span class="c-dim">this</span>.submitTarget.disabled =
+      v.length === <span class="c-erb">0</span> || v.length &gt; <span class="c-erb">60</span>
+  }
+}</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code>&lt;<span class="c-tag">textarea</span> data-controller=<span class="c-str">"char-count"</span>
+  data-action=<span class="c-str">"input-&gt;char-count#update"</span>&gt;…&lt;/<span class="c-tag">textarea</span>&gt;
+&lt;<span class="c-tag">span</span> data-char-count-target=<span class="c-str">"count"</span>&gt;&lt;/<span class="c-tag">span</span>&gt;
+&lt;<span class="c-tag">button</span> data-char-count-target=<span class="c-str">"submit"</span>&gt;保存&lt;/<span class="c-tag">button</span>&gt;</code></pre>
+      <div class="panel-foot">
+        <b>文字数・上限判定・disabled を手で同期</b>。
+        Turbo に入力毎の反応機構は基本無いので、これはどの実装でも Stimulus に落ちる。
+        （Turbo Stream 往復で作るなら打鍵ごとの点滅になる）
+      </div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-head"><span class="dot"></span>ReActionView（実物: app/views/showcase/lab.html.erb）<span class="grow">宣言1行</span></div>
+      <pre><code><span class="c-erb">&lt;%#</span> herb:state (draft: <span class="c-str">""</span>,
+  ready: draft != <span class="c-str">""</span>,
+  bio: <span class="c-str">""</span>,
+  ready_bio: bio != <span class="c-str">""</span> &amp;&amp; bio.length &lt;= <span class="c-erb">60</span>,
+  over: bio.length &gt; <span class="c-erb">60</span>) <span class="c-erb">%&gt;</span>
+
+&lt;<span class="c-tag">textarea</span> value=<span class="c-str">"&lt;%= draft %&gt;"</span>&gt;&lt;/<span class="c-tag">textarea</span>&gt;
+&lt;<span class="c-tag">p</span>&gt;<span class="c-erb">&lt;%=</span> draft.length <span class="c-erb">%&gt;</span> 文字
+  <span class="c-erb">&lt;%</span> <span class="c-kw">if</span> ready <span class="c-erb">%&gt;</span>・送信準備OK<span class="c-erb">&lt;%</span> <span class="c-kw">end</span> <span class="c-erb">%&gt;</span>&lt;/<span class="c-tag">p</span>&gt;
+&lt;<span class="c-tag">button</span> <span class="c-attr">disabled</span>=<span class="c-str">"&lt;%= !ready_bio %&gt;"</span>&gt;保存&lt;/<span class="c-tag">button</span>&gt;</code></pre>
+      <div class="panel-foot">
+        <b>派生状態の宣言</b>（<code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> は
+        コンボ派生、<code>over</code> は length 変換＋順序比較として manifest に入る）だけで、
+        文字数・出し分け・disabled 全部が <strong>0 往復で反応する</strong>。書くのは「読み」だけ。なお textarea は <code>value=</code> 対応なので送信後のリセットも表示まで追従する。
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= pair 4 ================= -->
+  <h3 style="margin-top:34px;">対比 4 — 行ごとの数量ステッパー（per-item 状態）</h3>
+  <div class="duo">
+    <div class="panel hot">
+      <div class="panel-head"><span class="dot"></span>Hotwire（Stimulus）<span class="grow">1ファイル</span></div>
+      <pre><code><span class="c-cmt">// app/javascript/controllers/stepper_controller.js</span>
+<span class="c-kw">export default class</span> <span class="c-kw">extends</span> Controller {
+  step({ currentTarget, params }) {
+    <span class="c-kw">const</span> row = currentTarget.closest(<span class="c-str">"[data-row]"</span>)
+    <span class="c-kw">const</span> qty = <span class="c-dim">Math</span>.max(<span class="c-erb">0</span>,
+      (<span class="c-kw">Number</span>(row.dataset.qty) || <span class="c-erb">0</span>) + params.delta)
+    row.dataset.qty = qty
+    row.querySelector(<span class="c-str">".qty"</span>).textContent = qty
+    row.querySelector(<span class="c-str">".minus"</span>).disabled = qty === <span class="c-erb">0</span>
+    <span class="c-dim">this</span>.recalcTotal()  <span class="c-cmt">// 全行走査して合計を張り直す</span>
+  }
+}</code></pre>
+      <div class="panel-foot">
+        <b>行ごとの状態は JS 側の dataset に置く</b>（HTML から見えない）。
+        合計の再計算も Stimulus 預け（逆にここなら金額×数量も書ける — 後述の境界と引き換え）。
+      </div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-head"><span class="dot"></span>ReActionView（実物: app/views/components/ui/_stepper.html.erb）<span class="grow">属性1組</span></div>
+      <pre><code><span class="c-erb">&lt;%#</span> herb:state (in_cart: <span class="c-erb">0</span>) <span class="c-erb">%&gt;</span>   <span class="c-cmt">&lt;%# 行ごとに: %&gt;</span>
+<span class="c-erb">&lt;%#</span> herb:state (qty: <span class="c-erb">0</span>) <span class="c-erb">%&gt;</span>
+
+&lt;<span class="c-tag">button</span> <span class="c-attr">data-herb-decrement</span>=<span class="c-str">"qty"</span>
+  <span class="c-attr">disabled</span>=<span class="c-str">"&lt;%= qty == 0 %&gt;"</span>&gt;−&lt;/<span class="c-tag">button</span>&gt;
+&lt;<span class="c-tag">span</span> class=<span class="c-str">"qty-value"</span>&gt;<span class="c-erb">&lt;%=</span> qty <span class="c-erb">%&gt;</span>&lt;/<span class="c-tag">span</span>&gt;
+&lt;<span class="c-tag">button</span> <span class="c-attr">data-herb-increment</span>=<span class="c-str">"qty"</span>&gt;＋&lt;/<span class="c-tag">button</span>&gt;
+<span class="c-erb">&lt;%</span> <span class="c-kw">if</span> qty &gt; <span class="c-erb">0</span> <span class="c-erb">%&gt;</span><span class="c-erb">&lt;%</span> in_cart += <span class="c-erb">1</span> <span class="c-erb">%&gt;</span><span class="c-erb">&lt;%</span> <span class="c-kw">end</span> <span class="c-erb">%&gt;</span>
+
+<span class="c-cmt">&lt;%# 統計はリストの直後（foldが完了してから読む） %&gt;</span>
+<span class="c-erb">&lt;%=</span> in_cart <span class="c-erb">%&gt;</span> 点をカートに追加</code></pre>
+      <div class="panel-foot">
+        <b>state は HTML に住んでいる</b>（行ごと宣言、hidden への presence）。たたみ鍵付き item なので
+        行が増減しても state が行に追従する。なお <code>in_cart</code> は計数 fold（<code>+= 1</code> の整数リテラル増分
+        のみ）— 金額合計は「クライアントでは作れない」が正確な境界（§6）。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="map">
+  <h2><span class="num">④</span>概念読替表</h2>
+  <p class="lede">Hotwire 慣れの人がすぐ置けるよう、部品の対応を1枚に。</p>
+  <div class="tbl-scroll">
+  <table>
+    <thead><tr><th>Hotwire の部品</th><th>役割</th><th>ReActionView での代わり</th><th>実装場所</th></tr></thead>
+    <tbody>
+      <tr><td><code>&lt;turbo-frame&gt;</code></td><td>局所更新の枠</td><td><code>data-herb-name</code> コレクション＋<code>&lt;%# herb:key … %&gt;</code>（鍵付き差分適用）</td><td>tasks/index, patterns</td></tr>
+      <tr><td>Turbo Stream（append / replace…）</td><td>応答後の部分操作</td><td>POST 201 の collection splice（<code>data-herb-into</code>）</td><td>tasks#create</td></tr>
+      <tr><td><code>form_with</code> ＋ submit リスナー</td><td>値の往復</td><td><code>data-herb-set="query=$value"</code> ＋ <code>data-herb-debounce</code>（form不要）</td><td>tasks/index</td></tr>
+      <tr><td>Stimulus（入力リアクティブ）</td><td>派生値・妥当性</td><td><code>&lt;%# herb:state (…) 派生宣言 %&gt;</code> と presence 束縛（<code>disabled</code>, <code>checked</code>, <code>hidden</code>）</td><td>lab 機能⑦⑫, ui/_switch</td></tr>
+      <tr><td>Stimulus（per-item targets）</td><td>行ごとの状態</td><td>行内 <code>&lt;%# herb:state (qty: 0) %&gt;</code> ＋ <code>data-herb-increment/decrement</code></td><td>lab 機能⑬, ui/_stepper</td></tr>
+      <tr><td>Stimulus / dialog 要素</td><td>開閉・Esc・backdrop</td><td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… keydown.esc@window-&gt;…"</code></td><td>tasks 機能③, lab 機能⑥</td></tr>
+      <tr><td><code>classList.toggle</code> / <code>hidden</code> 直接操作</td><td>見た目切替</td><td><code>data-herb-toggle</code> ＋ CSS <code>:has()</code> / <code>[hidden]</code> ガード</td><td>ui/_switch, lab 機能⑭</td></tr>
+      <tr><td>importmap の turbo / stimulus pins</td><td>JS ランタイム</td><td><code>import "reactionview"</code> 1行（gem が pin 済み・ビルドなし）</td><td>app/javascript/application.js</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="wire">
+  <h2><span class="num">⑤</span>往復はいつ飛ぶか — DevTools で数えられる形で</h2>
+  <p class="lede">「Turbo より通信が減る」は口でなく <code>?format=slots</code> のリクエスト数として読めます。</p>
+  <div class="grid-3">
+    <div class="card">
+      <p style="margin-bottom:6px;"><b>server mode（<code>/</code>, <code>/patterns</code>）</b></p>
+      <p style="font-size:13.8px;">
+        往復は<strong>state を読む分岐の腕が反転した時だけ</strong>1回。
+        検索の腕反転は <code>&lt;% if query.empty? %&gt;</code> がトリガ、ソート select 単体は 0（実測）。
+        連続タイピングで腕が反転しない間は行を触らず、文字はクライアント評価で更新。
+      </p>
+      <p class="mini">
+        なお steering（<code>Herb-State</code> ヘッダ）に載るのは
+        <strong>分岐の条件が読んでいる state</strong> に限る。
+        往復させたい state は必ずどこかの state 条件分岐に読ませる —
+        Patterns の3本柱（<code>if / elsif</code> 連鎖 / <code>page &gt; 1</code> / <code>selected_id &gt; 0</code>）はその実装。
+      </p>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:6px;"><b>client mode（<code>/lab</code>, <code>/ui</code>)</b></p>
+      <p style="font-size:13.8px;">
+        全操作 <strong>0 往復</strong>。未描画ブランチは初期レスポンスの
+        <code>&lt;template data-herb-region&gt;</code> に格納済みで、
+        <code>&lt;template data-herb-manifests&gt;</code>（states/reads/conditionals/presence/computed の命令書）に従って
+        ブラウザ内で腕の materialize・presence・fold が進む。
+      </p>
+      <p class="mini">UI Kit の9コンポーネント全操作は slot 往復 0 を実測（docs/ui-kit.md）。意図的に同期取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。</p>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:6px;"><b>共通の帳尻</b></p>
+      <ul class="tight" style="font-size:13.8px;">
+        <li><code>$refresh</code> 等の action は <code>data-herb-set</code> と同要素に併置できる（同 dispatch の state は 1 リクエストに合流）</li>
+        <li>no-JS 環境では form が通常の POST → <code>format.html</code> の redirect／flash で完結（フォールバック契約を統合テストで固定）</li>
+        <li>応答は HTML でなく値の JSON（<code>application/vnd.herb.slots+json</code>）— 行まるごとの再送ではない</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="bounds">
+  <h2><span class="num">⑥</span>正直な境界 — 0.6.0 時点の実測で書けないもの</h2>
+  <p class="lede">
+    営業コピーではなく実測ノートなので、 клиент評価が届かない枠も並べます。どれも対処パターンが確立済み。
+  </p>
+  <ul class="tight">
+    <li>
+      <b>演算・金額合計は fold に載らない</b> — fold の増分は整数リテラルのみ（<code>&lt;% in_cart += 1 %&gt;</code> の3タグ形）。
+      <code>total += price * qty</code> 系は設計段階で諦め、サーバー側の READ slot（1 往復）に置く。
+      派生の変換テーブルも <code>.length</code> / <code>.size</code> / <code>.to_s</code> のみ。
+    </li>
+    <li>
+      <b>ループデータとの比較は literal のみ</b> — <code>task.id == selected_id</code> は ErrorInTemplate。
+      コントローラから ivar（<code>@selected_id</code>）を渡し、per-row の属性スロットとして往復させる（patterns の実装）。
+    </li>
+    <li>
+      <b>per-item 分岐の腕に置いたサーバー読みの値は空で届く</b> — statics は materialize されるが値は乗らない（0.6.0 実測）。
+      対処は「答えを腕に置かない」：<code>hidden="&lt;%= !open %&gt;"</code> の presence 束縛＋CSS<code>[hidden]</code>ガード
+      （lab 機能⑭、ui コンポーネント全体）。
+    </li>
+    <li>
+      <b>パーシャル内の分岐腕は parked されない</b> — client mode でも region テンプレート自体が出ない（ui-kit 実測）。
+      パーシャルでは腕でなく presence（hidden）＋CSS で切替、が定石。
+    </li>
+    <li>
+      <b>POST 201 の splice は collection のみ</b> — region 級のサーバー読み（<code>Task.count</code> 等）は次の GET でしか追いつかない。
+      追加直後の hero は <code>$refresh</code> 頼み、という手順を見せるのが誠実。
+    </li>
+    <li>
+      <b>server モードでブラウザ所有 state を条件にした分岐を置かない</b> — steering に載らず、要求が常に行禁化（要求 storm）。
+      見た目は presence＋CSS、数値は READ slot へ。
+    </li>
+  </ul>
+  <p class="asc">
+    <b>この境界の読み方</b>: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されているのが
+    検証リポジトリとしての価値。<code>bin/rails test</code> は HTMLレンダ / herb_state による並び替え / slots 応答 /
+    no-JS フォールバックの契約を固定しているので、境界の再現性もコミットで追跡できます。
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<section id="next">
+  <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
+  <p class="lede">既存4画面で足りないのは「まだ Hotwire で書かざるを得なかった箇所」を捨てた新局面。3候補。</p>
+  <div class="grid-3">
+    <div class="card">
+      <p style="margin-bottom:6px;"><span class="flag flag-r">最有力</span> <b>行とヘッダの同時連動（ピン/星）</b></p>
+      <p style="font-size:13.8px;">
+        行の星を押すと、行の見た目とヘッダの「ピン済み N」が即時に揃う。
+        星の塗りは presence 束縛＋CSS、<code>N</code> は計数 fold（<code>when: "pinned"</code>）でクライアント評価 —
+        <strong>0 往復</strong>。Hotwire なら2か所の DOM 同期（Stimulus）か Stream 往復が要る。
+      </p>
+      <p class="mini">既存の実測パターン（presence + fold + toggle）の組合せのみで組める。</p>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:6px;"><b>横並べ比較画面（<code>/compare</code>）</b></p>
+      <p style="font-size:13.8px;">
+        <code>turbo-rails</code> を Gemfile に足し（importmap pin のみ・ビルドレス）、同じタスク管理を
+        Turbo Frame/Stream 版と ReActionView 版で並べ、Network 往復とコード量を横に対応させる。
+        決定的な説得力はあるが、Gemfile 変更の範囲確認が必要。
+      </p>
+      <p class="mini">本ページの§③の対比を実物として隣に置く形。</p>
+    </div>
+    <div class="card">
+      <p style="margin-bottom:6px;"><b>送信前計算フォーム（送料・合計）</b></p>
+      <p style="font-size:13.8px;">
+        入力に連動して合計や保存ボタンが変わるUI。<code>price * qty</code> は fold 外なので
+        READ slot の <strong>1 往復</strong>で答える「正直版」— Hotwire では Stimulus なしに書けない局面を
+        ReActionView が1往復で置く形を示せる。
+      </p>
+      <p class="mini">§⑥の境界の正面の実例になる。</p>
+    </div>
+  </div>
+</section>
+
+<footer class="page">
+  <p>
+    実測の経緯と制約の詳細は <code>AGENTS.md</code>（ReActionView メモ / 実測済みワイヤ形式）と
+    <code>docs/ui-kit.md</code> 参照。このページは静的HTML（ビルド・外部依存なし）。
+    生成日: 2026-10-25。
+  </p>
+</footer>
+
+</div>
+</body>
+</html>
