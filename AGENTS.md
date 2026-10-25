@@ -4,7 +4,8 @@
 
 このリポジトリは ReActionView の検証アプリ。Kaigi on Rails 2026（Marco Roth: "Herb in Rails 8.2"）の
 主張 — **ERB のみで Phoenix LiveView 的な細粒度リアクティビティ** — を、実用的なアプリ風の
-機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.0。
+機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.1
+（0.11.0 から 0.11.1 への更新は bin/ci 全ゲートで再検証済み。ワイヤ形式の実測メモは変らず通用）。
 
 2画面構成: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）と
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette）。
