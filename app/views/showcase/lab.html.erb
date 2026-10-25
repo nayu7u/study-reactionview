@@ -1,5 +1,5 @@
 <%# herb:slots client %>
-<%# herb:state (tab: "all", unread: 3, palette_open: false, preview: false, mute: false, draft: "", ready: draft != "") %>
+<%# herb:state (tab: "all", unread: 3, palette_open: false, preview: false, mute: false, draft: "", ready: draft != "", step: 1, name: "", email: "", name_ok: name != "", email_ok: email != "", bio: "", ready_bio: bio != "" && bio.length <= 60, over: bio.length > 60, in_cart: 0) %>
 
 <section class="hero">
   <div class="hero-badge">Client mode — サーバー往復ゼロ</div>
@@ -77,13 +77,108 @@
         <span><% if mute %>🔕 通知オフ<% else %>🔔 通知オン<% end %></span>
       </label>
     </div>
-    <textarea class="field" aria-label="下書き入力" placeholder="下書きを入力…"><%= draft %></textarea>
+    <textarea class="field" value="<%= draft %>" aria-label="下書き入力" placeholder="下書きを入力…"></textarea>
     <p class="char-hint" aria-live="polite"><%= draft.length %> 文字 <% if ready %>・送信準備OK<% end %></p>
     <div class="toolbar">
       <button disabled="<%= !ready %>">送信（実装は省略）</button>
       <button data-herb-reset="draft">クリア</button>
       <button class="btn btn-ghost" data-herb-action="$refresh">🔄 同期（サーバーから再描画）</button>
     </div>
+  </section>
+
+  <section class="feature" data-feature="wizard">
+    <span class="feature-tag">機能⑪ 多段ウィザード（step状態と派生ゲート、腕ごとの入力）</span>
+    <h2>サインアップステッパー</h2>
+    <div class="dot-row" aria-label="ステップ">
+      <span class="dot" aria-current="<%= step == 1 %>"></span>
+      <span class="dot" aria-current="<%= step == 2 %>"></span>
+      <span class="dot" aria-current="<%= step == 3 %>"></span>
+      <span class="toolbar-note">ステップ <%= step %>/3</span>
+    </div>
+    <% if step == 1 %>
+      <div class="wizard-step">
+        <label class="field-label" for="wiz_name">名前</label>
+        <input class="field" id="wiz_name" value="<%= name %>" placeholder="お名前" autocomplete="off">
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" data-herb-increment="step" disabled="<%= !name_ok %>">次へ</button>
+      </div>
+    <% end %>
+    <% if step == 2 %>
+      <div class="wizard-step">
+        <label class="field-label" for="wiz_email">メール</label>
+        <input class="field" id="wiz_email" value="<%= email %>" placeholder="you@example.com" autocomplete="off">
+      </div>
+      <div class="toolbar">
+        <button data-herb-decrement="step">戻る</button>
+        <button class="btn btn-primary" data-herb-increment="step" disabled="<%= !email_ok %>">次へ</button>
+      </div>
+    <% end %>
+    <% if step == 3 %>
+      <div class="wizard-step">
+        <p class="toolbar-note"><strong><%= name %></strong>（<%= email %>）で登録します。よろしいですか？</p>
+      </div>
+      <div class="toolbar">
+        <button data-herb-decrement="step">戻る</button>
+        <button class="btn btn-primary" data-herb-reset="step name email">完了（リセット）</button>
+      </div>
+    <% end %>
+    <p class="task-note">ゲートは派生状態（<code>name_ok: name != ""</code>）→ presence束縛の disabled。未描画の腕は全部 <code>&lt;template&gt;</code> に停めてあるので、切替は往復ゼロです。</p>
+  </section>
+
+  <section class="feature" data-feature="validate">
+    <span class="feature-tag">機能⑫ 入力バリデーション（length変換＋順序比較＋派生ゲート）</span>
+    <h2>文字数オーバー検知</h2>
+    <textarea class="field" value="<%= bio %>" aria-label="自己紹介" placeholder="60字以内で自己紹介…"></textarea>
+    <p class="char-hint" aria-live="polite"><%= bio.length %>/60字 <% if over %><span class="over-pill">⚠ 長すぎます</span><% end %></p>
+    <div class="toolbar">
+      <button class="btn btn-primary" disabled="<%= !ready_bio %>">保存（実装は省略）</button>
+      <button data-herb-reset="bio">クリア</button>
+    </div>
+    <p class="task-note">上限は派生状態の宣言に書く: <code>over: bio.length &gt; 60</code>。送信ゲートは <code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> のコンボ派生 — 比較はクライアント評価なので往復ゼロ。</p>
+  </section>
+
+  <section class="feature" data-feature="qty">
+    <span class="feature-tag">機能⑬ 数量ステッパー（行ごとの数量状態＋計数fold）</span>
+    <div class="feature-head">
+      <h2>カート行</h2>
+    </div>
+    <ul class="task-list" data-herb-name="cart">
+      <% @cart_items.each do |item| %>
+        <%# herb:key item[:id] %>
+        <%# herb:state (qty: 0) %>
+        <li class="qty-row">
+          <span class="qty-name"><%= item[:name] %><br><span class="qty-price">¥<%= item[:price] %></span></span>
+          <% if qty > 0 %><% in_cart += 1 %><% end %>
+          <span class="qty-group">
+            <button data-herb-decrement="qty" disabled="<%= qty == 0 %>" aria-label="<%= item[:name] %>を減らす">−</button>
+            <span class="qty-value"><%= qty %></span>
+            <button data-herb-increment="qty" aria-label="<%= item[:name] %>を増やす">＋</button>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+    <p class="task-stat" aria-live="polite"><span class="badge"><%= in_cart %></span> 点をカートに</p>
+    <p class="task-note">数量は行ごとのブラウザ状態。<code>in_cart</code> は計数fold（条件付き <code>+= 1</code>）で即時追従 — counted state をループの前で読むと「count is complete 前」のコンパイルエラーになるので統計はリストの後に置く。金額合計は増分が定数でないため fold に載らない。0で減ボタンを無効化する<code>disabled</code>は順序比較のpresence束縛。</p>
+  </section>
+
+  <section class="feature" data-feature="accordion">
+    <span class="feature-tag">機能⑭ アコーディオン（行ごとのopen状態とhiddenのpresence束縛）</span>
+    <h2>FAQ</h2>
+    <ul class="task-list" data-herb-name="faqs">
+      <% @faqs.each do |faq| %>
+        <%# herb:key faq[:id] %>
+        <%# herb:state (open: false) %>
+        <li>
+          <button class="acc-head" data-herb-toggle="open">
+            <span class="task-title"><%= faq[:q] %></span>
+            <span class="acc-marker"><% if open %>－<% else %>＋<% end %></span>
+          </button>
+          <div class="acc-body" hidden="<%= !open %>"><%= faq[:a] %></div>
+        </li>
+      <% end %>
+    </ul>
+    <p class="task-note">答えのテキストは腕に置かず、<code>hidden</code> 属性のpresence束縛（<code>!open</code>）で切替 — 行ごとの分岐の腕は materialize できても、腕に置いたサーバー読みの値は空で届く（0.6.0実測）。マーカーの＋/－は静的テキストなので腕で差し替わります。</p>
   </section>
 
 </div>

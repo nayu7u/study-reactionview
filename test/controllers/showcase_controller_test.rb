@@ -23,6 +23,30 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     assert_select "input.switch", count: 1
     assert_select 'div[data-herb-set*="mouseenter->preview=true"]'
     assert_select '[data-herb-action="$refresh"]'
+
+    # wizard: three step arms with gated next buttons
+    assert_select 'span.dot[aria-current="true"]', count: 1
+    assert_select 'span.dot[aria-current="false"]', count: 2
+    # presence bindings render as a bare attribute + a boolean_attribute slot:
+    # the empty name gates the first next button
+    assert_select 'button[data-herb-increment="step"][disabled]'
+    assert_select 'button[data-herb-decrement="step"]'
+    assert_select 'button[data-herb-reset="step name email"]'
+
+    # validation: combo derived gates the save button
+    assert_select "button.btn-primary[disabled]"
+
+    # qty stepper: one decrement per row, zero-clamped by presence
+    assert_select 'button[data-herb-decrement="qty"][disabled]', count: 3
+    assert_select 'button[data-herb-increment="qty"]', count: 3
+
+    # accordion: toggle headers with the closed marker arm
+    assert_select 'button.acc-head[data-herb-toggle="open"]', count: 3
+    assert_select ".acc-marker", "＋"
+    assert_select "div.acc-body[hidden]", count: 3
+    # the answers ride as plain item parts from the first render, outside any
+    # branch — per-item arm materialization drops server-read values (measured)
+    assert_includes response.body, "要りません"
   end
 
   test "the manifest compiles the derived state and parking" do
@@ -47,5 +71,31 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     presence = manifest.dig("states", "presence")
     assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "mute" }, "the switch binds a boolean state"
     assert manifest.dig("states", "computed").values.any? { |c| c[3] == "length" }, "the char count is a computed read"
+
+    declarations = manifest.dig("states", "declarations")
+    over = declarations.find { |d| d["name"] == "over" }
+    assert_equal "length", over["derived"][3], "the over-limit gate is a length-transform comparison"
+    assert_equal ">", over["derived"][2], "the comparison is an ordered operator the client evaluates"
+    ready_bio = declarations.find { |d| d["name"] == "ready_bio" }
+    assert ready_bio["derived"].is_a?(Hash) && ready_bio["derived"]["all"],
+      "the save gate is a combo derivation (empty AND under the limit)"
+
+    in_cart = declarations.find { |d| d["name"] == "in_cart" }
+    assert_equal "qty", in_cart.dig("count", "when", 0), "the fold counts rows whose qty passes"
+    assert_equal ">", in_cart.dig("count", "when", 2), "the fold condition is an ordered comparison"
+
+    open_decl = declarations.find { |d| d["name"] == "open" }
+    assert open_decl, "the accordion rows declare a per-item open state"
+
+    # the FAQ answers are NOT in a branch: per-item arm materialization
+    # delivers statics but drops server-read values (measured), so the body
+    # toggles through a hidden presence binding and the answer rides as a
+    # plain item part
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "open" },
+      "the accordion body binds hidden as a presence read on open"
+
+    # the parked mentions arm is still inventoried for the server to fill
+    branches = manifest.dig("states", "server", "branches") || {}
+    assert branches.values.flatten.any?, "parked arms with server reads are inventoried for refetch"
   end
 end

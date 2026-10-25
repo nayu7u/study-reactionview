@@ -1,0 +1,88 @@
+<%# herb:slots server %>
+<%# herb:state (priority: "all", page: 1, selected_id: 0) %>
+
+<section class="hero">
+  <div class="hero-badge"><%= @total %> tasks in this view</div>
+  <h1>Patterns</h1>
+  <p class="hero-sub">実務で撮る3パターン — 詳細連動・フィルタチップ・もっと見る。全部 server mode で、往復するのは値だけです。</p>
+</section>
+
+<div class="split">
+
+  <section class="feature" data-feature="inbox">
+    <span class="feature-tag">機能⑧ フィルタチップ（サーバー絞り込み＋件数バッジ）</span>
+    <h2>受信箱</h2>
+    <div class="chips" role="group" aria-label="優先度で絞り込み">
+      <button class="chip" data-herb-set="priority=all page=1" data-herb-action="$refresh" aria-pressed="<%= priority == "all" %>">すべて<span class="chip-count"><%= @total %></span></button>
+      <button class="chip chip-high" data-herb-set="priority=3 page=1" data-herb-action="$refresh" aria-pressed="<%= priority == "3" %>"><%= priority_label(3) %><span class="chip-count"><%= @chip_counts[3] || 0 %></span></button>
+      <button class="chip chip-mid" data-herb-set="priority=2 page=1" data-herb-action="$refresh" aria-pressed="<%= priority == "2" %>"><%= priority_label(2) %><span class="chip-count"><%= @chip_counts[2] || 0 %></span></button>
+      <button class="chip chip-low" data-herb-set="priority=1 page=1" data-herb-action="$refresh" aria-pressed="<%= priority == "1" %>"><%= priority_label(1) %><span class="chip-count"><%= @chip_counts[1] || 0 %></span></button>
+    </div>
+    <%# Why an elsif chain and not one interpolation: only states read by a
+        conditional's arms ride the steering header (measured: vr() collects
+        from conditionals + server.reads, and server.reads stays empty on
+        server-mode pages). Every chip transition flips one arm, so this
+        conditional both reports the filter and steers the round trip. %>
+    <% if priority == "3" %>
+      <p class="toolbar-note" aria-live="polite">優先度「高」で絞り込み中 — サーバー計算</p>
+    <% elsif priority == "2" %>
+      <p class="toolbar-note" aria-live="polite">優先度「中」で絞り込み中 — サーバー計算</p>
+    <% elsif priority == "1" %>
+      <p class="toolbar-note" aria-live="polite">優先度「低」で絞り込み中 — サーバー計算</p>
+    <% else %>
+      <p class="toolbar-note" aria-live="polite">全件を表示中 — サーバー計算</p>
+    <% end %>
+    <ul class="rows" data-herb-name="inbox">
+      <% @tasks.each do |task| %>
+        <%# herb:key task.id %>
+        <li>
+          <button class="row" data-herb-set="click->selected_id=<%= task.id %>" data-herb-action="$refresh" aria-current="<%= task.id == @selected_id %>">
+            <span class="row-main">
+              <span class="task-title"><%= task.title %></span>
+              <span class="row-meta"><%= task.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+            </span>
+            <span class="prio prio-<%= task.priority %>"><%= priority_label(task.priority) %></span>
+          </button>
+        </li>
+      <% end %>
+    </ul>
+    <% if page > 1 %>
+      <p class="toolbar-note"><%= page %> ページ目を表示中 — 既存行はそのまま、新しい行だけ追加</p>
+    <% end %>
+    <% if @remaining > 0 %>
+      <button class="btn btn-ghost load-more" data-herb-increment="page" data-herb-action="$refresh">もっと見る（残り<span data-herb-name="remaining"><%= @remaining %></span>件）</button>
+    <% else %>
+      <p class="load-done">全部読み込みました</p>
+    <% end %>
+    <p class="task-note">チップの絞り込みは <code>herb_state("priority")</code>、行の追加は鍵付き差分。<code>page</code> が1つ増えるだけの往復で、既存行は動かず新しい行だけ付きます。</p>
+  </section>
+
+  <aside class="feature" data-feature="detail">
+    <span class="feature-tag">機能⑩ 詳細連動（行選択→同じアクションが詳細を答える）</span>
+    <h2>詳細</h2>
+    <%# The condition reads the state itself (steering needs it; an ivar
+        condition would never reach the server) and the values ride named
+        slots, so a stale id just answers with empty values. %>
+    <% if selected_id > 0 %>
+      <div class="detail">
+        <h3 class="detail-title" data-herb-name="detail_title"><%= @selected&.title %></h3>
+        <dl class="detail-rows">
+          <div><dt>優先度</dt><dd data-herb-name="detail_priority"><%= @selected && priority_label(@selected.priority) %></dd></div>
+          <div><dt>作成</dt><dd data-herb-name="detail_created"><%= @selected&.created_at&.strftime("%Y-%m-%d %H:%M") %></dd></div>
+          <div><dt>ID</dt><dd data-herb-name="detail_id">#<%= @selected&.id %></dd></div>
+        </dl>
+        <button class="btn btn-ghost" data-herb-reset="selected_id" data-herb-action="$refresh">選択を解除</button>
+      </div>
+    <% else %>
+      <div class="detail detail-empty">
+        <p>行を選ぶと、同じGET往復の答えで詳細が差し替わります。解除は <code>data-herb-reset</code>。</p>
+      </div>
+    <% end %>
+    <p class="task-note">値は全部 <code>data-herb-name</code> のスロットで乗る — 腕のstaticsは初回固定でも、スロットは毎往復で差し変わります（ドロワーの文字数カウントと同じ発想）。行から行への切替は分岐が反転しないので <code>$refresh</code> を合成しています。</p>
+  </aside>
+
+</div>
+
+<footer class="page-meta">
+  楽観的追加（Sprint Hub機能③）と同じ201 spliceを、削除・更新でも試す余地があります。まずはここまでを読み込んでください。
+</footer>
