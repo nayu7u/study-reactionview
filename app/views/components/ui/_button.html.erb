@@ -1,0 +1,14 @@
+<%# UI Button — static variant mapping (the cva analog, as a plain Hash).
+    No state: renders identically on every pass, zero wire participation.
+    locals: label:, variant: ("primary"|"outline"|"ghost"|"danger", default
+    "primary"), size: ("sm"|"md"|"lg", default "md") %>
+<% variant = local_assigns.fetch(:variant, "primary")
+   size = local_assigns.fetch(:size, "md") %>
+<% variant_classes = {
+     "primary" => "ui-btn-primary",
+     "outline" => "ui-btn-outline",
+     "ghost" => "ui-btn-ghost",
+     "danger" => "ui-btn-danger"
+   }.fetch(variant, "ui-btn-primary") %>
+<% size_classes = { "sm" => "ui-btn-sm", "lg" => "ui-btn-lg" }.fetch(size, "") %>
+<button class="ui-btn <%= variant_classes %> <%= size_classes %>"><%= label %></button>

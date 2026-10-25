@@ -1,0 +1,46 @@
+.ui-accordion {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.ui-acc-item {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.ui-acc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--foreground);
+  text-align: left;
+  padding: 0.7rem 0.95rem;
+  cursor: pointer;
+}
+
+.ui-acc-head:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+}
+
+.ui-acc-marker { color: var(--muted-foreground); font-weight: 700; }
+
+.ui-acc-body {
+  padding: 0.1rem 0.95rem 0.85rem;
+  color: var(--muted-foreground);
+  font-size: 0.93rem;
+}
+
+/* presence-bound visibility: never rely on the host app's [hidden] guard */
+.ui-acc-body[hidden] { display: none; }

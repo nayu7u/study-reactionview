@@ -1,0 +1,19 @@
+<%# UI Accordion — per-item boolean states + hidden presence binding.
+    The answer stays OUTSIDE the branch arm on purpose: 0.6.0 materializes
+    per-item arms but drops server reads placed inside them, so visibility
+    flips through the presence-bound `hidden` attribute while the +/－ marker
+    (static text) swaps within the arm.
+    locals: items: (array of {id:, q:, a:}) %>
+<ul class="ui-accordion" data-herb-name="accordion">
+  <% items.each do |item| %>
+    <%# herb:key item[:id] %>
+    <%# herb:state (open: false) %>
+    <li class="ui-acc-item">
+      <button class="ui-acc-head" data-herb-toggle="open">
+        <span class="ui-acc-q"><%= item[:q] %></span>
+        <span class="ui-acc-marker"><% if open %>－<% else %>＋<% end %></span>
+      </button>
+      <div class="ui-acc-body" hidden="<%= !open %>"><%= item[:a] %></div>
+    </li>
+  <% end %>
+</ul>

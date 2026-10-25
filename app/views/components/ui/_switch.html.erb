@@ -1,0 +1,10 @@
+<%# UI Switch — boolean presence binding: the checkbox owns a browser-side
+    boolean, the visual rides CSS :has(:checked). Zero JS, zero roundtrips.
+    Region-scoped state means pasted instances SHOULD stay independent — the
+    demo deliberately renders two to pin that occurrence isolation down.
+    locals: label: (aria-label) %>
+<%# herb:state (on: false) %>
+<label class="ui-switch">
+  <input type="checkbox" checked="<%= on %>" aria-label="<%= label %>">
+  <span class="ui-switch-track"><span class="ui-switch-thumb"></span></span>
+</label>

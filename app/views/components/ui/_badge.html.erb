@@ -1,0 +1,7 @@
+<%# UI Badge — static variants. locals: label:, variant: ("default"|"soft"|"ok", default "default") %>
+<% variant = local_assigns.fetch(:variant, "default") %>
+<% variant_classes = {
+     "soft" => "ui-badge-soft",
+     "ok" => "ui-badge-ok"
+   }.fetch(variant, "") %>
+<span class="ui-badge <%= variant_classes %>"><%= label %></span>

@@ -1,0 +1,35 @@
+.ui-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.ui-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+}
+
+.ui-btn:active { transform: translateY(1px); }
+
+.ui-btn-primary { background: var(--primary); color: var(--primary-foreground); }
+.ui-btn-primary:hover { background: color-mix(in srgb, var(--primary) 86%, black); }
+
+.ui-btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
+.ui-btn-outline:hover { background: var(--muted); }
+
+.ui-btn-ghost { background: transparent; color: var(--foreground); }
+.ui-btn-ghost:hover { background: var(--muted); }
+
+.ui-btn-danger { background: var(--destructive); color: var(--primary-foreground); }
+.ui-btn-danger:hover { background: color-mix(in srgb, var(--destructive) 86%, black); }
+
+.ui-btn-sm { padding: 0.3rem 0.75rem; font-size: 0.85rem; }
+.ui-btn-lg { padding: 0.7rem 1.5rem; font-size: 1rem; }

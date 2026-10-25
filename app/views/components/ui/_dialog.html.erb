@@ -1,0 +1,17 @@
+<%# UI Dialog — self-contained trigger + modal: the trigger, the open state
+    and the backdrop ship as one fragment, so state never crosses a partial
+    boundary. Esc / outside clicks close via event-qualified set (the lab
+    palette shape). Rich body flows in through the render block.
+    locals: cta: (trigger label), label: (dialog aria-label) %>
+<%# herb:state (shown: false) %>
+<button class="ui-btn ui-btn-primary" data-herb-set="shown=true"><%= cta %></button>
+<% if shown %>
+  <div class="ui-dialog-backdrop">
+    <div class="ui-dialog" role="dialog" aria-modal="true" aria-label="<%= label %>" data-herb-set="click@outside->shown=false keydown.esc@window->shown=false">
+      <div class="ui-dialog-body"><%= yield %></div>
+      <div class="ui-dialog-actions">
+        <button class="ui-btn ui-btn-ghost" data-herb-reset="shown">閉じる</button>
+      </div>
+    </div>
+  </div>
+<% end %>

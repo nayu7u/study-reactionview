@@ -1,0 +1,18 @@
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.ui-badge-soft { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--foreground); }
+
+.ui-badge-ok { background: color-mix(in srgb, #14934a 16%, transparent); color: #14934a; }
+
+@media (prefers-color-scheme: dark) {
+  .ui-badge-ok { color: #4ade80; }
+}

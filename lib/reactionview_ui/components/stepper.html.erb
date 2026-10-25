@@ -1,0 +1,23 @@
+<%# UI Stepper — per-item integer qty + counted fold total.
+    `in_cart` is a counted state (conditional += 1 inside the keyed item
+    body, integer-literal increment only — that is why this widget counts
+    items and can never sum amounts). Its READ sits after the list: counted
+    state must not be read before the loop completes.
+    locals: items: (array of {id:, name:, price:}) %>
+<%# herb:state (in_cart: 0) %>
+<ul class="ui-stepper" data-herb-name="stepper">
+  <% items.each do |item| %>
+    <%# herb:key item[:id] %>
+    <%# herb:state (qty: 0) %>
+    <li class="ui-stepper-row">
+      <span class="ui-stepper-name"><%= item[:name] %> <span class="ui-stepper-price">¥<%= item[:price] %></span></span>
+      <span class="ui-stepper-group">
+        <button class="ui-stepper-btn" data-herb-decrement="qty" disabled="<%= qty == 0 %>" aria-label="<%= item[:name] %>を減らす">−</button>
+        <span class="ui-stepper-qty"><%= qty %></span>
+        <button class="ui-stepper-btn" data-herb-increment="qty" aria-label="<%= item[:name] %>を増やす">＋</button>
+      </span>
+      <% if qty > 0 %><% in_cart += 1 %><% end %>
+    </li>
+  <% end %>
+</ul>
+<p class="ui-stepper-total" aria-live="polite"><span class="ui-badge"><%= in_cart %></span> 点をカートに追加</p>

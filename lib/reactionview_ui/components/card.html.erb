@@ -1,0 +1,9 @@
+<%# UI Card — static wrapper. Rich content flows in via the render block,
+    the ERB equivalent of shadcn's Card/CardHeader/CardContent composition.
+    locals: title: (optional) %>
+<div class="ui-card">
+  <% if local_assigns[:title] %>
+    <h3 class="ui-card-title"><%= title %></h3>
+  <% end %>
+  <%= yield %>
+</div>

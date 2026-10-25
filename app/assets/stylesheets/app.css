@@ -925,3 +925,15 @@ textarea.field-over { border-color: #b91c1c; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- ui kit demo chrome (host-side only; the kit is self-contained) ---------- */
+
+.ui-demo-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.ui-demo-note { margin: 0 0 0.6rem; font-size: 0.92rem; }

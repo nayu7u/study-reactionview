@@ -1,4 +1,84 @@
 <%# herb:slots client %>
-<h1>UI kit spike</h1>
-<%= render "components/ui/spike_toggle" %>
-<%= render "components/ui/spike_faq" %>
+<% content_for(:title) { "UI Kit" } %>
+
+<section class="hero">
+  <div class="hero-badge">reactionview-ui — shadcn/ui モデルの検証</div>
+  <h1>UI Kit</h1>
+  <p class="hero-sub">9コンポーネント、すべてコピー元のERB断片(ソース配布)。state宣言は断片ごとに内蔵 — <code>herb:state</code> はパーシャル単位でmanifestに出るため、貼り付けた断片が自分のstateを所有します。開閉・切替・入力は全部ブラウザ内で完結、サーバー往復ゼロ。</p>
+</section>
+
+<div class="feature-grid ui-root">
+
+  <section class="feature" data-feature="buttons">
+    <span class="feature-tag">静的: variant マッピング(cva相当)</span>
+    <h2>Button / Badge / Card</h2>
+    <div class="ui-demo-row">
+      <%= render "components/ui/button", label: "保存する" %>
+      <%= render "components/ui/button", label: "キャンセル", variant: "outline" %>
+      <%= render "components/ui/button", label: "詳しく", variant: "ghost" %>
+      <%= render "components/ui/button", label: "削除", variant: "danger" %>
+      <%= render "components/ui/button", label: "小さいボタン", size: "sm" %>
+    </div>
+    <%= render "components/ui/card", title: "Card コンポーネント" do %>
+      <p class="ui-demo-note">本文は render ブロックで流し込む。ERB 版の CardContent。</p>
+      <div class="ui-demo-row">
+        <%= render "components/ui/badge", label: "default" %>
+        <%= render "components/ui/badge", label: "soft", variant: "soft" %>
+        <%= render "components/ui/badge", label: "ok", variant: "ok" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="feature" data-feature="switch">
+    <span class="feature-tag">presence束縛 + CSS :has — 同一断片を2個貼って instance 分離を確認</span>
+    <h2>Switch ×2</h2>
+    <div class="ui-demo-row">
+      <%= render "components/ui/switch", label: "通知をミュート" %>
+      <%= render "components/ui/switch", label: "星をつける" %>
+    </div>
+    <p class="task-note">同じ断片の2 instance。stateはregionスコープなので互いに独立なはず — 片方だけ動けばOK。</p>
+  </section>
+
+  <section class="feature" data-feature="tabs">
+    <span class="feature-tag">literal比較の分岐腕 + 鍵付きコレクション</span>
+    <h2>Tabs</h2>
+    <%= render "components/ui/tabs", overview: @tab_overview, activity: @tab_activity %>
+    <p class="task-note">パネルidは断片内のリテラル(クライアント比較はliteralのみ)。腕の中身は鍵付き行なので切替時に再構築されません。</p>
+  </section>
+
+  <section class="feature" data-feature="field">
+    <span class="feature-tag">派生状態(ready / over)と presence ゲート</span>
+    <h2>Field</h2>
+    <%= render "components/ui/field", label: "自己紹介", placeholder: "60字以内で自己紹介…" %>
+  </section>
+
+  <section class="feature" data-feature="stepper">
+    <span class="feature-tag">行ごとの数量state + 計数fold</span>
+    <h2>Stepper</h2>
+    <%= render "components/ui/stepper", items: @cart_items %>
+    <p class="task-note">合計は計数fold(整数リテラル増分のみ)。0での−ボタン無効化は順序比較のpresence束縛。</p>
+  </section>
+
+  <section class="feature" data-feature="accordion">
+    <span class="feature-tag">per-item の open state + hidden presence</span>
+    <h2>Accordion</h2>
+    <%= render "components/ui/accordion", items: @faqs %>
+    <p class="task-note">答えは腕に置かず hidden 束縛で切替(0.6.0のper-item腕は値が空で届く実測のため)。＋/－は静的テキストなので腕で差し替わります。</p>
+  </section>
+
+  <section class="feature" data-feature="dialog">
+    <span class="feature-tag">自己完結モーダル: トリガ+state+背景を1断片で</span>
+    <h2>Dialog</h2>
+    <%= render "components/ui/dialog", cta: "詳細を開く", label: "詳細ダイアログ" do %>
+      <strong>往復ゼロで開閉します。</strong>
+      <p>Esc と外側クリックでも閉じられます。本文は render ブロック。</p>
+    <% end %>
+  </section>
+
+</div>
+
+<footer class="page-meta">
+  ソース・オブ・トゥルースは <code>lib/reactionview_ui/components/</code>。導入は
+  <code>bin/rails g reactionview_ui:install</code> + <code>bin/rails g reactionview_ui:component &lt;name&gt;</code>。
+  Docs は <code>docs/ui-kit.md</code>。
+</footer>

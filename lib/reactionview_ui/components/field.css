@@ -1,0 +1,25 @@
+.ui-field {
+  width: 100%;
+  font: inherit;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  min-height: 4.2em;
+  resize: vertical;
+}
+
+.ui-field:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 40%, transparent);
+}
+
+.ui-field-hint {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.ui-field-actions { display: flex; gap: 0.5rem; }

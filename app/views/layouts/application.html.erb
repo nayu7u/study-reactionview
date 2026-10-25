@@ -20,6 +20,7 @@
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "reactionview_ui", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
@@ -31,6 +32,7 @@
         <%= link_to "Sprint Hub", root_path %>
         <%= link_to "Patterns", patterns_path %>
         <%= link_to "Client Lab", lab_path %>
+        <%= link_to "UI Kit", ui_path %>
       </nav>
     </header>
     <main class="page" id="main">

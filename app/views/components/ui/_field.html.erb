@@ -1,0 +1,14 @@
+<%# UI Field — text input with live derived state: char count (.length
+    transform), over-limit flag (derived + ordered comparison) and a
+    presence-bound submit gate (disabled = !ready). The textarea binds through
+    value= (BINDABLE_ELEMENTS two-way), not raw_text, so reset also clears the
+    visible value. Copy-source contract: the limit literal 60 lives in the
+    derived declaration — edit the hint text alongside it.
+    locals: label:, placeholder: %>
+<%# herb:state (draft: "", ready: draft != "", over: draft.length > 60) %>
+<textarea class="ui-field" value="<%= draft %>" placeholder="<%= placeholder %>" aria-label="<%= label %>"></textarea>
+<p class="ui-field-hint" aria-live="polite"><%= draft.length %>/60字 <% if over %>・⚠ 長すぎます<% end %></p>
+<div class="ui-field-actions">
+  <button class="ui-btn ui-btn-primary" disabled="<%= !ready %>">送信</button>
+  <button class="ui-btn ui-btn-ghost" data-herb-reset="draft">クリア</button>
+</div>

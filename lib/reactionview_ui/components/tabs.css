@@ -1,0 +1,54 @@
+.ui-tabs {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--muted);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.ui-tab {
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.35rem 0.95rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ui-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+}
+
+/* aria-pressed is a plain string attribute here (not a presence binding),
+ * so the selector reads the "true" literal */
+.ui-tab[aria-pressed="true"] {
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 12%);
+}
+
+.ui-tabs-panel {
+  list-style: none;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.ui-tabs-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.85rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.92rem;
+  color: var(--foreground);
+}
+
+.ui-tabs-detail { color: var(--muted-foreground); }
