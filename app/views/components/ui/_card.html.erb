@@ -1,9 +1,11 @@
-<%# UI Card — static wrapper. Rich content flows in via the render block,
-    the ERB equivalent of shadcn's Card/CardHeader/CardContent composition.
-    locals: title: (optional) %>
+<%# UI Card — static wrapper. The body comes in as a `content:` LOCAL, not a
+    render block on purpose: render-with-block inside a partial breaks the
+    slots re-render (TypeError, measured 0.6.0), so composition that must
+    survive round trips stays argument-shaped.
+    locals: title: (optional), content: (body text) %>
 <div class="ui-card">
   <% if local_assigns[:title] %>
     <h3 class="ui-card-title"><%= title %></h3>
   <% end %>
-  <%= yield %>
+  <p class="ui-card-body"><%= content %></p>
 </div>

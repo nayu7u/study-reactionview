@@ -10,6 +10,8 @@
 2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）、
 `Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務で撮るパターン集）、
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
+さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
+ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（docs/ui-kit.md）。
 
 ## 作業規約（必ず守る）
 
@@ -185,6 +187,37 @@
 - **録画の細部**: 要素クリップの高さがビューポートを超えると stitch され、sticky ヘッダが
   画像の途中に混入する。GIF はクリップが収まる高さのビューポートで撮る（patterns は
   split が横並びになる 1000px 幅も必要 — 832px 未満はメディアクエリで縦積みになる）
+
+## reactionview-ui キットで実測した事実（0.6.0 / herb 0.11.1）
+
+shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再現する検証。ソースは
+`lib/reactionview_ui/`、導入は `reactionview_ui:install` / `reactionview_ui:component`（copy_file
+で運ぶ — Thor の `template` は herb ディレクティブを評価して壊す）。docs/ui-kit.md に全文。
+
+- **`herb:state` はパーシャル内でも manifest に出る**: パーシャルごとに
+  `<template data-herb-manifests>` にエントリが増える（キーは `テンプレートパス:バージョンハッシュ`）。
+  トップレベル state の scope は文字列 `"region"`、ループ内は数値 0。shadcn の「コンポーネントが
+  内部stateを持つ」相当が断片単位で成立し、ページ側 wiring は不要
+- 静的コンポーネント（state無し）は `"states": null` にコンパイルされる = ワイヤ不参加
+- **同一パーシャルの複数 instance は occurrence index で独立**: region は
+  `<!--herb-region:...:0-->` / `:1` とコメントマーカーで区切られ、2個の switch の state は
+  別インスタンス（ブラウザ実測 [true,false]）
+- **test環境の client mode は region をコメントマーカーで出す**: `<template data-herb-region>`
+  は dev のみ（debug span と同じ env 差分）。test のアサートはコメントマーカーで引く
+- **パーシャル内の分岐腕は materialize されない（0.6.0 最大のギャップ）**: client mode でも腕は
+  parked されない（manifest の `fragments: {}`、region テンプレート自体が出ない）。set/toggle は
+  サーバー refetch にフォールバックするが、応答の腕は `{"branch": null}` で statics 空丸 —
+  per-item 腕ギャップの拡大版で、トップレベル条件分岐でも同じ
+  → **パーシャルでは腕でなく presence（hidden）+ CSS で切替する**。そうすれば全操作 0 往復
+- **パーシャル内の render-with-block は slots 再レンダで TypeError**（"no implicit conversion of
+  Hash into String"、GET 初回描画は成功するので発見が遅れる）→ 本文は `content:` ローカルで渡す
+- 計数foldはパーシャル内でも動く: `in_cart: 0` をパーシャル先頭で宣言、腕でなく
+  `<% if qty > 0 %><% in_cart += 1 %><% end %>` の3タグ形、統計読みはリスト直後
+- equality の presence 束縛（`hidden="<%= tab == "activity" %>"`）はコンパイルされクライアント評価
+  される — 「パネルの切替」も腕なしで書ける（stepper の `disabled="<%= qty == 0 %>"` と同型）
+- ブラウザ実測（`/tmp/opencode/capture/ui-probe.js`）: 9コンポーネント全操作で
+  **slot 往復 0**。herb dev tools の浮きメニューがポインタを吸うので、プローブは
+  `[class*="herb-dev-tools"]` への恒久CSS + `force: true` クリックで回避
 
 ## 調査ツール
 

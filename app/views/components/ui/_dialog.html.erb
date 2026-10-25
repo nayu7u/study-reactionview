@@ -1,17 +1,18 @@
 <%# UI Dialog — self-contained trigger + modal: the trigger, the open state
     and the backdrop ship as one fragment, so state never crosses a partial
     boundary. Esc / outside clicks close via event-qualified set (the lab
-    palette shape). Rich body flows in through the render block.
-    locals: cta: (trigger label), label: (dialog aria-label) %>
+    palette shape). The whole overlay flips through a presence binding
+    (hidden = !shown), NOT a branch arm — arms inside a partial are never
+    materialized in 0.6.0. The body is a `content:` local: render-with-block
+    inside a partial breaks the slots re-render (TypeError, 0.6.0 measured).
+    locals: cta:, label:, content: %>
 <%# herb:state (shown: false) %>
 <button class="ui-btn ui-btn-primary" data-herb-set="shown=true"><%= cta %></button>
-<% if shown %>
-  <div class="ui-dialog-backdrop">
-    <div class="ui-dialog" role="dialog" aria-modal="true" aria-label="<%= label %>" data-herb-set="click@outside->shown=false keydown.esc@window->shown=false">
-      <div class="ui-dialog-body"><%= yield %></div>
-      <div class="ui-dialog-actions">
-        <button class="ui-btn ui-btn-ghost" data-herb-reset="shown">閉じる</button>
-      </div>
+<div class="ui-dialog-backdrop" hidden="<%= !shown %>">
+  <div class="ui-dialog" role="dialog" aria-modal="true" aria-label="<%= label %>" data-herb-set="click@outside->shown=false keydown.esc@window->shown=false">
+    <p class="ui-dialog-body"><%= content %></p>
+    <div class="ui-dialog-actions">
+      <button class="ui-btn ui-btn-ghost" data-herb-reset="shown">閉じる</button>
     </div>
   </div>
-<% end %>
+</div>

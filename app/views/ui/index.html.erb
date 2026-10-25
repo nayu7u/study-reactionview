@@ -19,14 +19,12 @@
       <%= render "components/ui/button", label: "削除", variant: "danger" %>
       <%= render "components/ui/button", label: "小さいボタン", size: "sm" %>
     </div>
-    <%= render "components/ui/card", title: "Card コンポーネント" do %>
-      <p class="ui-demo-note">本文は render ブロックで流し込む。ERB 版の CardContent。</p>
-      <div class="ui-demo-row">
-        <%= render "components/ui/badge", label: "default" %>
-        <%= render "components/ui/badge", label: "soft", variant: "soft" %>
-        <%= render "components/ui/badge", label: "ok", variant: "ok" %>
-      </div>
-    <% end %>
+    <div class="ui-demo-row">
+      <%= render "components/ui/badge", label: "default" %>
+      <%= render "components/ui/badge", label: "soft", variant: "soft" %>
+      <%= render "components/ui/badge", label: "ok", variant: "ok" %>
+    </div>
+    <%= render "components/ui/card", title: "Card コンポーネント", content: "本文はローカル変数で渡す。ブロック付きrenderはslots再レンダで壊れる実測(0.6.0)のため。" %>
   </section>
 
   <section class="feature" data-feature="switch">
@@ -43,7 +41,7 @@
     <span class="feature-tag">literal比較の分岐腕 + 鍵付きコレクション</span>
     <h2>Tabs</h2>
     <%= render "components/ui/tabs", overview: @tab_overview, activity: @tab_activity %>
-    <p class="task-note">パネルidは断片内のリテラル(クライアント比較はliteralのみ)。腕の中身は鍵付き行なので切替時に再構築されません。</p>
+    <p class="task-note">パネルidは断片内のリテラル(クライアント比較はliteralのみ)。切替はpresence束縛(hidden = tab == 相手)で、往復ゼロ。</p>
   </section>
 
   <section class="feature" data-feature="field">
@@ -63,16 +61,13 @@
     <span class="feature-tag">per-item の open state + hidden presence</span>
     <h2>Accordion</h2>
     <%= render "components/ui/accordion", items: @faqs %>
-    <p class="task-note">答えは腕に置かず hidden 束縛で切替(0.6.0のper-item腕は値が空で届く実測のため)。＋/－は静的テキストなので腕で差し替わります。</p>
+    <p class="task-note">答えも＋/－マーカーも腕に置かず全部presence束縛で切替 — パーシャル内の分岐腕は0.6.0ではmaterializeされない実測(parkedされず、refetch応答もbranch:null)のため。</p>
   </section>
 
   <section class="feature" data-feature="dialog">
     <span class="feature-tag">自己完結モーダル: トリガ+state+背景を1断片で</span>
     <h2>Dialog</h2>
-    <%= render "components/ui/dialog", cta: "詳細を開く", label: "詳細ダイアログ" do %>
-      <strong>往復ゼロで開閉します。</strong>
-      <p>Esc と外側クリックでも閉じられます。本文は render ブロック。</p>
-    <% end %>
+    <%= render "components/ui/dialog", cta: "詳細を開く", label: "詳細ダイアログ", content: "開閉は presence 束縛(hidden = !shown)なので往復ゼロ。Esc と外側クリックでも閉じられます。" %>
   </section>
 
 </div>

@@ -1,28 +1,26 @@
-<%# UI Tabs — segmented trigger + keyed panel arms.
+<%# UI Tabs — segmented trigger + visibility-switched panels.
     Copy-source contract: panel ids are LITERAL strings ("overview" /
     "activity") because client-side comparisons are literal-only — extending
     means editing the literals here, which is exactly the shadcn trade (you
-    own the code). Rows inside each arm are a keyed collection, so arm
-    switches never rebuild rows.
+    own the code). Panels flip through presence bindings (hidden = tab ==
+    other), NOT branch arms: arms inside a partial are never materialized in
+    0.6.0 (client mode doesn't park them, refetch answers branch:null), while
+    presence + keyed collections survive partial composition intact.
     locals: overview:, activity: (arrays of {id:, label:, detail:}) %>
 <%# herb:state (tab: "overview") %>
 <nav class="ui-tabs" aria-label="タブ切替">
   <button class="ui-tab" data-herb-set="tab=overview" aria-pressed="<%= tab == "overview" %>">概要</button>
   <button class="ui-tab" data-herb-set="tab=activity" aria-pressed="<%= tab == "activity" %>">アクティビティ</button>
 </nav>
-<% if tab == "overview" %>
-  <ul class="ui-tabs-panel">
-    <% overview.each do |row| %>
-      <%# herb:key row[:id] %>
-      <li class="ui-tabs-row"><span class="ui-tabs-label"><%= row[:label] %></span><span class="ui-tabs-detail"><%= row[:detail] %></span></li>
-    <% end %>
-  </ul>
-<% end %>
-<% if tab == "activity" %>
-  <ul class="ui-tabs-panel">
-    <% activity.each do |row| %>
-      <%# herb:key row[:id] %>
-      <li class="ui-tabs-row"><span class="ui-tabs-label"><%= row[:label] %></span><span class="ui-tabs-detail"><%= row[:detail] %></span></li>
-    <% end %>
-  </ul>
-<% end %>
+<ul class="ui-tabs-panel" hidden="<%= tab == "activity" %>">
+  <% overview.each do |row| %>
+    <%# herb:key row[:id] %>
+    <li class="ui-tabs-row"><span class="ui-tabs-label"><%= row[:label] %></span><span class="ui-tabs-detail"><%= row[:detail] %></span></li>
+  <% end %>
+</ul>
+<ul class="ui-tabs-panel" hidden="<%= tab == "overview" %>">
+  <% activity.each do |row| %>
+    <%# herb:key row[:id] %>
+    <li class="ui-tabs-row"><span class="ui-tabs-label"><%= row[:label] %></span><span class="ui-tabs-detail"><%= row[:detail] %></span></li>
+  <% end %>
+</ul>
