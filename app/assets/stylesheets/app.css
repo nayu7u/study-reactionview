@@ -47,7 +47,13 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  /* 日本語ファミリを system-ui より先に置く: Linux の fontconfig は system-ui 経由だと
+   * CJK を中国語(SC)面で解決しがちで、漢字が中国語字形に見えるため。
+   * "Noto Sans CJK JP" はローカル .ttc の実ファミリ名 — Web フォント名の
+   * "Noto Sans JP" だけではローカルインストールにマッチしない。 */
+  font-family:
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Noto Sans JP",
+    Meiryo, "Yu Gothic", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 16px;
   line-height: 1.65;
   color: var(--ink);
