@@ -62,9 +62,14 @@ class PatternsFlowTest < ActionDispatch::IntegrationTest
     assert_equal expected, collection["order"]
     assert_equal 4, collection["order"].size
 
-    # the toolbar note rides as a plain string slot
-    note = payload["slots"].values.find { |slot| slot.is_a?(String) && slot.include?("表示中") }
-    assert_equal "4件を表示中 — 絞り込みもページングもサーバー計算", note
+    # the note is a conditional on the priority state: only states read by a
+    # conditional's arms ride the steering header, so this branch is also
+    # what makes the chip's round trip carry priority at all
+    note = payload["slots"].values.find do |slot|
+      slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("絞り込み中")
+    end
+    assert note, "the filtered note arm answers the chip click"
+    assert_match(/優先度「高」/, note["statics"])
   end
 
   test "page two answers with more keyed rows, page three with the done arm" do
@@ -113,7 +118,10 @@ class PatternsFlowTest < ActionDispatch::IntegrationTest
     assert_includes values, selected.id.to_s
   end
 
-  test "a stale selection degrades to the empty arm instead of blank values" do
+  test "a stale selection answers the detail arm with empty values" do
+    # The detail condition must read the state itself (selected_id > 0) or the
+    # client would never steer the round trip; a stale id therefore lands in
+    # the detail arm with empty slot values rather than the empty arm.
     get patterns_path(format: "slots"), headers: {
       "Accept" => "application/vnd.herb.slots+json",
       "Herb-State" => { "app/views/patterns/index.html.erb" => { "selected_id" => 999_999 } }.to_json
@@ -122,9 +130,24 @@ class PatternsFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     payload = JSON.parse(response.body)
     detail = payload["slots"].values.find do |slot|
-      slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("detail-empty")
+      slot.is_a?(Hash) && slot["statics"].is_a?(String) && slot["statics"].include?("detail-title")
     end
-    assert detail, "an unknown id answers with the empty arm"
-    assert_equal 1, detail["branch"]
+    assert detail, "the detail arm is still the answered branch"
+    assert_equal 0, detail["branch"]
+    assert detail["slots"].values.all?(&:empty?), "the values degrade to empty instead of ghost data"
+  end
+
+  test "the steering conditionals are compiled from the three states" do
+    get patterns_path
+
+    assert_response :success
+    json = response.body[/<template data-herb-manifests[^>]*>(\{.*?\})<\/template>/m, 1]
+    manifest = JSON.parse(json).values.first
+    conditions = manifest.dig("states", "conditionals").values
+      .flat_map { |c| Array(c["arms"]) }.map { |a| a["condition"]&.first }.compact
+
+    assert_includes conditions, "priority", "the note conditional reads priority for the steering header"
+    assert_includes conditions, "selected_id", "the detail conditional reads selected_id"
+    assert_includes conditions, "page", "the page indicator conditional reads page"
   end
 end

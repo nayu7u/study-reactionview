@@ -19,7 +19,6 @@ class PatternsController < ApplicationController
     @chip_counts = Task.group(:priority).count
     @tasks = scope.limit(page * PER_PAGE).to_a
     @remaining = [ @total - @tasks.size, 0 ].max
-    @note = @tasks.empty? ? "該当するタスクはありません" : "#{@tasks.size}件を表示中 — 絞り込みもページングもサーバー計算"
     @selected = selected_id.positive? ? Task.find_by(id: selected_id) : nil
     # Why the view compares task ids against this ivar instead of the
     # `selected_id` state: the compiler only accepts state comparisons
