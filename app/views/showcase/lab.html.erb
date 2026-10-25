@@ -87,7 +87,7 @@
   </section>
 
   <section class="feature" data-feature="wizard">
-    <span class="feature-tag">機能⑧ 多段ウィザード（step状態と派生ゲート、腕ごとの入力）</span>
+    <span class="feature-tag">機能⑪ 多段ウィザード（step状態と派生ゲート、腕ごとの入力）</span>
     <h2>サインアップステッパー</h2>
     <div class="dot-row" aria-label="ステップ">
       <span class="dot" aria-current="<%= step == 1 %>"></span>
@@ -127,7 +127,7 @@
   </section>
 
   <section class="feature" data-feature="validate">
-    <span class="feature-tag">機能⑨ 入力バリデーション（length変換＋順序比較＋派生ゲート）</span>
+    <span class="feature-tag">機能⑫ 入力バリデーション（length変換＋順序比較＋派生ゲート）</span>
     <h2>文字数オーバー検知</h2>
     <textarea class="field" aria-label="自己紹介" placeholder="60字以内で自己紹介…"><%= bio %></textarea>
     <p class="char-hint" aria-live="polite"><%= bio.length %>/60字 <% if over %><span class="over-pill">⚠ 長すぎます</span><% end %></p>
@@ -139,7 +139,7 @@
   </section>
 
   <section class="feature" data-feature="qty">
-    <span class="feature-tag">機能⑩ 数量ステッパー（行ごとの数量状態＋計数fold）</span>
+    <span class="feature-tag">機能⑬ 数量ステッパー（行ごとの数量状態＋計数fold）</span>
     <div class="feature-head">
       <h2>カート行</h2>
     </div>
@@ -163,7 +163,7 @@
   </section>
 
   <section class="feature" data-feature="accordion">
-    <span class="feature-tag">機能⑪ アコーディオン（行ごとのopen状態と停まった答えの腕）</span>
+    <span class="feature-tag">機能⑭ アコーディオン（行ごとのopen状態と停まった答えの腕）</span>
     <h2>FAQ</h2>
     <ul class="task-list" data-herb-name="faqs">
       <% @faqs.each do |faq| %>

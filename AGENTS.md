@@ -7,8 +7,9 @@
 機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.1
 （0.11.0 から 0.11.1 への更新は bin/ci 全ゲートで再検証済み。ワイヤ形式の実測メモは変らず通用）。
 
-2画面構成: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）と
-`Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette）。
+2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）、
+`Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務で撮るパターン集）、
+`Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
 
 ## 作業規約（必ず守る）
 
@@ -102,6 +103,54 @@
   「全件の合計」を `@tasks.size` で出すと一瞬 1件表示になるため、合計は `Task.count` のように独立に取る
 - `herb_state` をコントローラーから呼ばないと、ビュー側だけ state を読んでいてもフィルターは効かない
  （Toolbarが様になってにもかかわらず、起きた）。ビューとコントローラー両方が設計側物として読む必要がある
+- `herb_state` はヘッダJSONの値を**型変換なしで**返す（`Herb-State` の生値）。クライアントは
+  宣言kindに対して literal を検査するが、手作りヘッダは任意型を通す。Integer state は
+  `Integer(...)` の防御的キャストを挟む（`integer_state` ヘルパーを patterns 参照）
+
+## Patterns 画面で新たに実測した事実（0.6.0 / herb 0.11.1）
+
+- **state 比較は literal のみ**: `aria-pressed="<%= priority == value.to_s %>"` のような
+  式との比較は ErrorInTemplate（「The client resolves a comparison by looking the state up」）。
+  ループデータとの比較（`task.id == selected_id`）も不可 → コントローラーから ivar
+  （`@selected_id`）を渡して ivar 同士で比較し、per-item の属性スロットとして往復させる
+- **`data-herb-set` の複数代入**: 属性内の空白区切り token は別 binding として各々実行される。
+  `data-herb-set="priority=all page=1"` は 1 クリックで 2 state 動く。`data-herb-reset` の
+  複数 state（`palette_open draft`）と同じ形。なお set の1 binding が受け付けるのは
+  1 組の `state=value` のみ（カンマ区切りは無視される）
+- **literal の型検査**: set の値は宣言kindに対して検査される。integer 宣言に
+  `selected_id=<%= task.id %>`（数値に見える文字列）はOK、非数値はクライアントがエラー表示
+- **派生宣言のコンボと順序比較**: `ready_bio: bio != "" && bio.length <= 60` は
+  `{"all" => [...]}` のコンボ派生として、`over: bio.length > 60` は length変換＋順序比較として
+  manifest に現れる。変換テーブルは `.length` / `.size` / `.to_s` のみ（演算は不可）
+- **fold の when に順序比較が書ける**: `<% if qty > 0 %><% in_cart += 1 %><% end %>` は
+  `count: {when: ["qty", 0, ">"], by: 1}` としてコンパイルされる。truthy 判定（`<% if qty %>`）は
+  使わず明示比較が安全
+- **presence束縛のHTML表現**: `disabled="<%= state %>"` は裸属性＋
+  `data-herb-slot="N:boolean_attribute:disabled"` マーカーとして出る。`disabled="false"` という
+  値付き文字列は**出ない** → assert は `[disabled]`（属性の有無）で引く。aria-pressed などの
+  文字列補間（"true"/"false" が出る）とは別物
+- **item内の属性補間は wire に載る**: 鍵付き item の中の `aria-current="<%= ... %>"` や
+  `class="prio prio-<%= task.priority %>"` は per-item parts として応答に乗り、クライアントが
+  当てはめる。既存行の内容がサーバー側で変わる場合も同じ経路で追随する
+- **ivar 条件分岐は wire に載る**: `<% if @remaining > 0 %>` のような state を使わない条件でも、
+  dynamics コンパイラは全 if を conditional として追跡し、応答に `branch` 値＋腕 statics を乗せる。
+  初期 HTML には現在腕が `<!--herb-branch:N:x-->` マーカーで載る。クライアントは
+  branch 値が変わったときだけ switchBranch（statics は応答から hold して materialize）。
+  応答の slots 値は**毎回適用**されるので、腕の中の値は data-herb-name スロットで乗せるのが定石
+  （statics は初回固定でも値は毎往復差し替わる）
+- **stale 選択の退避**: `selected_id` が実在しない行を指したままの応答は then 腕を空値で返す。
+  詳細パネルの条件は `selected_id > 0` ではなく `@selected`（コントローラーで実在確認済み）に
+  すると、server 側の腕選択とクライアントの見た目が常に一致する
+- **counted state をループ前で読むな**は再確認された（lab の数量ステッパーで再現）:
+  `in_cart` を feature-head で読むと「read before its count is complete」のコンパイルエラー。
+  統計行はリストの後に置く
+- **アコーディオン（per-item 分岐 + サーバー読みの腕）**: 行ごとの `open` 状態＋`data-herb-toggle`、
+  本文の腕は parked（`<!--herb-branch:46:-->` スロット格納）。腕の `faq[:a]` はサーバー読みなので
+  `server.branches` に node_path が列挙され、クライアントの `requestBranchRefetch` 機構が
+  腕 materialize 時に値を取りに行く設計（メンション腕と同型）。**ブラウザでの materialize 実確認は
+  録画時（Playwright 撮影）に要確認** — manifest/parked/refetch までの実測は済
+- **fold で金額合計は作れない**: fold の増分は整数リテラルのみ（`fold_increment` が
+  `Prism::IntegerNode` を要求）。`total += price * qty` 系は設計段階で諦める
 
 ## 調査ツール
 
