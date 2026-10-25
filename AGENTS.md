@@ -152,6 +152,40 @@
 - **fold で金額合計は作れない**: fold の増分は整数リテラルのみ（`fold_increment` が
   `Prism::IntegerNode` を要求）。`total += price * qty` 系は設計段階で諦める
 
+## ブラウザ実測（headless Chromium・録画環境）で確定した事実
+
+録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。
+ツールはリポジトリに入れない（「Node/yarn を導入しない」はアプリの前提で、録画道具は別物）。
+
+- **server mode の往復トリガは「state条件分岐の腕の切替」だけ**。state を書いても、
+  その state を読む分岐の腕が反転しない限り GET slots は飛ばない（ソートの select 単体は
+  リクエスト0で実測。hub の検索が動くのはノートの「全件表示↔絞り込み中」反転がトリガだから）。
+  さらに**連続タイピングで腕が反転しない間は行が古いまま**（ノートの文字だけ client 評価で更新され、
+  行は初回の絞り込み結果で止まる — 実測）
+- **steering ヘッダ（Herb-State）に載る state も「分岐の腕の条件が読んでいる state」に限る**
+  （クライアントの `steering()` が conditionals + server.reads から収集。server-mode ページの
+  `server.reads` は常に空）。**だから往復させたい state は、必ずどこかの state 条件分岐に読ませる**。
+  Patterns 画面では ① ノートを priority の if/elsif 連鎖に（全遷移でどこかの腕が反転）②
+  ページインジケータを `page > 1` の if に ③ 詳細の条件を `selected_id > 0` に、の3本で賄う
+- **反転しない反復操作（行→行、2→3ページ目）は `data-herb-action="$refresh"` を合成する**。
+  同一要素に action と set が併置できる。action が先に評価されて `request(0)` を予約するが、
+  実際のヘッダは timer 発火時に組み立てられるので、同 dispatch 中に書いた state が載る（1リクエストに合流）
+- **per-item 分岐の腕の実測**: 静的テキスト（＋/－マーカー）は materialize されるが、
+  **腕に置いたサーバー読みの値は空で届く**。ワイヤ自体は完全（応答は item ごとに
+  `{branch: 0, slots: {"47": "答え"}}` を返している）で、refetch も発火する — クライアントが
+  materialize 済みの item 腕に値を流し込めていないだけ。0.6.0 のギャップ
+- **対処パターン: 答えを腕に置かず presence 束縛で見た目を切る**。`hidden="<%= !open %>"`
+  は falsy 読みの presence としてコンパイルされ（manifest: `["open", nil, "falsy"]`）、
+  答えは平常の item part として初回から DOM に乗る。`checked/selected/disabled` に加えて
+  `hidden` も presence の仲間。CSS には `[hidden] { display: none !important; }` のガードを足す
+- **textarea は raw_text ではなく `value="<%= state %>"` で束縛する**。raw_text の適用は
+  `textContent` 書き込みのみで、ユーザーが一度でも打つと表示値（`value` プロパティ）と乖離し、
+  reset しても表示が空にならない（hint は「0 文字」なのに中身が残る — 機能⑦でも発生していた実測）。
+  `value=` 形式なら BINDABLE_ELEMENTS（textarea 第一次級）として双方向に結線され、reset が表示まで追従する
+- **録画の細部**: 要素クリップの高さがビューポートを超えると stitch され、sticky ヘッダが
+  画像の途中に混入する。GIF はクリップが収まる高さのビューポートで撮る（patterns は
+  split が横並びになる 1000px 幅も必要 — 832px 未満はメディアクエリで縦積みになる）
+
 ## 調査ツール
 
 - debug-mcp（Kaigi on Rails 2026・riraさんの講演）は **adopt-on-demand**: 実行時状態に依存するバグで

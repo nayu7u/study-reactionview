@@ -80,12 +80,20 @@ $ bin/rails server     # http://localhost:3000
 同じ tasks テーブルを「受信箱」として組み直した、実務寄りの3パターン。すべて server mode で、
 往復するのは値だけ（検索・並び替えと同じ契約）。
 
+<div><img src="docs/media/patterns-light.png" alt="Patterns (light)" width="49%"/> <img src="docs/media/patterns-dark.png" alt="Patterns (dark)" width="49%"/></div>
+
 ### 機能⑧ フィルタチップ（サーバー絞り込み＋件数バッジ）
+
+![チップの絞り込みはサーバーが答える](docs/media/08-chips.gif)
 
 - 優先度（1=低/2=中/3=高）は `tasks.priority` 列。チップの絞り込みは `herb_state("priority")` を
   コントローラーとビューの**両方**で読む（hub の検索と同じ契約）。
 - チップのクリックは 1 属性に 2 state を代入する: `data-herb-set="priority=3 page=1"`。
   空白で区切った token は別 binding として各々実行される（クライアント実装の実測）。
+- **往復の契約は「state を読む分岐を作る」**: server mode では、腕が反転したときにだけ
+  GET slots が飛び、ヘッダには「分岐の腕が読んでいる state」しか載らない（ブラウザ実測）。
+  だからノートは priority の if/elsif 連鎖にして、全遷移でどこかの腕が反転するようにしてある。
+  これがないと、同一要素に `data-herb-action="$refresh"` を合成しても state が載らない。
 - 選択中チップは `aria-pressed` の文字列補間。CSS は `[aria-pressed="true"]`。
   **state 比較は literal のみ**（`value.to_s` のような式は ErrorInTemplate）なので、
   チップは4個を literal 展開している。
@@ -93,22 +101,31 @@ $ bin/rails server     # http://localhost:3000
 
 ### 機能⑨ もっと見る（鍵付き差分で行が増える）
 
-- `page` は Integer state。「もっと見る」は `data-herb-increment="page"`。
+![もっと見るは鍵付き差分で行を足し、枯れると腕が差し替わる](docs/media/09-load-more.gif)
+
+- `page` は Integer state。「もっと見る」は `data-herb-increment="page"`＋`data-herb-action="$refresh"`
+  （2ページ目→3ページ目は分岐が反転しないので、`$refresh` の合成で往復を保証する）。
   同じ GET slots 往復で `order`/`items` が伸び、クライアントは既存行を動かさず新しい行だけ足す。
+- 「N ページ目を表示中」は `page > 1` の if（else無し）— ページ state を分岐に読ませる役割も兼ねる。
 - 全件読み込み済みの腕（「全部読み込みました」）は **ivar 条件の分岐**（`<% if @remaining > 0 %>`）。
   server モードでは state 条件でなくても wire に `branch` 値＋腕 statics が乗り、
   初期 HTML の `<!--herb-branch:N:腕-->` マーカーと突き合わせて切替が起きる。
 
 ### 機能⑩ 詳細連動（行選択→同じアクションが詳細を答える）
 
-- 行クリックは `data-herb-set="click->selected_id=<%= task.id %>"`。詳細パネルは
-  `@selected` 条件の分岐で、値は全部 `data-herb-name` の名前付きスロットで乗る
-  （腕の statics は初回固定でも、スロットは毎往復差し変わる — ドロワーの文字数と同じ理屈）。
+![行クリックから行への切替まで、往復は値だけ](docs/media/10-detail.gif)
+
+- 行クリックは `data-herb-set="click->selected_id=<%= task.id %>"`＋`data-herb-action="$refresh"` —
+  行から行への切替は `selected_id > 0` の腕が反転しないので `$refresh` を合成する
+  （ヘッダは timer 発火時に組み立てられるので、1 リクエストに新 state が載る）。
+- 詳細パネルの条件は `selected_id > 0`（**state 条件でないと往復が発生しない**。ivar 条件は
+  wire に乗るだけで steering しない — 実測）。値は全部 `data-herb-name` の名前付きスロットで乗る
+  （腕の statics は初回固定でも、スロットは毎往復差し替わる — ドロワーの文字数と同じ理屈）。
 - 行のハイライトは `aria-current="<%= task.id == @selected_id %>"` — **loop データとの比較は
   state に書けない**ので controller 渡しの ivar と比較し、per-item の属性スロットとして往復する。
   鍵付き item の中の属性補間が wire に乗ることは実測済み（`aria-current`、prio クラスとも）。
 - 選択解除は `data-herb-reset="selected_id"`。消えた行の ID が選択された場合は
-  空の腕（`@selected` 条件）に退避して空文字の詳細を描かない。
+  空値の詳細腕（state 条件の答え）になる — 幽霊データにはならない。
 
 ## Client Lab（client モード、`/lab`）
 
@@ -146,6 +163,8 @@ $ bin/rails server     # http://localhost:3000
 
 ### 機能⑪ 多段ウィザード（step状態と派生ゲート）
 
+![入力が派生ゲートを解くと次へが効く。切替は往復ゼロ](docs/media/11-wizard.gif)
+
 - `step`（Integer state）の三つ分岐は `<% if step == 1 %>` の**別タグに展開**した三ブロック
   （case+when を1タグに詰めると Herb がパース不能になる教訓の if 版）。
 - 「次へ」は `data-herb-increment="step"`、ゲートは派生状態 `name_ok: name != ""` を presence 束縛した
@@ -154,12 +173,19 @@ $ bin/rails server     # http://localhost:3000
 
 ### 機能⑫ 入力バリデーション（length変換＋順序比較＋コンボ派生）
 
+![60字を超えると警告ピルの腕が差替わり、保存が無効になる](docs/media/12-validate.gif)
+
 - `over: bio.length > 60` — 派生宣言に `.length` 変換と順序比較が書ける。オーバー時は警告ピルの腕が差し替わる。
 - 送信ゲートはコンボ派生 `ready_bio: bio != "" && bio.length <= 60`。manifest には
   `{"all" => [["bio","","!="], ["bio",60,"<=","length"]]}` として現れる。
 - 演算（20 - length など）は不可能（変換は `.length` / `.to_s` のみ）。だから表示は「N/60字」の形。
+- textarea は `<textarea><%= bio %></textarea>` の raw_text ではなく **`value="<%= bio %>"` で束縛**:
+  raw_text は textContent しか書かないので、一度でも打つと reset が表示に追従しなくなる（実測）。
+  `value=` 形式なら textarea も双方向に結線され、クリアが表示まで空にする。
 
 ### 機能⑬ 数量ステッパー（行ごとの数量＋計数fold）
+
+![数量は行ごとに動き、バッジのfoldが即時追従する](docs/media/13-qty.gif)
 
 - `qty` は行ごとの Integer state。減ボタンは `disabled="<%= qty == 0 %>"` — 順序比較の presence 束縛で
   0 で握る（見た目の即時性は CSS、数値は read スロット、の分担は hub と同じ）。
@@ -168,12 +194,18 @@ $ bin/rails server     # http://localhost:3000
   （「count is complete 前」）になるので、統計行はリストの後に置く。
 - 金額合計は作れない: fold の増分は整数リテラルのみ（`total += price * qty` は不可）。
 
-### 機能⑭ アコーディオン（行ごとの open と停まった答えの腕）
+### 機能⑭ アコーディオン（行ごとの open 状態と hidden の presence 束縛）
 
-- `open` は行ごとの boolean state。ヘッダーは `data-herb-toggle="open"`、本文の腕は parked。
-- 腕にはサーバー読み（`faq[:a]`）が混ざるので manifest の `server.branches` に node_path が載り、
-  クライアントが腕を materialize する際にサーバーへ値を取りに行く（メンションタブの腕と同じ機構の
-  per-item 版 — 録画時にブラウザで確認する）。
+![行ごとに独立して開閉する。答えは初回からDOMに載っている](docs/media/14-accordion.gif)
+
+- `open` は行ごとの boolean state。ヘッダーは `data-herb-toggle="open"`。
+- **答えのテキストは腕に置かない**: 行ごとの分岐の腕は materialize できても、腕に置いた
+  サーバー読みの値は空で届く（0.6.0 実測 — ワイヤは item ごとの `{branch, slots}` を返しているのに
+  クライアントが materialize 済みの item 腕に流し込めない）。代わりに本文は平常の item part として
+  初回から DOM に載せ、`hidden="<%= !open %>"` の presence 束縛で見た目を切る。マーカーの＋/－は
+  静的テキストなので腕で差し替わる。
+- `hidden` は `checked/selected/disabled` に加わる presence の仲間（falsy 読みとして manifest に現れる）。
+  CSS は `[hidden] { display: none !important; }` のガードで表示規則に勝たせない。
 
 ## 検証の進め方
 
