@@ -524,7 +524,7 @@
 <span class="c-cmt">&lt;%# 統計はリストの直後（foldが完了してから読む） %&gt;</span>
 <span class="c-erb">&lt;%=</span> in_cart <span class="c-erb">%&gt;</span> 点をカートに追加</code></pre>
       <div class="panel-foot">
-        <b>state は HTML に住んでいる</b>（行ごと宣言、hidden への presence）。たたみ鍵付き item なので
+        <b>state は HTML に住んでいる</b>（行ごと宣言、hidden への presence）。鍵付き item に紐づいた状態なので
         行が増減しても state が行に追従する。なお <code>in_cart</code> は計数 fold（<code>+= 1</code> の整数リテラル増分
         のみ）— 金額合計は「クライアントでは作れない」が正確な境界（§6）。
       </div>
@@ -597,7 +597,7 @@
 <section id="bounds">
   <h2><span class="num">⑥</span>正直な境界 — 0.6.0 時点の実測で書けないもの</h2>
   <p class="lede">
-    営業コピーではなく実測ノートなので、 клиент評価が届かない枠も並べます。どれも対処パターンが確立済み。
+    営業コピーではなく実測ノートなので、クライアント評価が届かない枠も並べます。どれも対処パターンが確立済み。
   </p>
   <ul class="tight">
     <li>
