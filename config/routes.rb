@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get "/board", to: "tasks#index"
   get "/patterns", to: "patterns#index"
   get "/lab", to: "showcase#lab"
+  get "/ui", to: "ui#index"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
