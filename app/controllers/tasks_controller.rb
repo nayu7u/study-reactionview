@@ -7,7 +7,7 @@ class TasksController < ApplicationController
     # param (keeps one backslash literal without double-escaping mazes).
     esc = "\\"
     term = herb_state("query", "").gsub(/[%_\\]/) { "#{esc}#{$&}" }
-    where = term.blank? ? nil : ["title LIKE ? ESCAPE ?", "%#{term}%", esc]
+    where = term.blank? ? nil : [ "title LIKE ? ESCAPE ?", "%#{term}%", esc ]
 
     @tasks = Task.order(created_at: direction)
     @tasks = @tasks.where(*where) if where
