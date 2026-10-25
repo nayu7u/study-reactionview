@@ -1,20 +1,23 @@
 # Study ReActionView
 
-**ReActionView 0.6.0 + Herb 0.11.0 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
-すなわち **ERB だけで React 的な細粒度リアクティビティが成立する** ことを、二つの実用的な画面で実演・検証する。
+**ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
+すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、実用的なアプリ風の
+四つのショーケースで実演・検証する。
 
-- React / Stimulus / Node / yarn / ビルドパイプライン: **一切なし**。`app/javascript/application.js` は
+- React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
   `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
 - 細粒度の更新は Herb の slots が担う。state 変化に対して、HTML ではなく値の JSON
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
+- Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
 
-## 2つの画面
+## 4つの画面
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
 | Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、楽観的追加 |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務で撮る3パターン: フィルタチップ、もっと見る、詳細連動 |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
+| UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
 
 ```console
 $ bin/rails db:setup   # または db:seed
@@ -87,7 +90,7 @@ $ bin/rails server     # http://localhost:3000
 ![チップの絞り込みはサーバーが答える](docs/media/08-chips.gif)
 
 - 優先度（1=低/2=中/3=高）は `tasks.priority` 列。チップの絞り込みは `herb_state("priority")` を
-  コントローラーとビューの**両方**で読む（hub の検索と同じ契約）。
+  コントローラーとビューの両方で読む（hub の検索と同じ契約）。
 - チップのクリックは 1 属性に 2 state を代入する: `data-herb-set="priority=3 page=1"`。
   空白で区切った token は別 binding として各々実行される（クライアント実装の実測）。
 - **往復の契約は「state を読む分岐を作る」**: server mode では、腕が反転したときにだけ
@@ -105,9 +108,9 @@ $ bin/rails server     # http://localhost:3000
 
 - `page` は Integer state。「もっと見る」は `data-herb-increment="page"`＋`data-herb-action="$refresh"`
   （2ページ目→3ページ目は分岐が反転しないので、`$refresh` の合成で往復を保証する）。
-  同じ GET slots 往復で `order`/`items` が伸び、クライアントは既存行を動かさず新しい行だけ足す。
-- 「N ページ目を表示中」は `page > 1` の if（else無し）— ページ state を分岐に読ませる役割も兼ねる。
-- 全件読み込み済みの腕（「全部読み込みました」）は **ivar 条件の分岐**（`<% if @remaining > 0 %>`）。
+  同じ GET slots 往復で `order`/`items` が伸び、クライアントは既存行を動かさず新しい行だけを追加する。
+- 「N ページ目を表示中」は `page > 1` の if（else無し）で、ページ state を分岐に読ませる役割も兼ねる。
+- 全件読み込み済みの腕（「全部読み込みました」）は **ivar 条件の分岐**（`<% if @remaining > 0 %>`）だ。
   server モードでは state 条件でなくても wire に `branch` 値＋腕 statics が乗り、
   初期 HTML の `<!--herb-branch:N:腕-->` マーカーと突き合わせて切替が起きる。
 
@@ -115,22 +118,22 @@ $ bin/rails server     # http://localhost:3000
 
 ![行クリックから行への切替まで、往復は値だけ](docs/media/10-detail.gif)
 
-- 行クリックは `data-herb-set="click->selected_id=<%= task.id %>"`＋`data-herb-action="$refresh"` —
+- 行クリックは `data-herb-set="click->selected_id=<%= task.id %>"`＋`data-herb-action="$refresh"`。
   行から行への切替は `selected_id > 0` の腕が反転しないので `$refresh` を合成する
   （ヘッダは timer 発火時に組み立てられるので、1 リクエストに新 state が載る）。
 - 詳細パネルの条件は `selected_id > 0`（**state 条件でないと往復が発生しない**。ivar 条件は
-  wire に乗るだけで steering しない — 実測）。値は全部 `data-herb-name` の名前付きスロットで乗る
-  （腕の statics は初回固定でも、スロットは毎往復差し替わる — ドロワーの文字数と同じ理屈）。
-- 行のハイライトは `aria-current="<%= task.id == @selected_id %>"` — **loop データとの比較は
-  state に書けない**ので controller 渡しの ivar と比較し、per-item の属性スロットとして往復する。
+  wire に乗るだけで steering しない。いずれも実測）。値は全部 `data-herb-name` の名前付きスロットで乗る
+  （腕の statics は初回固定でも、スロットは毎往復差し替わる。ドロワーの文字数と同じ理屈だ）。
+- 行のハイライトは `aria-current="<%= task.id == @selected_id %>"` で行う。**loop データとの比較は
+  state に書けない**ので、controller 渡しの ivar と比較して、per-item の属性スロットとして往復する。
   鍵付き item の中の属性補間が wire に乗ることは実測済み（`aria-current`、prio クラスとも）。
 - 選択解除は `data-herb-reset="selected_id"`。消えた行の ID が選択された場合は
-  空値の詳細腕（state 条件の答え）になる — 幽霊データにはならない。
+  空値の詳細腕（state 条件の答え）になる。幽霊データにはならない。
 
 ## Client Lab（client モード、`/lab`）
 
 この画面の未描画の分岐（タブの裏側・モーダル・hover の表示）は、初回 HTML に `<template data-herb-region>`
-として格納済みだ。開閉・切替・カウントはすべてブラウザ内で完結する。`$refresh` だけが意図的な脱出口だ。
+として格納済みだ。開閉・切替・カウントはすべてブラウザ内で完結する。`$refresh` だけが意図的にサーバーへ聞き直す手段だ。
 
 <div><img src="docs/media/lab-light.png" alt="Client Lab (light)" width="49%"/> <img src="docs/media/lab-dark.png" alt="Client Lab (dark)" width="49%"/></div>
 
@@ -161,34 +164,34 @@ $ bin/rails server     # http://localhost:3000
 - `<%# herb:state (draft: "", ready: draft != "") %>` が **派生宣言**だ。`draft` が空でなければ `ready` が真になり、
   文字数表示の即時化と `disabled="<%= !ready %>"` の送信ボタンの有効化がクライアント内で完結する。
 
-### 機能⑪ 多段ウィザード（step状態と派生ゲート）
+### 機能⑪ 多段ウィザード（step状態と派生の有効化）
 
-![入力が派生ゲートを解くと次へが効く。切替は往復ゼロ](docs/media/11-wizard.gif)
+![入力が済むと派生状態が次へを有効にする。切替は往復ゼロ](docs/media/11-wizard.gif)
 
-- `step`（Integer state）の三つ分岐は `<% if step == 1 %>` の**別タグに展開**した三ブロック
-  （case+when を1タグに詰めると Herb がパース不能になる教訓の if 版）。
-- 「次へ」は `data-herb-increment="step"`、ゲートは派生状態 `name_ok: name != ""` を presence 束縛した
-  `disabled`。腕ごとに入力が置ける（未描画腕の input も停めてある）。
-- 完了腕は `data-herb-reset="step name email"` — 複数 state を空白で並べて一気に戻せる。
+- `step`（Integer state）の三つ分岐は `<% if step == 1 %>` の別タグに展開した三ブロック
+  （case+when を1タグに詰めると Herb がパース不能になるという教訓の if 版）。
+- 「次へ」は `data-herb-increment="step"`。押せるかどうかは派生状態 `name_ok: name != ""` を presence 束縛した
+  `disabled` で決まる。腕ごとに入力が置ける（未描画腕の input も停めてある）。
+- 完了腕は `data-herb-reset="step name email"` で、複数 state を空白で並べて一気に戻せる。
 
 ### 機能⑫ 入力バリデーション（length変換＋順序比較＋コンボ派生）
 
 ![60字を超えると警告ピルの腕が差替わり、保存が無効になる](docs/media/12-validate.gif)
 
-- `over: bio.length > 60` — 派生宣言に `.length` 変換と順序比較が書ける。オーバー時は警告ピルの腕が差し替わる。
-- 送信ゲートはコンボ派生 `ready_bio: bio != "" && bio.length <= 60`。manifest には
+- 派生宣言 `over: bio.length > 60` に `.length` 変換と順序比較が書ける。オーバー時は警告ピルの腕が差し替わる。
+- 送信の有効化はコンボ派生 `ready_bio: bio != "" && bio.length <= 60` だ。manifest には
   `{"all" => [["bio","","!="], ["bio",60,"<=","length"]]}` として現れる。
 - 演算（20 - length など）は不可能（変換は `.length` / `.to_s` のみ）。だから表示は「N/60字」の形。
-- textarea は `<textarea><%= bio %></textarea>` の raw_text ではなく **`value="<%= bio %>"` で束縛**:
+- textarea は `<textarea><%= bio %></textarea>` の raw_text ではなく **`value="<%= bio %>"` で束縛する**。
   raw_text は textContent しか書かないので、一度でも打つと reset が表示に追従しなくなる（実測）。
-  `value=` 形式なら textarea も双方向に結線され、クリアが表示まで空にする。
+  `value=` 形式なら textarea も双方向に結線され、クリアで表示の値まで空になる。
 
 ### 機能⑬ 数量ステッパー（行ごとの数量＋計数fold）
 
 ![数量は行ごとに動き、バッジのfoldが即時追従する](docs/media/13-qty.gif)
 
-- `qty` は行ごとの Integer state。減ボタンは `disabled="<%= qty == 0 %>"` — 順序比較の presence 束縛で
-  0 で握る（見た目の即時性は CSS、数値は read スロット、の分担は hub と同じ）。
+- `qty` は行ごとの Integer state。減ボタンは `disabled="<%= qty == 0 %>"` で、順序比較の presence 束縛により
+  0 で握る（見た目の即時性は CSS、数値は read スロットという分担は hub と同じ）。
 - `<%= in_cart %>` 件の合計は**条件付き fold**（`<% if qty > 0 %><% in_cart += 1 %><% end %>`）。
   fold の when に順序比較が書ける。counted state をループの**前**で読むとコンパイルエラー
   （「count is complete 前」）になるので、統計行はリストの後に置く。
@@ -200,16 +203,25 @@ $ bin/rails server     # http://localhost:3000
 
 - `open` は行ごとの boolean state。ヘッダーは `data-herb-toggle="open"`。
 - **答えのテキストは腕に置かない**: 行ごとの分岐の腕は materialize できても、腕に置いた
-  サーバー読みの値は空で届く（0.6.0 実測 — ワイヤは item ごとの `{branch, slots}` を返しているのに
+  サーバー読みの値は空で届く（0.6.0 の実測。ワイヤは item ごとの `{branch, slots}` を返しているのに、
   クライアントが materialize 済みの item 腕に流し込めない）。代わりに本文は平常の item part として
   初回から DOM に載せ、`hidden="<%= !open %>"` の presence 束縛で見た目を切る。マーカーの＋/－は
   静的テキストなので腕で差し替わる。
 - `hidden` は `checked/selected/disabled` に加わる presence の仲間（falsy 読みとして manifest に現れる）。
   CSS は `[hidden] { display: none !important; }` のガードで表示規則に勝たせない。
 
+## UI Kit（client モード、`/ui`）
+
+shadcn/ui のモデル（ソース配布 + トークン + variant API）を ERB で再現した検証キット。9コンポーネントのソースを
+`lib/reactionview_ui/` に置き、ジェネレータ（`reactionview_ui:install` / `reactionview_ui:component`）で
+`app/views/components/ui/` にコピーして使う。断片は `herb:state` 宣言を内蔵する。ページ側の wiring は不要。
+headless Chromium で全コンポーネントを操作した結果、全操作でスロット往復 0 だった。
+コンポーネントの一覧と実測の詳細は [docs/ui-kit.md](docs/ui-kit.md)。
+
 ## 検証の進め方
 
-- **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `showcase_controller_test` が検証する契約は、
+- **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `showcase_controller_test` /
+  `ui_controller_test` が検証する契約は、
   HTML レンダ / `herb_state` による並び替え・絞り込み / slots 応答の形状（items+order / 分岐 / スカラー混在）/
   201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。
