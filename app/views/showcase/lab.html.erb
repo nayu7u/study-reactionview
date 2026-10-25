@@ -174,13 +174,11 @@
             <span class="task-title"><%= faq[:q] %></span>
             <span class="acc-marker"><% if open %>－<% else %>＋<% end %></span>
           </button>
-          <% if open %>
-            <div class="acc-body"><%= faq[:a] %></div>
-          <% end %>
+          <div class="acc-body" hidden="<%= !open %>"><%= faq[:a] %></div>
         </li>
       <% end %>
     </ul>
-    <p class="task-note">開く腕にはサーバー読み（<code>faq[:a]</code>）が混ざるので、manifestの <code>server.branches</code> に node_path が載る — client mode でも腕に静的データを停めておける実測。</p>
+    <p class="task-note">答えのテキストは腕に置かず、<code>hidden</code> 属性のpresence束縛（<code>!open</code>）で切替 — 行ごとの分岐の腕は materialize できても、腕に置いたサーバー読みの値は空で届く（0.6.0実測）。マーカーの＋/－は静的テキストなので腕で差し替わります。</p>
   </section>
 
 </div>

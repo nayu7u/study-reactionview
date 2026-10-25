@@ -43,6 +43,10 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     # accordion: toggle headers with the closed marker arm
     assert_select 'button.acc-head[data-herb-toggle="open"]', count: 3
     assert_select ".acc-marker", "＋"
+    assert_select "div.acc-body[hidden]", count: 3
+    # the answers ride as plain item parts from the first render, outside any
+    # branch — per-item arm materialization drops server-read values (measured)
+    assert_includes response.body, "要りません"
   end
 
   test "the manifest compiles the derived state and parking" do
@@ -83,7 +87,14 @@ class ShowcaseFlowTest < ActionDispatch::IntegrationTest
     open_decl = declarations.find { |d| d["name"] == "open" }
     assert open_decl, "the accordion rows declare a per-item open state"
 
-    # the parked FAQ answer arms are listed for the server to fill
+    # the FAQ answers are NOT in a branch: per-item arm materialization
+    # delivers statics but drops server-read values (measured), so the body
+    # toggles through a hidden presence binding and the answer rides as a
+    # plain item part
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "open" },
+      "the accordion body binds hidden as a presence read on open"
+
+    # the parked mentions arm is still inventoried for the server to fill
     branches = manifest.dig("states", "server", "branches") || {}
     assert branches.values.flatten.any?, "parked arms with server reads are inventoried for refetch"
   end

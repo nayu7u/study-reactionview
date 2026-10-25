@@ -41,6 +41,10 @@
 
 * { box-sizing: border-box; }
 
+/* the accordion toggles visibility through the presence-bound `hidden`
+ * attribute; this guard keeps any display rule from beating the UA style */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
