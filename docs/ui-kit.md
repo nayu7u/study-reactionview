@@ -19,7 +19,7 @@ headless Chromium で全コンポーネントを操作した結果、**全操作
 | Tabs | パネル切替 → 選択強調(aria-pressed)とパネル表示 | 0 |
 | Dialog | 開く / Esc / 外側クリック / 閉じる | 0 |
 
-コンポーネントは Stimirulus も独自 JS も書かない。挙動は `herb:state` 宣言 + presence 束縛 +
+コンポーネントは Stimirulus も独自 JS も書かない。挙動は `herb:state` 宣言 + presence バインディング +
 `data-herb-*` 属性だけで、Herb のコンパイラが manifest に落とす。
 
 ## 導入(shadcn の init / add に対応)
@@ -56,7 +56,7 @@ manifest で `"states": null` にコンパイルされ、ワイヤに一切参�
 
 ### Switch
 
-boolean の presence 束縛 + CSS `:has(input:checked)`。同一断片を2個貼ると
+boolean の presence バインディング + CSS `:has(input:checked)`。同一断片を2個貼ると
 occurrence index(`<!--herb-region:...:0-->` / `:1`)ごとに state が独立する実測済み。
 
 ```erb
@@ -67,7 +67,7 @@ occurrence index(`<!--herb-region:...:0-->` / `:1`)ごとに state が独立す�
 
 ### Stepper
 
-行ごとの `qty`(scope: 0)+ 計数fold `in_cart`(整数リテラル増分のみ)。fold の読み取りは
+行ごとの `qty`(scope: 0)+ カウントfold `in_cart`(整数リテラル増分のみ)。fold の読み取りは
 リストの後(ループ前で読むとコンパイルエラー)。
 
 ```erb
@@ -79,7 +79,7 @@ occurrence index(`<!--herb-region:...:0-->` / `:1`)ごとに state が独立す�
 ### Field
 
 派生状態(`ready: draft != ""` / `over: draft.length > 60`)+ presence ゲート。
-textarea は `value=` で束縛(BINDABLE_ELEMENTS、reset が表示まで追従)。
+textarea は `value=` でバインド(BINDABLE_ELEMENTS、reset が表示まで追従)。
 
 ```erb
 <%= render "components/ui/field", label: "自己紹介", placeholder: "60字以内で…" %>
@@ -89,7 +89,7 @@ textarea は `value=` で束縛(BINDABLE_ELEMENTS、reset が表示まで追従)
 
 ### Accordion
 
-本文も ＋/－ マーカーも**全部 presence 束縛**(2つの span を貼って hidden で切替)。
+本文も ＋/－ マーカーも**全部 presence バインディング**(2つの span を貼って hidden で切替)。
 per-item の `open`(scope: 0)。
 
 ```erb
@@ -124,13 +124,13 @@ Esc / 外側クリックは `data-herb-set="keydown.esc@window->shown=false ..."
 
 ## 0.6.0 で実測した制約(このキットの設計規約)
 
-1. **パーシャル内の分岐腕は materialize されない**: client mode でも腕は parked されず
+1. **パーシャル内の分岐は materialize されない**: client mode でも分岐先は parked されず
    (manifest の `fragments: {}`、`<template data-herb-region>` 自体が出ない)、
    refetch 応答も `{"branch": null}` で statics が空。
-   → パーシャルでは腕でなく **presence(hidden)+ CSS で切替**する
+   → パーシャルでは分岐でなく **presence(hidden)+ CSS で切替**する
 2. **パーシャル内の render-with-block は slots 再レンダで壊れる**
    (`TypeError: no implicit conversion of Hash into String`)→ 本文は `content:` ローカルで渡す
 3. **クライアント比較は literal のみ** → ループデータとの比較(`t[:id] == …`)は不可。
    パネルid等は断片内リテラルにする
-4. 計数fold・派生状態・presence・鍵付きコレクションはパーシャル構成でも**完全に動く**
+4. カウントfold・派生状態・presence・キー付きコレクションはパーシャル構成でも**完全に動く**
    (manifest はパーシャルごとに出る:`herb:state` は断片自身が所有する)

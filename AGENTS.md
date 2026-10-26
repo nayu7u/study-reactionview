@@ -8,7 +8,7 @@
 （0.11.0 から 0.11.1 への更新は bin/ci 全ゲートで再検証済み。ワイヤ形式の実測メモは変らず通用）。
 
 2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）、
-`Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務で撮るパターン集）、
+`Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務から拾ったパターン集）、
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
 さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
 ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（docs/ui-kit.md）。
@@ -45,7 +45,7 @@
   実測では旧プロセスが app.css を見失い 500 を返し続けた）
 - 設定出力: `bin/rails runner 'c = ReActionView.config; puts [c.intercept_erb, c.slots, c.default_slot_mode, c.dev_server_enabled?].inspect'`
 - seed: `bin/rails db:setup`（schema 缶詰後は `bin/rails db:seed`）
-- 統合テスト: `bin/rails test`（reactive 契約 = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
+- 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
 
 ## 実測済みのスロット・ワイヤ形式（0.6.0）
 
@@ -53,16 +53,16 @@
 - 本体: `{"template": "...", "version": "...", "occurrence": 0, "slots": {<番号>: {...}}}`
   - 分岐は `{"branch": 0|1|…|null, "statics": "<マークアップ>", "slots": {...}}`
   - コレクションは `{"items": {"<実ID>": {"<パート番号>": "<値>"}}, "order": ["<ID>", …], "statics": "<行テンプレート>"}`
-    — React流の鍵付き照合で、クライアントは行を再構築せず移動・差し替えする
+    — React流のキー付き照合で、クライアントは行を再構築せず移動・差し替えする
 - `POST …?format=slots` は **201** で新規行のみを返す（楽観的追加の差し替え用）
 - `herb:slots server` 時、textarea は `data-herb-slot="N:raw_text"`、補間属性は `…:attribute:name` として分岐外のスロットへ載る
 - client mode では未描画ブランチが `<template data-herb-region="app/views/<テンプレート>:<version>">` に
-  `<!--herb-branch:<番号>:<腕>-->` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
-  `states.declarations`（kind/derived/scope）、`reads`、`conditionals`（条件の腕）、`presence`（boolean属性束縛）、
+  `<!--herb-branch:<番号>:<現在の分岐>-->` 付きで格納され、`<template data-herb-manifests>` に**クライアントへの命令書**がJSONで載る:
+  `states.declarations`（kind/derived/scope）、`reads`、`conditionals`（条件分岐）、`presence`（boolean属性バインディング）、
   `computed`（`.length` 等の変換）、`server`
 - `server` マップ（`server.branches` / `server.reads`）: 平常時（GET初期描画・全client-evaluable）は
-  serverモード・client mode の**両方**で空。埋まるのは「分岐の腕に server-read（任意のRuby/ループデータ）が
-  混ざったとき」— client mode でメンション腕に `.select` ループを置いたら `branches` に node_path が列挙された。
+  serverモード・client mode の**両方**で空。埋まるのは「分岐の各ケースに server-read（任意のRuby/ループデータ）が
+  混ざったとき」— client mode でメンション側の分岐に `.select` ループを置いたら `branches` に node_path が列挙された。
   「serverモードで埋まる」説は撤回（モード判別には使えない）
 
 ## テストにまつわる実測の教訓
@@ -81,18 +81,18 @@
 - **`case` + `when` を1つのERBタグに詰めない**: Herb はパース不能として ErrorInTemplate。
   `<% case x %><% when "a" %>…<% when "b" %>…<% else %>…<% end %>` と各々別タグにする
 - **コレクションを `<% if @tasks.any? %>` 等の分岐で包むな**: slots応答が items/order 形式ではなく
-  分岐の statics として全体が返り、鍵付き差分適用が壊れる。コレクションは必ずレベルを保つ
+  分岐の statics として全体が返り、キー付き差分適用が壊れる。コレクションは必ずレベルを保つ
 - **行クラスの状態補間（`class="<%= … if done %>"` など）を書かない**: `attribute_interpolation` スロット =
-  サーバー読み＝チェックのたびに往復。presence 束縛（`checked`）+ CSS `:has(input:checked)` で即時描画に寄せる
-- **計数foldの公式形は3タグ**: `<% if done %><% done_count += 1 %><% end %>` をキー付きitem body内に。
+  サーバー読み＝チェックのたびに往復。presence バインディング（`checked`）+ CSS `:has(input:checked)` で即時描画に寄せる
+- **カウントfoldの決まった形は3タグ**: `<% if done %><% done_count += 1 %><% end %>` をキー付きitem body内に。
   `done_count += 1 if done`（修飾子if）は fold_increment が1文としてパースできず、
   「client never sees a server-side write」という紛らわしいエラーになる。
   counted state は **ループより前で読むな**（heroの統計文はリスト直下へ移動した）。
   マニフェストには declarations[i].count = {collection, when, by} として現れる
-- **aria-pressedはpresence束縛でなく文字列補間**: `aria-pressed="<%= tab == "all" %>"` は
-  "true"/"false" の文字列属性として出る（checked/selected/disabled の boolean属性束縛とは別物）。
+- **aria-pressedはpresenceバインディングでなく文字列補間**: `aria-pressed="<%= tab == "all" %>"` は
+  "true"/"false" の文字列属性として出る（checked/selected/disabled の boolean属性バインディングとは別物）。
   client mode では純状態比較なのでクライアント評価＝往復なし。CSSは `[aria-pressed="true"]` で引く
-- **serverモードではブラウザ所有statesを条件にした分岐を書くな**: 腕がparkedされずクライアントに
+- **serverモードではブラウザ所有statesを条件にした分岐を書くな**: 分岐先がparkedされずクライアントに
   materializeできず → switchBranch失敗 → refetch が追加されるが、steeringにitem状態(done)や
   counted(done_count)は載らないのでサーバー回答が常に行禁化→要求storm。見た目は presence＋CSSで、
   数値はREAD slot（`<%= done_count %>`）で置く。行の文言ピルも同様（両方の文言をDOMに置き
@@ -103,7 +103,7 @@
 - **create応答のspliceはquery/filter状態を無視して入る**（コントローラーのcreateスコープに
   フィルターが無いため）。検索中に追加すると絞り込まれていない行が差し込まれる
 - slots応答の slots 値は**スカラー（数値/真偽/文字列）が混ざる**。Hashと決め打ちしない
-  （hero の合計はスカラー、presence束縛は真偽値、分岐は Hash{branch, statics, slots}）
+  （hero の合計はスカラー、presenceバインディングは真偽値、分岐は Hash{branch, statics, slots}）
 - create 応答はコントローラーが絞ったスコープで一式を再計算する。
   「全件の合計」を `@tasks.size` で出すと一瞬 1件表示になるため、合計は `Task.count` のように独立に取る
 - `herb_state` をコントローラーから呼ばないと、ビュー側だけ state を読んでいてもフィルターは効かない
@@ -130,29 +130,29 @@
 - **fold の when に順序比較が書ける**: `<% if qty > 0 %><% in_cart += 1 %><% end %>` は
   `count: {when: ["qty", 0, ">"], by: 1}` としてコンパイルされる。truthy 判定（`<% if qty %>`）は
   使わず明示比較が安全
-- **presence束縛のHTML表現**: `disabled="<%= state %>"` は裸属性＋
+- **presenceバインディングのHTML表現**: `disabled="<%= state %>"` は裸属性＋
   `data-herb-slot="N:boolean_attribute:disabled"` マーカーとして出る。`disabled="false"` という
   値付き文字列は**出ない** → assert は `[disabled]`（属性の有無）で引く。aria-pressed などの
   文字列補間（"true"/"false" が出る）とは別物
-- **item内の属性補間は wire に載る**: 鍵付き item の中の `aria-current="<%= ... %>"` や
+- **item内の属性補間は wire に載る**: キー付き item の中の `aria-current="<%= ... %>"` や
   `class="prio prio-<%= task.priority %>"` は per-item parts として応答に乗り、クライアントが
   当てはめる。既存行の内容がサーバー側で変わる場合も同じ経路で追随する
 - **ivar 条件分岐は wire に載る**: `<% if @remaining > 0 %>` のような state を使わない条件でも、
-  dynamics コンパイラは全 if を conditional として追跡し、応答に `branch` 値＋腕 statics を乗せる。
-  初期 HTML には現在腕が `<!--herb-branch:N:x-->` マーカーで載る。クライアントは
+  dynamics コンパイラは全 if を conditional として追跡し、応答に `branch` 値と分岐の statics を乗せる。
+  初期 HTML には現在の分岐先が `<!--herb-branch:N:x-->` マーカーで載る。クライアントは
   branch 値が変わったときだけ switchBranch（statics は応答から hold して materialize）。
-  応答の slots 値は**毎回適用**されるので、腕の中の値は data-herb-name スロットで乗せるのが定石
+  応答の slots 値は**毎回適用**されるので、分岐の中の値は data-herb-name スロットで乗せるのが定石
   （statics は初回固定でも値は毎往復差し替わる）
-- **stale 選択の退避**: `selected_id` が実在しない行を指したままの応答は then 腕を空値で返す。
+- **stale 選択の退避**: `selected_id` が実在しない行を指したままの応答は then 側を空値で返す。
   詳細パネルの条件は `selected_id > 0` ではなく `@selected`（コントローラーで実在確認済み）に
-  すると、server 側の腕選択とクライアントの見た目が常に一致する
+  すると、server 側の分岐選択とクライアントの見た目が常に一致する
 - **counted state をループ前で読むな**は再確認された（lab の数量ステッパーで再現）:
   `in_cart` を feature-head で読むと「read before its count is complete」のコンパイルエラー。
   統計行はリストの後に置く
-- **アコーディオン（per-item 分岐 + サーバー読みの腕）**: 行ごとの `open` 状態＋`data-herb-toggle`、
-  本文の腕は parked（`<!--herb-branch:46:-->` スロット格納）。腕の `faq[:a]` はサーバー読みなので
+- **アコーディオン（per-item 分岐 + サーバー読みの値）**: 行ごとの `open` 状態＋`data-herb-toggle`、
+  本文の分岐先は parked（`<!--herb-branch:46:-->` スロット格納）。分岐の中の `faq[:a]` はサーバー読みなので
   `server.branches` に node_path が列挙され、クライアントの `requestBranchRefetch` 機構が
-  腕 materialize 時に値を取りに行く設計（メンション腕と同型）。**ブラウザでの materialize 実確認は
+  分岐 materialize 時に値を取りに行く設計（メンション側と同型）。**ブラウザでの materialize 実確認は
   録画時（Playwright 撮影）に要確認** — manifest/parked/refetch までの実測は済
 - **fold で金額合計は作れない**: fold の増分は整数リテラルのみ（`fold_increment` が
   `Prism::IntegerNode` を要求）。`total += price * qty` 系は設計段階で諦める
@@ -162,31 +162,31 @@
 録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。
 ツールはリポジトリに入れない（「Node/yarn を導入しない」はアプリの前提で、録画道具は別物）。
 
-- **server mode の往復トリガは「state条件分岐の腕の切替」だけ**。state を書いても、
-  その state を読む分岐の腕が反転しない限り GET slots は飛ばない（ソートの select 単体は
+- **server mode の往復トリガは「state条件分岐の答えの切替」だけ**。state を書いても、
+  その state を読む分岐の答えが反転しない限り GET slots は飛ばない（ソートの select 単体は
   リクエスト0で実測。hub の検索が動くのはノートの「全件表示↔絞り込み中」反転がトリガだから）。
-  さらに**連続タイピングで腕が反転しない間は行が古いまま**（ノートの文字だけ client 評価で更新され、
+  さらに**連続タイピングで分岐が反転しない間は行が古いまま**（ノートの文字だけ client 評価で更新され、
   行は初回の絞り込み結果で止まる — 実測）
-- **steering ヘッダ（Herb-State）に載る state も「分岐の腕の条件が読んでいる state」に限る**
+- **steering ヘッダ（Herb-State）に載る state も「分岐の条件が読んでいる state」に限る**
   （クライアントの `steering()` が conditionals + server.reads から収集。server-mode ページの
   `server.reads` は常に空）。**だから往復させたい state は、必ずどこかの state 条件分岐に読ませる**。
-  Patterns 画面では ① ノートを priority の if/elsif 連鎖に（全遷移でどこかの腕が反転）②
+  Patterns 画面では ① ノートを priority の if/elsif 連鎖に（全遷移でどこかの分岐が反転）②
   ページインジケータを `page > 1` の if に ③ 詳細の条件を `selected_id > 0` に、の3本で賄う
 - **反転しない反復操作（行→行、2→3ページ目）は `data-herb-action="$refresh"` を合成する**。
   同一要素に action と set が併置できる。action が先に評価されて `request(0)` を予約するが、
   実際のヘッダは timer 発火時に組み立てられるので、同 dispatch 中に書いた state が載る（1リクエストに合流）
-- **per-item 分岐の腕の実測**: 静的テキスト（＋/－マーカー）は materialize されるが、
-  **腕に置いたサーバー読みの値は空で届く**。ワイヤ自体は完全（応答は item ごとに
+- **per-item 分岐の実測**: 静的テキスト（＋/－マーカー）は materialize されるが、
+  **分岐の中に置いたサーバー読みの値は空で届く**。ワイヤ自体は完全（応答は item ごとに
   `{branch: 0, slots: {"47": "答え"}}` を返している）で、refetch も発火する — クライアントが
-  materialize 済みの item 腕に値を流し込めていないだけ。0.6.0 のギャップ
-- **対処パターン: 答えを腕に置かず presence 束縛で見た目を切る**。`hidden="<%= !open %>"`
+  materialize 済みの item の分岐に値を当てはめられていないだけ。0.6.0 のギャップ
+- **対処パターン: 答えを分岐の中に置かず presence バインディングで表示を切り替える**。`hidden="<%= !open %>"`
   は falsy 読みの presence としてコンパイルされ（manifest: `["open", nil, "falsy"]`）、
   答えは平常の item part として初回から DOM に乗る。`checked/selected/disabled` に加えて
   `hidden` も presence の仲間。CSS には `[hidden] { display: none !important; }` のガードを足す
-- **textarea は raw_text ではなく `value="<%= state %>"` で束縛する**。raw_text の適用は
+- **textarea は raw_text ではなく `value="<%= state %>"` でバインドする**。raw_text の適用は
   `textContent` 書き込みのみで、ユーザーが一度でも打つと表示値（`value` プロパティ）と乖離し、
   reset しても表示が空にならない（hint は「0 文字」なのに中身が残る — 機能⑦でも発生していた実測）。
-  `value=` 形式なら BINDABLE_ELEMENTS（textarea 第一次級）として双方向に結線され、reset が表示まで追従する
+  `value=` 形式なら BINDABLE_ELEMENTS（textarea 第一次級）として双方向に結び付けられ、reset が表示まで追従する
 - **録画の細部**: 要素クリップの高さがビューポートを超えると stitch され、sticky ヘッダが
   画像の途中に混入する。GIF はクリップが収まる高さのビューポートで撮る（patterns は
   split が横並びになる 1000px 幅も必要 — 832px 未満はメディアクエリで縦積みになる）
@@ -207,17 +207,17 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   別インスタンス（ブラウザ実測 [true,false]）
 - **test環境の client mode は region をコメントマーカーで出す**: `<template data-herb-region>`
   は dev のみ（debug span と同じ env 差分）。test のアサートはコメントマーカーで引く
-- **パーシャル内の分岐腕は materialize されない（0.6.0 最大のギャップ）**: client mode でも腕は
+- **パーシャル内の分岐は materialize されない（0.6.0 最大のギャップ）**: client mode でも分岐先は
   parked されない（manifest の `fragments: {}`、region テンプレート自体が出ない）。set/toggle は
-  サーバー refetch にフォールバックするが、応答の腕は `{"branch": null}` で statics 空丸 —
-  per-item 腕ギャップの拡大版で、トップレベル条件分岐でも同じ
-  → **パーシャルでは腕でなく presence（hidden）+ CSS で切替する**。そうすれば全操作 0 往復
+  サーバー refetch にフォールバックするが、応答の分岐スロットは `{"branch": null}` で statics 空丸 —
+  per-item 分岐ギャップの拡大版で、トップレベル条件分岐でも同じ
+  → **パーシャルでは分岐でなく presence（hidden）+ CSS で切替する**。そうすれば全操作 0 往復
 - **パーシャル内の render-with-block は slots 再レンダで TypeError**（"no implicit conversion of
   Hash into String"、GET 初回描画は成功するので発見が遅れる）→ 本文は `content:` ローカルで渡す
-- 計数foldはパーシャル内でも動く: `in_cart: 0` をパーシャル先頭で宣言、腕でなく
+- カウントfoldはパーシャル内でも動く: `in_cart: 0` をパーシャル先頭で宣言、分岐でなく
   `<% if qty > 0 %><% in_cart += 1 %><% end %>` の3タグ形、統計読みはリスト直後
-- equality の presence 束縛（`hidden="<%= tab == "activity" %>"`）はコンパイルされクライアント評価
-  される — 「パネルの切替」も腕なしで書ける（stepper の `disabled="<%= qty == 0 %>"` と同型）
+- equality の presence バインディング（`hidden="<%= tab == "activity" %>"`）はコンパイルされクライアント評価
+  される — 「パネルの切替」も分岐なしで書ける（stepper の `disabled="<%= qty == 0 %>"` と同型）
 - ブラウザ実測（`/tmp/opencode/capture/ui-probe.js`）: 9コンポーネント全操作で
   **slot 往復 0**。herb dev tools の浮きメニューがポインタを吸うので、プローブは
   `[class*="herb-dev-tools"]` への恒久CSS + `force: true` クリックで回避
@@ -237,6 +237,6 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   → ビルドステップゼロがデモの前提。app.css に素のCSS（デザイントークン含む）で書く
 - 行クラスのstate補間（`class="<%= … if done %>"` のようなもの）を戻さない
   → 属性補間はサーバー読みスロットになりチェックごとに往復する。
-  見た目の状態は presence 束縛（`checked`）+ CSS `:has(input:checked)` で即時追随させる
+  見た目の状態は presence バインディング（`checked`）+ CSS `:has(input:checked)` で即時追随させる
 - モーダルフォームを `board_path` にPOSTさせない → board はGETルートのみ。CRUDの入口は
-  `tasks_path`（正攻法の分離）。`data-herb-into` はスプライス先コレクションの名前指定に過ぎない
+  `tasks_path`（正攻法の分離）。`data-herb-into` は差し込み先コレクションの名前指定に過ぎない

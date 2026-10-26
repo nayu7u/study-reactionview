@@ -299,17 +299,17 @@
         <td>検索・並び替え</td><td>form + <code>turbo-frame</code> + 部分テンプレ ＋（文字入力単位にするなら）Stimulus debounce</td>
         <td><code>data-herb-set="query=$value"</code> + <code>data-herb-debounce</code></td></tr>
       <tr><td>完了チェック・統計</td><td>行の class 切替の Stimulus ＋統計の再描画</td>
-        <td>presence 束縛（<code>checked</code>）＋CSS <code>:has()</code> ＋計数 fold（<code>done_count</code>）</td></tr>
+        <td>presence バインディング（<code>checked</code>）＋CSS <code>:has()</code> ＋カウントfold（<code>done_count</code>）</td></tr>
       <tr><td>作成ドロワー</td><td>Stimulus の dialog 開閉、focus と backdrop 処理</td>
         <td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… esc@window-&gt;…"</code></td></tr>
-      <tr><td>楽観的追加</td><td>Stimulus で先に DOM を挿入するか Turbo Stream 追従（順序・鍵の整合は自前）</td>
+      <tr><td>楽観的追加</td><td>Stimulus で先に DOM を挿入するか Turbo Stream 追従（順序・キーの整合は自前）</td>
         <td><code>data-herb-into="tasks"</code> → POST 201 の splice</td></tr>
 
       <tr><td rowspan="3"><b>Patterns</b><br><code>/patterns</code></td><td rowspan="3">server</td>
         <td>フィルタチップ</td><td>chips 用の form submit リンク、aria 状態の保守</td>
         <td><code>data-herb-set="priority=3 page=1"</code> ＋ <code>aria-pressed</code> スロット</td></tr>
       <tr><td>もっと見る</td><td><code>link_to … data: { turbo_stream: … }</code> ＋ append ストリーム or フレーム増設</td>
-        <td><code>data-herb-increment="page"</code> ＋ <code>$refresh</code>（鍵付き差分で既存行は動かない）</td></tr>
+        <td><code>data-herb-increment="page"</code> ＋ <code>$refresh</code>（キー付き差分で既存行は動かない）</td></tr>
       <tr><td>詳細連動</td><td>行クリック → 別フレームの再描画、選択状態の管理を Stimulus で</td>
         <td>同じ往復が詳細の分岐と <code>data-herb-name</code> スロットに答える</td></tr>
 
@@ -319,13 +319,13 @@
       <tr><td>ライブ入力・バリデーション</td><td>文字数Controller、妥当性Controller、disabled の同期</td>
         <td>派生宣言（<code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code>）＋presence の <code>disabled</code></td></tr>
       <tr><td>ウィザード（3ステップ）</td><td>ステップController ＋入力ゲートController</td>
-        <td><code>step</code> 状態の分岐（未描画の腕は <code>&lt;template data-herb-region&gt;</code> に格納済み）</td></tr>
+        <td><code>step</code> 状態の分岐（未描画の分岐先は <code>&lt;template data-herb-region&gt;</code> に格納済み）</td></tr>
 
       <tr><td rowspan="2"><b>UI Kit</b><br><code>/ui</code></td><td rowspan="2">client</td>
         <td>switch・accordion 等 9コンポーネント</td><td>shadcn/ui 相当 = Stimulus の Data API、往復も発生しうる更新の配管</td>
-        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence 束縛。<strong>全操作 0 往復</strong>（実測）</td></tr>
+        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>全操作 0 往復</strong>（実測）</td></tr>
       <tr><td>数量ステッパー（stepper）</td><td>行ごとの qty 管理と全体合計を Stimulus に</td>
-        <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋計数 fold の <code>in_cart</code></td></tr>
+        <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋カウントfold の <code>in_cart</code></td></tr>
     </tbody>
   </table>
   </div>
@@ -388,7 +388,7 @@
       <div class="panel-foot">
         <b>オプション1行</b>＋「<code>if query.empty?</code> の反転」が往復のトリガ。
         行もバッジも同じ往復の slots ワイヤで一体に更新されるので、部分更新の配管を複数作らない。
-        文字入力中は腕が反転しない限り通信なし — debounce は属性備え付け。
+        文字入力中は分岐が反転しない限り通信なし — debounce は属性備え付け。
       </div>
     </div>
   </div>
@@ -399,7 +399,7 @@
     <div class="panel hot">
       <div class="panel-head"><span class="dot"></span>Hotwire（Stimulus 楽観挿入 + Turbo Stream 正）<span class="grow">2ファイル</span></div>
       <pre><code><span class="c-cmt">// 楽観的に置くには Stimulus で先に DOM を作る —</span>
-<span class="c-cmt">// 差し込み口・順序・鍵の整合は自前管理になる</span>
+<span class="c-cmt">// 差し込み口・順序・キーの整合は自前管理になる</span>
 <span class="c-kw">export default class</span> <span class="c-kw">extends</span> Controller {
   <span class="c-kw">static</span> targets = [<span class="c-str">"list"</span>, <span class="c-str">"row"</span>]
   submit(event) {
@@ -415,7 +415,7 @@
 <span class="c-cmt">&lt;!-- app/views/tasks/create.turbo_stream.erb --&gt;</span>
 &lt;<span class="c-tag">%=</span> <span class="c-erb">turbo_stream</span>.prepend <span class="c-str">"tasks"</span>, <span class="c-attr">@task</span> <span class="c-tag">%&gt;</span></code></pre>
       <div class="panel-foot">
-        <b>楽観側と正側が別の仕組みに別れがち</b>。順序や重複、鍵照合は手で管理する領分。
+        <b>楽観側と正側が別の仕組みに別れがち</b>。順序や重複、キー照合は手で管理する領分。
         （もっと手軽に Turbo Frame で送るなら、それは<strong>往復待ちの描画</strong>になり楽観でなくなる）
       </div>
     </div>
@@ -434,7 +434,7 @@
 <span class="c-cmt">&lt;%# no-JS の従来フォールバックも同じコントローラで %&gt;</span>
 <span class="c-erb">format.html</span> <span class="c-kw">do</span> redirect_to <span class="c-attr">root_path</span>, <span class="c-attr">notice:</span> … <span class="c-kw">end</span></code></pre>
       <div class="panel-foot">
-        <b>201 応答の collection splice</b>。クライアントは鍵付き照合で新規行だけ差し込み（既存行は動かない）、
+        <b>201 応答の collection splice</b>。クライアントはキー付き照合で新規行だけ差し込み（既存行は動かない）、
         その行の statics は GET と同じテンプレーコンパイルから出るので整合が取れている。
         ドロワーを閉じる/クリアする <code>data-herb-set</code>/<code>-reset</code> も form と同時発火。
       </div>
@@ -524,8 +524,8 @@
 <span class="c-cmt">&lt;%# 統計はリストの直後（foldが完了してから読む） %&gt;</span>
 <span class="c-erb">&lt;%=</span> in_cart <span class="c-erb">%&gt;</span> 点をカートに追加</code></pre>
       <div class="panel-foot">
-        <b>state は HTML に住んでいる</b>（行ごと宣言、hidden への presence）。鍵付き item に紐づいた状態なので
-        行が増減しても state が行に追従する。なお <code>in_cart</code> は計数 fold（<code>+= 1</code> の整数リテラル増分
+        <b>state は HTML に住んでいる</b>（行ごと宣言、hidden への presence）。キー付き item に紐づいた状態なので
+        行が増減しても state が行に追従する。なお <code>in_cart</code> はカウントfold（<code>+= 1</code> の整数リテラル増分
         のみ）— 金額合計は「クライアントでは作れない」が正確な境界（§6）。
       </div>
     </div>
@@ -540,10 +540,10 @@
   <table>
     <thead><tr><th>Hotwire の部品</th><th>役割</th><th>ReActionView での代わり</th><th>実装場所</th></tr></thead>
     <tbody>
-      <tr><td><code>&lt;turbo-frame&gt;</code></td><td>局所更新の枠</td><td><code>data-herb-name</code> コレクション＋<code>&lt;%# herb:key … %&gt;</code>（鍵付き差分適用）</td><td>tasks/index, patterns</td></tr>
+      <tr><td><code>&lt;turbo-frame&gt;</code></td><td>局所更新の枠</td><td><code>data-herb-name</code> コレクション＋<code>&lt;%# herb:key … %&gt;</code>（キー付き差分適用）</td><td>tasks/index, patterns</td></tr>
       <tr><td>Turbo Stream（append / replace…）</td><td>応答後の部分操作</td><td>POST 201 の collection splice（<code>data-herb-into</code>）</td><td>tasks#create</td></tr>
       <tr><td><code>form_with</code> ＋ submit リスナー</td><td>値の往復</td><td><code>data-herb-set="query=$value"</code> ＋ <code>data-herb-debounce</code>（form不要）</td><td>tasks/index</td></tr>
-      <tr><td>Stimulus（入力リアクティブ）</td><td>派生値・妥当性</td><td><code>&lt;%# herb:state (…) 派生宣言 %&gt;</code> と presence 束縛（<code>disabled</code>, <code>checked</code>, <code>hidden</code>）</td><td>lab 機能⑦⑫, ui/_switch</td></tr>
+      <tr><td>Stimulus（入力リアクティブ）</td><td>派生値・妥当性</td><td><code>&lt;%# herb:state (…) 派生宣言 %&gt;</code> と presence バインディング（<code>disabled</code>, <code>checked</code>, <code>hidden</code>）</td><td>lab 機能⑦⑫, ui/_switch</td></tr>
       <tr><td>Stimulus（per-item targets）</td><td>行ごとの状態</td><td>行内 <code>&lt;%# herb:state (qty: 0) %&gt;</code> ＋ <code>data-herb-increment/decrement</code></td><td>lab 機能⑬, ui/_stepper</td></tr>
       <tr><td>Stimulus / dialog 要素</td><td>開閉・Esc・backdrop</td><td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… keydown.esc@window-&gt;…"</code></td><td>tasks 機能③, lab 機能⑥</td></tr>
       <tr><td><code>classList.toggle</code> / <code>hidden</code> 直接操作</td><td>見た目切替</td><td><code>data-herb-toggle</code> ＋ CSS <code>:has()</code> / <code>[hidden]</code> ガード</td><td>ui/_switch, lab 機能⑭</td></tr>
@@ -561,9 +561,9 @@
     <div class="card">
       <p style="margin-bottom:6px;"><b>server mode（<code>/</code>, <code>/patterns</code>）</b></p>
       <p style="font-size:13.8px;">
-        往復は<strong>state を読む分岐の腕が反転した時だけ</strong>1回。
-        検索の腕反転は <code>&lt;% if query.empty? %&gt;</code> がトリガ、ソート select 単体は 0（実測）。
-        連続タイピングで腕が反転しない間は行を触らず、文字はクライアント評価で更新。
+        往復は<strong>state を読む分岐の答えが反転した時だけ</strong>1回。
+        検索の分岐反転は <code>&lt;% if query.empty? %&gt;</code> がトリガ、ソート select 単体は 0（実測）。
+        連続タイピングで分岐が反転しない間は行を触らず、文字はクライアント評価で更新。
       </p>
       <p class="mini">
         なお steering（<code>Herb-State</code> ヘッダ）に載るのは
@@ -578,7 +578,7 @@
         全操作 <strong>0 往復</strong>。未描画ブランチは初期レスポンスの
         <code>&lt;template data-herb-region&gt;</code> に格納済みで、
         <code>&lt;template data-herb-manifests&gt;</code>（states/reads/conditionals/presence/computed の命令書）に従って
-        ブラウザ内で腕の materialize・presence・fold が進む。
+        ブラウザ内で分岐の materialize・presence・fold が進む。
       </p>
       <p class="mini">UI Kit の9コンポーネント全操作は slot 往復 0 を実測（docs/ui-kit.md）。意図的に同期取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。</p>
     </div>
@@ -586,7 +586,7 @@
       <p style="margin-bottom:6px;"><b>共通の帳尻</b></p>
       <ul class="tight" style="font-size:13.8px;">
         <li><code>$refresh</code> 等の action は <code>data-herb-set</code> と同要素に併置できる（同 dispatch の state は 1 リクエストに合流）</li>
-        <li>no-JS 環境では form が通常の POST → <code>format.html</code> の redirect／flash で完結（フォールバック契約を統合テストで固定）</li>
+        <li>no-JS 環境では form が通常の POST → <code>format.html</code> の redirect／flash で完結（フォールバックの振る舞いを統合テストで固定）</li>
         <li>応答は HTML でなく値の JSON（<code>application/vnd.herb.slots+json</code>）— 行まるごとの再送ではない</li>
       </ul>
     </div>
@@ -610,13 +610,13 @@
       コントローラから ivar（<code>@selected_id</code>）を渡し、per-row の属性スロットとして往復させる（patterns の実装）。
     </li>
     <li>
-      <b>per-item 分岐の腕に置いたサーバー読みの値は空で届く</b> — statics は materialize されるが値は乗らない（0.6.0 実測）。
-      対処は「答えを腕に置かない」：<code>hidden="&lt;%= !open %&gt;"</code> の presence 束縛＋CSS<code>[hidden]</code>ガード
+      <b>per-item 分岐に置いたサーバー読みの値は空で届く</b> — statics は materialize されるが値は乗らない（0.6.0 実測）。
+      対処は「答えを分岐の中に置かない」：<code>hidden="&lt;%= !open %&gt;"</code> の presence バインディング＋CSS<code>[hidden]</code>ガード
       （lab 機能⑭、ui コンポーネント全体）。
     </li>
     <li>
-      <b>パーシャル内の分岐腕は parked されない</b> — client mode でも region テンプレート自体が出ない（ui-kit 実測）。
-      パーシャルでは腕でなく presence（hidden）＋CSS で切替、が定石。
+      <b>パーシャル内の分岐先は parked されない</b> — client mode でも region テンプレート自体が出ない（ui-kit 実測）。
+      パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
     </li>
     <li>
       <b>POST 201 の splice は collection のみ</b> — region 級のサーバー読み（<code>Task.count</code> 等）は次の GET でしか追いつかない。
@@ -630,7 +630,7 @@
   <p class="asc">
     <b>この境界の読み方</b>: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されているのが
     検証リポジトリとしての価値。<code>bin/rails test</code> は HTMLレンダ / herb_state による並び替え / slots 応答 /
-    no-JS フォールバックの契約を固定しているので、境界の再現性もコミットで追跡できます。
+    no-JS フォールバックの振る舞いを固定しているので、境界の再現性もコミットで追跡できます。
   </p>
 </section>
 
@@ -643,7 +643,7 @@
       <p style="margin-bottom:6px;"><span class="flag flag-r">最有力</span> <b>行とヘッダの同時連動（ピン/星）</b></p>
       <p style="font-size:13.8px;">
         行の星を押すと、行の見た目とヘッダの「ピン済み N」が即時に揃う。
-        星の塗りは presence 束縛＋CSS、<code>N</code> は計数 fold（<code>when: "pinned"</code>）でクライアント評価 —
+        星の塗りは presence バインディング＋CSS、<code>N</code> はカウントfold（<code>when: "pinned"</code>）でクライアント評価 —
         <strong>0 往復</strong>。Hotwire なら2か所の DOM 同期（Stimulus）か Stream 往復が要る。
       </p>
       <p class="mini">既存の実測パターン（presence + fold + toggle）の組合せのみで組める。</p>
