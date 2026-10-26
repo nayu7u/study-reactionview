@@ -4,7 +4,7 @@
 <section class="hero">
   <div class="hero-badge"><%= @total %> tasks in this view</div>
   <h1>Patterns</h1>
-  <p class="hero-sub">実務で撮る3パターン — 詳細連動・フィルタチップ・もっと見る。全部 server mode で、往復するのは値だけです。</p>
+  <p class="hero-sub">実務から拾った3パターン — 詳細連動・フィルタチップ・もっと見る。全部 server mode で、往復するのは値だけです。</p>
 </section>
 
 <div class="split">
@@ -54,7 +54,7 @@
     <% else %>
       <p class="load-done">全部読み込みました</p>
     <% end %>
-    <p class="task-note">チップの絞り込みは <code>herb_state("priority")</code>、行の追加は鍵付き差分。<code>page</code> が1つ増えるだけの往復で、既存行は動かず新しい行だけ付きます。</p>
+    <p class="task-note">チップの絞り込みは <code>herb_state("priority")</code>、行の追加はキー付き差分。<code>page</code> が1つ増えるだけの往復で、既存行は動かず新しい行だけ付きます。</p>
   </section>
 
   <aside class="feature" data-feature="detail">
@@ -78,7 +78,7 @@
         <p>行を選ぶと、同じGET往復の答えで詳細が差し替わります。解除は <code>data-herb-reset</code>。</p>
       </div>
     <% end %>
-    <p class="task-note">値は全部 <code>data-herb-name</code> のスロットで乗る — 腕のstaticsは初回固定でも、スロットは毎往復で差し変わります（ドロワーの文字数カウントと同じ発想）。行から行への切替は分岐が反転しないので <code>$refresh</code> を合成しています。</p>
+    <p class="task-note">値は全部 <code>data-herb-name</code> のスロットで乗る — 分岐のstaticsは初回固定でも、スロットは毎往復で差し変わります（ドロワーの文字数カウントと同じ発想）。行から行への切替は分岐が反転しないので <code>$refresh</code> を合成しています。</p>
   </aside>
 
 </div>

@@ -4,7 +4,7 @@
 <section class="hero">
   <div class="hero-badge">Client mode — サーバー往復ゼロ</div>
   <h1>Client Lab</h1>
-  <p class="hero-sub">このページの未描画ブランチは <code>&lt;template data-herb-region&gt;</code> に格納済み。開閉・切替・カウントはすべてブラウザ内で完結します。<code>$refresh</code> だけが意図的な脱出口です。</p>
+  <p class="hero-sub">このページの未描画ブランチは <code>&lt;template data-herb-region&gt;</code> に格納済み。開閉・切替・カウントはすべてブラウザ内で完結します。<code>$refresh</code> だけが、意図的にサーバーへ問い合わせ直す手段です。</p>
 </section>
 
 <div class="feature-grid">
@@ -61,7 +61,7 @@
       <h2>コマンドパレット</h2>
       <button data-herb-set="click->palette_open=true keydown.meta+k@window->palette_open=true keydown.ctrl+k@window->palette_open=true"><kbd>⌘K</kbd> で開く</button>
     </div>
-    <p><kbd>Esc</kbd> と外側クリックで閉じます。入力はpresence束縛：文字数と「検索中」表示が即時追随します。</p>
+    <p><kbd>Esc</kbd> と外側クリックで閉じます。入力はpresenceバインディングで、文字数と「検索中」表示が即時追随します。</p>
     <div data-herb-set="mouseenter->preview=true mouseleave->preview=false" class="lib-hover">
       👀 ここにホバー
     </div>
@@ -69,7 +69,7 @@
   </section>
 
   <section class="feature" data-feature="switch">
-    <span class="feature-tag">機能⑦ switch束縛と派生状態（ready: draft != ""）</span>
+    <span class="feature-tag">機能⑦ switchバインディングと派生状態（ready: draft != ""）</span>
     <h2>オンオフとライブ入力</h2>
     <div class="switch-row">
       <label class="task-check">
@@ -87,7 +87,7 @@
   </section>
 
   <section class="feature" data-feature="wizard">
-    <span class="feature-tag">機能⑪ 多段ウィザード（step状態と派生ゲート、腕ごとの入力）</span>
+    <span class="feature-tag">機能⑪ 多段ウィザード（step状態と派生の有効化、ステップごとの入力）</span>
     <h2>サインアップステッパー</h2>
     <div class="dot-row" aria-label="ステップ">
       <span class="dot" aria-current="<%= step == 1 %>"></span>
@@ -123,11 +123,11 @@
         <button class="btn btn-primary" data-herb-reset="step name email">完了（リセット）</button>
       </div>
     <% end %>
-    <p class="task-note">ゲートは派生状態（<code>name_ok: name != ""</code>）→ presence束縛の disabled。未描画の腕は全部 <code>&lt;template&gt;</code> に停めてあるので、切替は往復ゼロです。</p>
+    <p class="task-note">押せるかどうかは派生状態（<code>name_ok: name != ""</code>）→ presenceバインドの disabled。未描画のステップは全部 <code>&lt;template&gt;</code> に格納してあるので、切替は往復ゼロです。</p>
   </section>
 
   <section class="feature" data-feature="validate">
-    <span class="feature-tag">機能⑫ 入力バリデーション（length変換＋順序比較＋派生ゲート）</span>
+    <span class="feature-tag">機能⑫ 入力バリデーション（length変換＋順序比較＋コンボ派生）</span>
     <h2>文字数オーバー検知</h2>
     <textarea class="field" value="<%= bio %>" aria-label="自己紹介" placeholder="60字以内で自己紹介…"></textarea>
     <p class="char-hint" aria-live="polite"><%= bio.length %>/60字 <% if over %><span class="over-pill">⚠ 長すぎます</span><% end %></p>
@@ -135,11 +135,11 @@
       <button class="btn btn-primary" disabled="<%= !ready_bio %>">保存（実装は省略）</button>
       <button data-herb-reset="bio">クリア</button>
     </div>
-    <p class="task-note">上限は派生状態の宣言に書く: <code>over: bio.length &gt; 60</code>。送信ゲートは <code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> のコンボ派生 — 比較はクライアント評価なので往復ゼロ。</p>
+    <p class="task-note">上限は派生状態の宣言に書く: <code>over: bio.length &gt; 60</code>。送信の有効化は <code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> のコンボ派生 — 比較はクライアント評価なので往復ゼロ。</p>
   </section>
 
   <section class="feature" data-feature="qty">
-    <span class="feature-tag">機能⑬ 数量ステッパー（行ごとの数量状態＋計数fold）</span>
+    <span class="feature-tag">機能⑬ 数量ステッパー（行ごとの数量状態＋カウントfold）</span>
     <div class="feature-head">
       <h2>カート行</h2>
     </div>
@@ -159,11 +159,11 @@
       <% end %>
     </ul>
     <p class="task-stat" aria-live="polite"><span class="badge"><%= in_cart %></span> 点をカートに</p>
-    <p class="task-note">数量は行ごとのブラウザ状態。<code>in_cart</code> は計数fold（条件付き <code>+= 1</code>）で即時追従 — counted state をループの前で読むと「count is complete 前」のコンパイルエラーになるので統計はリストの後に置く。金額合計は増分が定数でないため fold に載らない。0で減ボタンを無効化する<code>disabled</code>は順序比較のpresence束縛。</p>
+    <p class="task-note">数量は行ごとのブラウザ状態。<code>in_cart</code> はカウントfold（条件付き <code>+= 1</code>）で即時追従 — counted state をループの前で読むと「count is complete 前」のコンパイルエラーになるので統計はリストの後に置く。金額合計は増分が定数でないため fold に載らない。0で減ボタンを無効化する<code>disabled</code>は順序比較のpresenceバインディング。</p>
   </section>
 
   <section class="feature" data-feature="accordion">
-    <span class="feature-tag">機能⑭ アコーディオン（行ごとのopen状態とhiddenのpresence束縛）</span>
+    <span class="feature-tag">機能⑭ アコーディオン（行ごとのopen状態とhiddenのpresenceバインディング）</span>
     <h2>FAQ</h2>
     <ul class="task-list" data-herb-name="faqs">
       <% @faqs.each do |faq| %>
@@ -178,7 +178,7 @@
         </li>
       <% end %>
     </ul>
-    <p class="task-note">答えのテキストは腕に置かず、<code>hidden</code> 属性のpresence束縛（<code>!open</code>）で切替 — 行ごとの分岐の腕は materialize できても、腕に置いたサーバー読みの値は空で届く（0.6.0実測）。マーカーの＋/－は静的テキストなので腕で差し替わります。</p>
+    <p class="task-note">答えのテキストは分岐の中に置かず、<code>hidden</code> 属性のpresenceバインディング（<code>!open</code>）で切替 — 行ごとの分岐は materialize できても、分岐の中に置いたサーバー読みの値は空で届く（0.6.0実測）。マーカーの＋/－は静的テキストなので分岐の切替で差し替わります。</p>
   </section>
 
 </div>

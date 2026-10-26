@@ -28,7 +28,7 @@
   </section>
 
   <section class="feature" data-feature="switch">
-    <span class="feature-tag">presence束縛 + CSS :has — 同一断片を2個貼って instance 分離を確認</span>
+    <span class="feature-tag">presenceバインディング + CSS :has — 同一断片を2個貼って instance 分離を確認</span>
     <h2>Switch ×2</h2>
     <div class="ui-demo-row">
       <%= render "components/ui/switch", label: "通知をミュート" %>
@@ -38,36 +38,36 @@
   </section>
 
   <section class="feature" data-feature="tabs">
-    <span class="feature-tag">literal比較の分岐腕 + 鍵付きコレクション</span>
+    <span class="feature-tag">literal比較の分岐 + キー付きコレクション</span>
     <h2>Tabs</h2>
     <%= render "components/ui/tabs", overview: @tab_overview, activity: @tab_activity %>
-    <p class="task-note">パネルidは断片内のリテラル(クライアント比較はliteralのみ)。切替はpresence束縛(hidden = tab == 相手)で、往復ゼロ。</p>
+    <p class="task-note">パネルidは断片内のリテラル(クライアント比較はliteralのみ)。切替はpresenceバインディング(hidden = tab == 相手)で、往復ゼロ。</p>
   </section>
 
   <section class="feature" data-feature="field">
-    <span class="feature-tag">派生状態(ready / over)と presence ゲート</span>
+    <span class="feature-tag">派生状態(ready / over)と disabled の presence バインディング</span>
     <h2>Field</h2>
     <%= render "components/ui/field", label: "自己紹介", placeholder: "60字以内で自己紹介…" %>
   </section>
 
   <section class="feature" data-feature="stepper">
-    <span class="feature-tag">行ごとの数量state + 計数fold</span>
+    <span class="feature-tag">行ごとの数量state + カウントfold</span>
     <h2>Stepper</h2>
     <%= render "components/ui/stepper", items: @cart_items %>
-    <p class="task-note">合計は計数fold(整数リテラル増分のみ)。0での−ボタン無効化は順序比較のpresence束縛。</p>
+    <p class="task-note">合計はカウントfold(整数リテラル増分のみ)。0での−ボタン無効化は順序比較のpresenceバインディング。</p>
   </section>
 
   <section class="feature" data-feature="accordion">
     <span class="feature-tag">per-item の open state + hidden presence</span>
     <h2>Accordion</h2>
     <%= render "components/ui/accordion", items: @faqs %>
-    <p class="task-note">答えも＋/－マーカーも腕に置かず全部presence束縛で切替 — パーシャル内の分岐腕は0.6.0ではmaterializeされない実測(parkedされず、refetch応答もbranch:null)のため。</p>
+    <p class="task-note">答えも＋/－マーカーも分岐の中に置かず全部presenceバインディングで切替 — パーシャル内の分岐は0.6.0ではmaterializeされない実測(parkedされず、refetch応答もbranch:null)のため。</p>
   </section>
 
   <section class="feature" data-feature="dialog">
     <span class="feature-tag">自己完結モーダル: トリガ+state+背景を1断片で</span>
     <h2>Dialog</h2>
-    <%= render "components/ui/dialog", cta: "詳細を開く", label: "詳細ダイアログ", content: "開閉は presence 束縛(hidden = !shown)なので往復ゼロ。Esc と外側クリックでも閉じられます。" %>
+    <%= render "components/ui/dialog", cta: "詳細を開く", label: "詳細ダイアログ", content: "開閉は presence バインディング(hidden = !shown)なので往復ゼロ。Esc と外側クリックでも閉じられます。" %>
   </section>
 
 </div>

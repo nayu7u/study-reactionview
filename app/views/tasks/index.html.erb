@@ -26,7 +26,7 @@
   </section>
 
   <section class="feature" data-feature="fine-grained">
-    <span class="feature-tag">機能② 細粒度更新＋楽観的追加（key / data-herb-into / 計数fold）</span>
+    <span class="feature-tag">機能② 細粒度更新＋楽観的追加（key / data-herb-into / カウントfold）</span>
     <div class="feature-head">
       <h2>タスク一覧</h2>
       <button class="btn btn-primary" data-herb-toggle="drawer_open">＋ 新規タスク</button>
@@ -46,11 +46,11 @@
       <% end %>
     </ul>
     <p class="task-stat" aria-live="polite"><%= done_count %>/<%= Task.count %> 件完了</p>
-    <p class="task-note">取り消し線は presence 束縛＋CSS で即時。<code>done_count</code> fold が統計を即時に動かし、行の文言は同じ往復の答えで追随します。</p>
+    <p class="task-note">取り消し線は presence バインディング＋CSS で即時。<code>done_count</code> fold が統計を即時に動かし、行の文言は同じ往復の答えで追随します。</p>
   </section>
 
   <section class="feature" data-feature="drawer">
-    <span class="feature-tag">機能③ ドロワーとフォーム束縛（presence束縛 / 派生は無しでもdisabledで担保） </span>
+    <span class="feature-tag">機能③ ドロワーとフォームのバインディング（presence バインディング / 派生は無しでもdisabledで担保） </span>
     <h2>作成ドロワーの動き</h2>
     <p>「＋ 新規タスク」でスライドイン。<kbd>⌘B</kbd>/<kbd>Ctrl+B</kbd> でも開けます。backdropクリック・<kbd>Esc</kbd>で閉じる。送信成功で閉じ、打ち込んだtitleもリセットされます。</p>
     <div class="drawer-demo-hint" data-herb-set="keydown.meta+b@window->drawer_open=true keydown.ctrl+b@window->drawer_open=true">💡 <kbd>⌘B</kbd> / <kbd>Ctrl+B</kbd> でも開けます</div>

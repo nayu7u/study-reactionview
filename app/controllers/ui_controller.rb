@@ -15,7 +15,7 @@ class UiController < ApplicationController
   FAQS = [
     { id: 1, q: "導入にビルドステップは要りますか?", a: "要りません。ジェネレータが ERB 断片と素の CSS をコピーするだけで、Propshaft がそのまま配ります。" },
     { id: 2, q: "state の宣言はどこに書くの?", a: "断片自身が持っています。herb:state はパーシャル単位で manifest に出るので、貼り付けたコンポーネントが自分の state を所有します。" },
-    { id: 3, q: "shadcn/ui と何が違うの?", a: "Radix の代わりに Herb のコンパイラが挙動を担い、Stimulus を書かずに presence 束縛と data-herb-* 属性だけで反応します。" }
+    { id: 3, q: "shadcn/ui と何が違うの?", a: "Radix の代わりに Herb のコンパイラが挙動を担い、Stimulus を書かずに presence バインディングと data-herb-* 属性だけで反応します。" }
   ].freeze
 
   CART_ITEMS = [

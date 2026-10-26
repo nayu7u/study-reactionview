@@ -4,8 +4,8 @@ class ShowcaseController < ApplicationController
   # covers those).
   NOTIFICATIONS = [
     { id: 1, title: "Sprint Hub が slots で応答しました", detail: "@team 宛の報告", kind: "mention" },
-    { id: 2, title: "presence 束縛が属性を更新しました", detail: "checked / selected / disabled", kind: "info" },
-    { id: 3, title: "計数foldが統計を即時更新しました", detail: "done_count += 1", kind: "info" }
+    { id: 2, title: "presence バインディングが属性を更新しました", detail: "checked / selected / disabled", kind: "info" },
+    { id: 3, title: "カウントfoldが統計を即時更新しました", detail: "done_count += 1", kind: "info" }
   ].freeze
 
   # Static in-memory data on purpose (same rule as NOTIFICATIONS): the lab
