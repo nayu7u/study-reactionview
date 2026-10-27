@@ -31,16 +31,4 @@ class PatternsController < ApplicationController
   def priority_label(priority)
     PRIORITIES.fetch(priority, "?")
   end
-
-  private
-
-  # herb_state returns the raw JSON value from the header untyped (the real
-  # client type-checks literals against the declaration kind, but a crafted
-  # header may send "12" as a string), so browser-supplied numbers are cast
-  # defensively instead of calling Integer-only methods on them.
-  def integer_state(name, default)
-    Integer(herb_state(name, default))
-  rescue TypeError, ArgumentError
-    default
-  end
 end

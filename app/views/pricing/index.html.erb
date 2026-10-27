@@ -1,0 +1,20 @@
+<%# herb:slots server %>
+<%# herb:state (plan: "team", seats: 5, annual: false, support: false) %>
+
+<section class="hero">
+  <div class="hero-badge">Server mode — 金額はサーバーが計算</div>
+  <h1>Pricing</h1>
+  <p class="hero-sub">プランと席数を選ぶと、見積もりをサーバーが計算し直します。</p>
+</section>
+
+<section class="feature" data-feature="pricing">
+  <span class="feature-tag">機能⑮ サーバー計算の見積もり</span>
+  <h2>見積もり</h2>
+  <p class="toolbar-note">
+    初期値: <%= plan %> / <%= seats %>席 /
+    <% if annual %>年払い<% else %>月払い<% end %> /
+    サポート<% if support %>あり<% else %>なし<% end %>
+  </p>
+  <p class="price-total" aria-live="polite" data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
+  <p class="toolbar-note">消費税: <span data-herb-name="tax"><%= number_to_currency(@tax, unit: "¥", precision: 0) %></span></p>
+</section>
