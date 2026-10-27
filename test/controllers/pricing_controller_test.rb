@@ -78,6 +78,23 @@ class PricingControllerTest < ActionDispatch::IntegrationTest
     assert_includes JSON.parse(response.body)["slots"].values, "¥134,640"
   end
 
+  test "a crafted header renders the normalized plan and seats" do
+    slots({ "plan" => "nope", "seats" => 999, "annual" => "false", "support" => "false" })
+
+    assert_response :success
+    values = JSON.parse(response.body)["slots"].values
+    assert_includes values, "Team: チームで使う"
+    assert_includes values, "50"
+    refute_includes values, "999", "the raw out-of-range seat count must not reach the response"
+
+    slots({ "plan" => "starter", "seats" => -3, "annual" => false, "support" => false })
+
+    assert_response :success
+    values = JSON.parse(response.body)["slots"].values
+    assert_includes values, "Starter: 小さく始める"
+    refute_includes values, "-3", "the raw negative seat count must not reach the response"
+  end
+
   test "tax rounds down at the yen boundary" do
     slots({ "plan" => "starter", "seats" => 11, "annual" => true, "support" => true })
 
@@ -130,7 +147,6 @@ class PricingControllerTest < ActionDispatch::IntegrationTest
       .select { |p| p.is_a?(Array) }
       .map(&:first)
     assert_includes presence_states, "seats"
-    assert_includes presence_states, "support"
   end
 
   test "the plan branch answers the selected plan" do
@@ -146,13 +162,13 @@ class PricingControllerTest < ActionDispatch::IntegrationTest
   test "the volume discount is a presence toggle with a top-level value" do
     slots({ "plan" => "team", "seats" => 9, "annual" => false, "support" => false })
 
-    assert_includes JSON.parse(response.body)["slots"].values, "¥0",
-      "the hidden discount line still carries a top-level value"
+    values = JSON.parse(response.body)["slots"].values
+    assert_equal 1, values.count("¥2,400"), "only the Team plan card price is present below ten seats"
 
-    slots({ "plan" => "team", "seats" => 11, "annual" => false, "support" => false })
+    slots({ "plan" => "team", "seats" => 10, "annual" => false, "support" => false })
 
-    assert_includes JSON.parse(response.body)["slots"].values, "¥2,640",
-      "the discount value stays outside the branch as a top-level READ slot"
+    values = JSON.parse(response.body)["slots"].values
+    assert_equal 2, values.count("¥2,400"), "the plan card price and the volume discount are both present at ten seats"
 
     get pricing_path
 

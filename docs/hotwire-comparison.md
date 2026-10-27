@@ -61,7 +61,7 @@ import "reactionview"
 | **Patterns** (`/patterns`) | server | フィルタチップ | chips 用の form submit、aria 状態の保守 | `data-herb-set="priority=3 page=1"`＋`aria-pressed` スロット |
 | | | もっと見る | `link_to …, data: { turbo_stream: … }`＋append ストリーム / フレーム増設 | `data-herb-increment="page"`＋`$refresh`（キー付き差分で既存行は動かない） |
 | | | 詳細連動 | 行クリック → 別フレーム再描画、選択状態を Stimulus で管理 | 同じ往復が詳細の分岐と `data-herb-name` スロットに答える |
-| **Pricing** (`/pricing`) | server | プラン・席数・年払い・サポートの見積もり | Stimulus に価格式を写す／フォーム再送で全体を再描画 | `herb_state` + READ slot + 席数/サポートの `$refresh` |
+| **Pricing** (`/pricing`) | server | プラン・席数・年払い・サポートの見積もり | Stimulus に価格式を写す／フォーム再送で全体を再描画 | `herb_state` + READ slot + 席数/年払い/サポートの `$refresh` |
 | **Client Lab** (`/lab`) | client | タブ・カウンタ・パレット | Stimulus ×3（tab / unread / palette） | `herb:state` 宣言＋`data-herb-set / -increment / -reset` |
 | | | ライブ入力・バリデーション | 文字数・妥当性・disabled 同期のコントローラ | 派生宣言（`ready_bio: bio != "" && bio.length <= 60`）＋presence の `disabled` |
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
@@ -318,8 +318,8 @@ export default class extends Controller {
 ```
 
 > 料金式はコントローラだけにある。`?format=slots` の応答は内訳の値だけで、
-> プラン・年払いは分岐の反転、席数・サポートは非反転条件＋`$refresh` が1往復を運ぶ。
-> 金額の行は分岐の外に置き、`hidden` の presence で表示を切り替える（§⑥）。
+> プランは分岐の反転、席数・年払い・サポートは非反転条件＋`$refresh` が1往復を運ぶ。
+> 金額の行は分岐の外に置き、`hidden` 属性で表示を切り替える（§⑥）。
 
 ---
 
@@ -350,10 +350,10 @@ export default class extends Controller {
   - なお steering（`Herb-State` ヘッダ）に載るのは**分岐の条件が読んでいる state** に限る。
     往復させたい state は必ずどこかの state 条件分岐に読ませる —
     Patterns の3本柱（`if / elsif` 連鎖、`page > 1`、`selected_id > 0`）はその実装。
-    Pricing の `seats > 0` と `support == true || support == false` は常に真の条件で、
-    分岐を反転させずに steering へ載せるためだけに読ませている。
-  - **Pricing** は `plan` / `annual` が分岐の反転、`seats` / `support` が非反転条件＋`$refresh`。
-    金額は分岐の外の READ slot に置き、表示は `hidden` の presence で切り替える。
+    Pricing の `seats > 0`、`annual == true || annual == false`、`support == true || support == false` は
+    常に真の条件で、分岐を反転させずに steering へ載せるためだけに読ませている。
+  - **Pricing** は `plan` が分岐の反転、`seats` / `annual` / `support` が非反転条件＋`$refresh`。
+    金額は分岐の外の READ slot に置き、表示は `hidden` 属性で切り替える。
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
 - **client mode（`/lab`, `/ui`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
@@ -387,8 +387,8 @@ export default class extends Controller {
   （lab 機能⑭、ui コンポーネント全体）。
 - **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ** — 分岐の切替後に
   値スロットを取りに行くため、年払い・サポートの切替が2リクエストになった（Pricing の実測）。
-  金額は分岐の外に置き、`hidden` の presence で行を出し分けると1リクエストに収まる。
-  分岐は static な表示の切替に使う。
+  金額は分岐の外に置き、`hidden` 属性（ボリュームは presence、年払い・サポートは正規化した値）で
+  行を出し分けると1リクエストに収まる。分岐は static な表示の切替に使う。
 - **パーシャル内の分岐先は parked されない** — client mode でも region テンプレート
   自体が出ない（ui-kit 実測）。パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
 - **POST 201 の splice は collection のみ** — region 級のサーバー読み（`Task.count` 等）

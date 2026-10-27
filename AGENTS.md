@@ -162,22 +162,28 @@
 
 ## Pricing 画面で実測した事実（0.6.0 / herb 0.11.1）
 
-- **`plan` / `annual` はトップレベルの state 分岐**: 分岐の反転が1往復を運ぶ。応答の statics が
+- **`plan` はトップレベルの state 分岐**: 分岐の反転が1往復を運ぶ。応答の statics が
   切り替わり、金額は READ slot で差し替わる。行ごとの分岐とは挙動が違う（上の「行ごと」の注意は
   そのまま）。
-- **`seats` / `support` は常に真の条件を steering 用に読ませ、`$refresh` で1往復**: `seats > 0` と
-  `support == true || support == false` は値が変わっても分岐が反転しない。`data-herb-action="$refresh"`
-  を同じ要素に合成し、ヘッダの state を1リクエストに載せる。条件を消すと state が steering に載らず、
-  合計が古いままになる。
+- **`seats` / `annual` / `support` は常に真の条件を steering 用に読ませ、`$refresh` で1往復**:
+  `seats > 0`、`annual == true || annual == false`、`support == true || support == false` は
+  値が変わっても分岐が反転しない。`data-herb-action="$refresh"` を同じ要素に合成し、ヘッダの state を
+  1リクエストに載せる。条件を消すと state が steering に載らず、合計が古いままになる。
+- **可視の値は正規化した ivar、生の state は hidden の steering 条件**: 範囲外の席数や文字列 boolean を
+  表示に漏らさないため、可視出力は `@plan_key` / `@seats` / `@annual` / `@support` で作り、生の state は
+  hidden の条件分岐にだけ読ませる。手作りヘッダの 999 席や "false" が画面に出ない（テスト済み）。
+  可視値はサーバー読みなので、往復後に更新される。
 - **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ**: `annual_discount` / `support_fee` /
   `volume_discount` を分岐の中に置くと、分岐の切替後に値スロットを取りに行き、年払い・サポートの
   切替が2リクエストになった（headless Chromium 実測）。金額を分岐の外へ出し、行の表示だけ
-  `hidden` の presence で切り替えると1リクエストに収まる。分岐は static な文言の切替に使う。
+  `hidden` 属性（ボリュームは presence、年払い・サポートは正規化した値）で切り替えると1リクエストに収まる。
+  分岐は static な文言の切替に使う。
 - **サポートのチェックボックスは2リクエスト**: `checked` のバインドは `input` と `change` の両方で
   state を書くため、条件分岐の反転と合わせて2回飛んだ。`data-herb-set` の2ボタン（`support=false` /
   `support=true`）＋`$refresh` に変えると1回になる。
 - **年払いの条件を2つに分けると2リクエスト**: 小計ラベルと割引ノートが別々に annual を読むと、
-  それぞれが refetch を予約して2回飛ぶ。文言を小計ラベル側に畳んで1つにすると1回になる。
+  それぞれが refetch を予約して2回飛ぶ。可視の小計ラベルは `@annual` の三項で出し分け、
+  steering 用の常真条件を1つだけ置き、`$refresh` を合成すると1回になる。
 - **ボリューム割引の10席しきい値は分岐でなく presence**: `hidden="<%= seats < 10 %>"` と
   `hidden="<%= seats >= 10 %>"` で行を出し分け、金額は分岐外の READ slot。`seats > 0` の常真条件が
   steering を担い、`$refresh` が往復を運ぶ。しきい値の分岐を置くと9→10で2リクエストになる。
@@ -196,7 +202,7 @@
 - **server mode の基本の往復トリガは「state条件分岐の答えの切替」**。state を書いても、
   その state を読む分岐の答えが反転しない限り GET slots は飛ばない（ソートの select 単体は
   リクエスト0で実測。hub の検索が動くのはノートの「全件表示↔絞り込み中」反転がトリガだから）。
-  `$refresh` を合成した操作は、分岐が反転しなくても1回飛ぶ（Pricing の席数・サポート）。
+  `$refresh` を合成した操作は、分岐が反転しなくても1回飛ぶ（Pricing の席数・年払い・サポート）。
   さらに**連続タイピングで分岐が反転しない間は行が古いまま**（ノートの文字だけ client 評価で更新され、
   行は初回の絞り込み結果で止まる — 実測）
 - **steering ヘッダ（Herb-State）に載る state も「分岐の条件が読んでいる state」に限る**
@@ -204,9 +210,9 @@
   `server.reads` は常に空）。**だから往復させたい state は、必ずどこかの state 条件分岐に読ませる**。
   Patterns 画面では ① ノートを priority の if/elsif 連鎖に（全遷移でどこかの分岐が反転）②
   ページインジケータを `page > 1` の if に ③ 詳細の条件を `selected_id > 0` に、の3本で賄う。
-  Pricing の `seats > 0` と `support == true || support == false` は、常に真の条件を steering に
-  載せる例（分岐は反転しない）
-- **反転しない反復操作（行→行、2→3ページ目、Pricing の席数・サポート）は
+  Pricing の `seats > 0`、`annual == true || annual == false`、`support == true || support == false` は、
+  常に真の条件を steering に載せる例（分岐は反転しない）
+- **反転しない反復操作（行→行、2→3ページ目、Pricing の席数・年払い・サポート）は
   `data-herb-action="$refresh"` を合成する**。
   同一要素に action と set が併置できる。action が先に評価されて `request(0)` を予約するが、
   実際のヘッダは timer 発火時に組み立てられるので、同 dispatch 中に書いた state が載る（1リクエストに合流）

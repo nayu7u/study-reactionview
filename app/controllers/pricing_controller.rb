@@ -16,6 +16,7 @@ class PricingController < ApplicationController
   def index
     requested_plan = herb_state("plan", "team")
     plan_key = PLANS.key?(requested_plan) ? requested_plan : "team"
+    @plan_key = plan_key
     @plan = PLANS.fetch(plan_key)
     @plans = PLANS
 

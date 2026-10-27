@@ -136,13 +136,14 @@ $ bin/rails server     # http://localhost:3000
 SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラン・席数・年払い・優先サポートは
 ブラウザ所有の state で、金額の計算はすべて Ruby 側に残す。JavaScript には料金式を書かない。
 
-- `plan` / `annual` は state 条件の分岐が反転して1往復する。`seats` / `support` は分岐が
-  反転しないため、steering 用の非反転条件（`seats > 0`、`support == true || support == false`）と
-  `data-herb-action="$refresh"` の合成で1往復させる。サポートの条件は常に真だが、state を
-  steering ヘッダに載せるために読ませている。
+- `plan` は state 条件の分岐が反転して1往復する。`seats` / `annual` / `support` は分岐が
+  反転しないため、steering 用の非反転条件（`seats > 0`、`annual == true || annual == false`、
+  `support == true || support == false`）と `data-herb-action="$refresh"` の合成で1往復させる。
+  これらの条件は常に真だが、state を steering ヘッダに載せるために読ませている。
 - 内訳の金額は `data-herb-name` の READ slot。ボリューム割引・年払い割引・優先サポートの行は
-  分岐の中に置かず、`hidden` の presence バインディングで出し分ける。分岐の中のサーバー読みは
-  切替後に branch refetch を1回呼ぶため（0.6.0 実測）、金額は分岐の外に置くのが定石だ。
+  分岐の中に置かず、`hidden` 属性で出し分ける（ボリュームは state の presence、年払い・サポートは
+  正規化した値）。分岐の中のサーバー読みは切替後に branch refetch を1回呼ぶため（0.6.0 実測）、
+  金額は分岐の外に置くのが定石だ。
 - headless Chromium で、プラン・席数・年払い・サポートの各操作が **1 リクエスト**で
   内訳と合計を更新することを確認済み。ページはリロードされない。
 - JavaScript を切ると初期表示のみで、再計算はできない（no-JS の再計算は対象外）。
