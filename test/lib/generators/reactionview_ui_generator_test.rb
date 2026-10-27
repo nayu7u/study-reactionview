@@ -13,7 +13,7 @@ class ReactionviewUiComponentGeneratorTest < Rails::Generators::TestCase
   setup :prepare_destination
 
   test "copies the fragment verbatim into app/views/components/ui" do
-    run_generator ["switch"]
+    run_generator [ "switch" ]
 
     path = "app/views/components/ui/_switch.html.erb"
     assert_file path
@@ -22,7 +22,7 @@ class ReactionviewUiComponentGeneratorTest < Rails::Generators::TestCase
   end
 
   test "unknown component names fail loudly with the catalog" do
-    output = capture(:stderr) { run_generator ["nonexistent"] }
+    output = capture(:stderr) { run_generator [ "nonexistent" ] }
     # Thor rescues Thor::Error itself and reports on stderr; the contract we
     # actually care about is that nothing lands in the app
     assert_match(/Unknown component: nonexistent/, output)
