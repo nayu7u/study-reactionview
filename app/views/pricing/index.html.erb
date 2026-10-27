@@ -4,17 +4,101 @@
 <section class="hero">
   <div class="hero-badge">Server mode — 金額はサーバーが計算</div>
   <h1>Pricing</h1>
-  <p class="hero-sub">プランと席数を選ぶと、見積もりをサーバーが計算し直します。</p>
+  <p class="hero-sub">プランと席数を選ぶと、見積もりをサーバーが計算し直します。返るのは HTML 全体ではなく、内訳の値だけです。</p>
 </section>
 
-<section class="feature" data-feature="pricing">
-  <span class="feature-tag">機能⑮ サーバー計算の見積もり</span>
-  <h2>見積もり</h2>
-  <p class="toolbar-note">
-    初期値: <%= plan %> / <%= seats %>席 /
-    <% if annual %>年払い<% else %>月払い<% end %> /
-    サポート<% if support %>あり<% else %>なし<% end %>
-  </p>
-  <p class="price-total" aria-live="polite" data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
-  <p class="toolbar-note">消費税: <span data-herb-name="tax"><%= number_to_currency(@tax, unit: "¥", precision: 0) %></span></p>
-</section>
+<div class="split pricing-layout">
+  <section class="feature" data-feature="pricing">
+    <span class="feature-tag">機能⑮ サーバー計算の見積もり</span>
+    <h2>プランと席数</h2>
+
+    <div class="plan-grid" role="group" aria-label="プラン">
+      <button class="plan-card" data-herb-set="plan=starter" aria-pressed="<%= plan == "starter" %>">
+        <span class="plan-name"><%= @plans["starter"][:label] %></span>
+        <span class="plan-price"><%= number_to_currency(@plans["starter"][:price], unit: "¥", precision: 0) %><small>/席/月</small></span>
+        <span class="plan-blurb"><%= @plans["starter"][:blurb] %></span>
+      </button>
+      <button class="plan-card" data-herb-set="plan=team" aria-pressed="<%= plan == "team" %>">
+        <span class="plan-name"><%= @plans["team"][:label] %></span>
+        <span class="plan-price"><%= number_to_currency(@plans["team"][:price], unit: "¥", precision: 0) %><small>/席/月</small></span>
+        <span class="plan-blurb"><%= @plans["team"][:blurb] %></span>
+      </button>
+      <button class="plan-card" data-herb-set="plan=business" aria-pressed="<%= plan == "business" %>">
+        <span class="plan-name"><%= @plans["business"][:label] %></span>
+        <span class="plan-price"><%= number_to_currency(@plans["business"][:price], unit: "¥", precision: 0) %><small>/席/月</small></span>
+        <span class="plan-blurb"><%= @plans["business"][:blurb] %></span>
+      </button>
+    </div>
+
+    <div class="seat-row">
+      <span class="field-label">席数</span>
+      <div class="qty-group">
+        <button data-herb-decrement="seats" data-herb-action="$refresh" aria-label="席数を減らす" disabled="<%= seats <= 1 %>">−</button>
+        <span class="qty-value"><%= seats %></span>
+        <button data-herb-increment="seats" data-herb-action="$refresh" aria-label="席数を増やす" disabled="<%= seats >= 50 %>">＋</button>
+      </div>
+      <span class="toolbar-note">1〜50席</span>
+    </div>
+
+    <nav class="seg" aria-label="請求サイクル">
+      <button class="seg-btn" data-herb-set="annual=false" aria-pressed="<%= !annual %>">月払い</button>
+      <button class="seg-btn" data-herb-set="annual=true" aria-pressed="<%= annual %>">年払い</button>
+    </nav>
+
+    <div class="toolbar">
+      <nav class="seg" aria-label="優先サポート">
+        <button class="seg-btn" data-herb-set="support=false" data-herb-action="$refresh" aria-pressed="<%= !support %>">サポートなし</button>
+        <button class="seg-btn" data-herb-set="support=true" data-herb-action="$refresh" aria-pressed="<%= support %>">優先サポート +¥10,000/月</button>
+      </nav>
+    </div>
+
+    <p class="task-note">
+      席数の増減は分岐が反転しないため、<code>$refresh</code> を合成しています。
+      表示の切替は <code>hidden</code> の presence で行い、金額は分岐の外の READ slot で受けます。
+    </p>
+  </section>
+
+  <aside class="feature pricing-summary" data-feature="pricing-summary">
+    <span class="feature-tag">見積もり</span>
+    <h2>お見積もり</h2>
+    <p class="price-total" aria-live="polite" data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
+
+    <dl class="price-lines">
+      <div><dt>基本料金（<%= @plan[:label] %> × <%= @seats %>席）</dt><dd data-herb-name="base_fee"><%= number_to_currency(@seat_fee, unit: "¥", precision: 0) %></dd></div>
+      <div class="price-line-discount" hidden="<%= seats < 10 %>">
+        <dt>ボリューム割引（10%）</dt>
+        <dd>-<span data-herb-name="volume_discount"><%= number_to_currency(@volume_discount, unit: "¥", precision: 0) %></span></dd>
+      </div>
+      <div class="price-line-note" hidden="<%= seats >= 10 %>">
+        <dt>ボリューム割引</dt>
+        <dd>10席以上で10%OFF</dd>
+      </div>
+      <div hidden="<%= !support %>">
+        <dt>優先サポート</dt>
+        <dd data-herb-name="support_fee"><%= number_to_currency(@support_fee, unit: "¥", precision: 0) %></dd>
+      </div>
+      <div><dt><% if annual %>小計（12か月・年払い割引）<% else %>小計<% end %></dt><dd data-herb-name="subtotal"><%= number_to_currency(@subtotal, unit: "¥", precision: 0) %></dd></div>
+      <div class="price-line-discount" hidden="<%= !annual %>">
+        <dt>年払い割引（15%）</dt>
+        <dd>-<span data-herb-name="annual_discount"><%= number_to_currency(@annual_discount, unit: "¥", precision: 0) %></span></dd>
+      </div>
+      <div><dt>税抜合計</dt><dd data-herb-name="discounted"><%= number_to_currency(@discounted, unit: "¥", precision: 0) %></dd></div>
+      <div><dt>消費税（10%）</dt><dd data-herb-name="tax"><%= number_to_currency(@tax, unit: "¥", precision: 0) %></dd></div>
+    </dl>
+
+    <p class="toolbar-note"><% if seats > 0 %>現在 <%= seats %> 席で見積もり中。<% end %></p>
+    <% if support == true || support == false %>
+      <p class="toolbar-note">優先サポートは任意です。</p>
+    <% end %>
+
+    <p class="task-note">金額はすべてサーバーで計算しています。内訳は READ slot なので、同じ <code>?format=slots</code> 応答で値だけが差し替わります。表示の切替は <code>hidden</code> の presence バインディングで行い、金額は分岐の外に置いています。JavaScript を切ると初期表示のみで、再計算はできません。</p>
+  </aside>
+</div>
+
+<% if plan == "starter" %>
+  <p class="toolbar-note">Starter: 小さく始めるプランです。</p>
+<% elsif plan == "team" %>
+  <p class="toolbar-note">Team: チームで使うプランです。</p>
+<% else %>
+  <p class="toolbar-note">Business: 統制と安心のプランです。</p>
+<% end %>
