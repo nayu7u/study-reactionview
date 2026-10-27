@@ -22,7 +22,7 @@ DB を引く更新（検索・ソート・ページネーション・作成）�
 ReActionView は `herb_state` と `data-herb-*` 属性だけで、
 同じアクションが HTML を出しつつ部分更新のワイヤも返す。
 
-実装: `/`（Sprint Hub）と `/patterns`（Patterns）
+実装: `/`（Sprint Hub）、`/patterns`（Patterns）、`/pricing`（Pricing）
 
 ### 層2 — Stimulus コントローラ（リアクティブUI）→ **client mode**
 
@@ -48,7 +48,7 @@ import "reactionview"
 
 ---
 
-## ② 証明マップ — 4画面が消している Hotwire の部品
+## ② 証明マップ — 5画面が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 
@@ -61,6 +61,7 @@ import "reactionview"
 | **Patterns** (`/patterns`) | server | フィルタチップ | chips 用の form submit、aria 状態の保守 | `data-herb-set="priority=3 page=1"`＋`aria-pressed` スロット |
 | | | もっと見る | `link_to …, data: { turbo_stream: … }`＋append ストリーム / フレーム増設 | `data-herb-increment="page"`＋`$refresh`（キー付き差分で既存行は動かない） |
 | | | 詳細連動 | 行クリック → 別フレーム再描画、選択状態を Stimulus で管理 | 同じ往復が詳細の分岐と `data-herb-name` スロットに答える |
+| **Pricing** (`/pricing`) | server | プラン・席数・年払い・サポートの見積もり | Stimulus に価格式を写す／フォーム再送で全体を再描画 | `herb_state` + READ slot + 席数/サポートの `$refresh` |
 | **Client Lab** (`/lab`) | client | タブ・カウンタ・パレット | Stimulus ×3（tab / unread / palette） | `herb:state` 宣言＋`data-herb-set / -increment / -reset` |
 | | | ライブ入力・バリデーション | 文字数・妥当性・disabled 同期のコントローラ | 派生宣言（`ready_bio: bio != "" && bio.length <= 60`）＋presence の `disabled` |
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
@@ -69,7 +70,7 @@ import "reactionview"
 
 ---
 
-## ③ 実コード対比 — 4つの局面
+## ③ 実コード対比 — 5つの局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -276,6 +277,50 @@ export default class extends Controller {
 > ただし `in_cart` はカウントfold（`+= 1` の整数リテラル増分のみ）—
 > 金額合計は「クライアントでは作れない」が正確な境界（§⑥）。
 
+### 対比 5 — 料金計算（サーバーに残す）
+
+**Hotwire 側（代表形）— 価格式が Stimulus にもう1つ住む**
+
+```js
+// app/javascript/controllers/quote_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["plan", "seats", "annual", "total"]
+
+  connect() { this.render() }
+
+  render() {
+    const seats = Number(this.seatsTarget.value)
+    const base = { starter: 1200, team: 2400, business: 4000 }[this.planTarget.value]
+    // ボリューム割引・年払い割引・消費税もここに写す
+    this.totalTarget.textContent = `¥${base * seats}`
+  }
+}
+```
+
+> 表示のたびに価格式を JS 側でも保守する。サーバーの見積もりと食い違うと、どちらが正か分からなくなる。
+
+**ReActionView 側（実物）— 計算は Ruby、返るのは値**
+
+```rb
+# app/controllers/pricing_controller.rb
+@seats = integer_state("seats", 5).clamp(SEAT_MIN, SEAT_MAX)
+@annual = boolean_state("annual", false)
+@support = boolean_state("support", false)
+```
+
+```erb
+<%# app/views/pricing/index.html.erb %>
+<%# herb:state (plan: "team", seats: 5, annual: false, support: false) %>
+<button data-herb-set="annual=true" aria-pressed="<%= annual %>">年払い</button>
+<p data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
+```
+
+> 料金式はコントローラだけにある。`?format=slots` の応答は内訳の値だけで、
+> プラン・年払いは分岐の反転、席数・サポートは非反転条件＋`$refresh` が1往復を運ぶ。
+> 金額の行は分岐の外に置き、`hidden` の presence で表示を切り替える（§⑥）。
+
 ---
 
 ## ④ 概念読替表
@@ -286,6 +331,7 @@ export default class extends Controller {
 | Turbo Stream（append / replace…） | 応答後の部分操作 | POST 201 の collection splice（`data-herb-into`） | tasks#create |
 | `form_with` ＋ submit リスナー | 値の往復 | `data-herb-set="query=$value"` ＋ `data-herb-debounce`（form不要） | tasks/index |
 | Stimulus（入力リアクティブ） | 派生値・妥当性 | `<%# herb:state (…) 派生宣言 %>` と presence バインディング（`disabled`, `checked`, `hidden`） | lab 機能⑦⑫, ui/_switch |
+| Stimulus（料金計算） | 入力に連動する合計 | サーバーの `herb_state` 計算＋`data-herb-name` の READ slot（1往復） | pricing |
 | Stimulus（per-item targets） | 行ごとの状態 | 行内 `<%# herb:state (qty: 0) %>` ＋ `data-herb-increment/decrement` | lab 機能⑬, ui/_stepper |
 | Stimulus / dialog 要素 | 開閉・Esc・backdrop | `<% if drawer_open %>` ＋ `data-herb-set="click@outside->… keydown.esc@window->…"` | tasks 機能③, lab 機能⑥ |
 | `classList.toggle` / `hidden` 直接操作 | 見た目切替 | `data-herb-toggle` ＋ CSS `:has()` / `[hidden]` ガード | ui/_switch, lab 機能⑭ |
@@ -297,12 +343,18 @@ export default class extends Controller {
 
 「Turbo より通信が減る」は口でなく `?format=slots` のリクエスト数として読めます。
 
-- **server mode（`/`, `/patterns`）**: 往復は**state を読む分岐の答えが反転した時だけ**1回。
+- **server mode（`/`, `/patterns`, `/pricing`）**: 往復は、state を読む分岐の答えが反転した時に1回。
+  `$refresh` を合成した操作は、分岐が反転しなくてもその1回で運ぶ。
   検索の分岐反転は `<% if query.empty? %>` がトリガ、ソート select 単体は 0（実測）。
   連続タイピングで分岐が反転しない間は行を触らず、文字はクライアント評価で更新。
   - なお steering（`Herb-State` ヘッダ）に載るのは**分岐の条件が読んでいる state** に限る。
     往復させたい state は必ずどこかの state 条件分岐に読ませる —
     Patterns の3本柱（`if / elsif` 連鎖、`page > 1`、`selected_id > 0`）はその実装。
+    Pricing の `seats > 0` と `support == true || support == false` は常に真の条件で、
+    分岐を反転させずに steering へ載せるためだけに読ませている。
+  - **Pricing** は `plan` / `annual` が分岐の反転、`seats` / `support` が非反転条件＋`$refresh`。
+    金額は分岐の外の READ slot に置き、表示は `hidden` の presence で切り替える。
+    headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
 - **client mode（`/lab`, `/ui`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
   （states / reads / conditionals / presence / computed の命令書）に従って
@@ -333,13 +385,18 @@ export default class extends Controller {
   されるが値は乗らない（0.6.0 実測）。対処は「答えを分岐の中に置かない」:
   `hidden="<%= !open %>"` の presence バインディング＋CSS `[hidden]` ガード
   （lab 機能⑭、ui コンポーネント全体）。
+- **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ** — 分岐の切替後に
+  値スロットを取りに行くため、年払い・サポートの切替が2リクエストになった（Pricing の実測）。
+  金額は分岐の外に置き、`hidden` の presence で行を出し分けると1リクエストに収まる。
+  分岐は static な表示の切替に使う。
 - **パーシャル内の分岐先は parked されない** — client mode でも region テンプレート
   自体が出ない（ui-kit 実測）。パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
 - **POST 201 の splice は collection のみ** — region 級のサーバー読み（`Task.count` 等）
   は次の GET でしか追いつかない。追加直後の hero は `$refresh` 頼み、という手順を
   見せるのが誠実。
-- **server モードでブラウザ所有 state を条件にした分岐を置かない** — steering に
+- **server モードで行ごとのブラウザ所有 state を条件にした分岐を置かない** — steering に
   載らず、要求が常に行禁化（要求 storm）。見た目は presence＋CSS、数値は READ slot へ。
+  トップレベルの `plan` / `annual` 分岐はサーバー応答の statics で切り替わり、1往復で済む（Pricing 実測）。
 
 > **この境界の読み方**: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されて
 > いるのが検証リポジトリとしての価値。`bin/rails test` は HTMLレンダ / herb_state による
@@ -359,12 +416,8 @@ export default class extends Controller {
    ビルドレス）、同じタスク管理を Turbo Frame/Stream 版と ReActionView 版で並べ、
    Network 往復とコード量を横に対応させる。決定的な説得力はあるが、Gemfile 変更の
    範囲確認が必要。
-3. **送信前計算フォーム（送料・合計）**: 入力に連動して合計や保存ボタンが変わるUI。
-   `price * qty` は fold 外なので READ slot の **1 往復**で答える「正直版」—
-   Hotwire では Stimulus なしに書けない局面を ReActionView が1往復で置く形を示せる。
-   §⑥の境界の正面の実例になる。
 
 ---
 
 実測の経緯と制約の詳細は `AGENTS.md`（ReActionView メモ / 実測済みワイヤ形式）と
-`docs/ui-kit.md` 参照。生成日: 2026-10-25。
+`docs/ui-kit.md` 参照。更新日: 2026-10-27。

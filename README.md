@@ -2,7 +2,7 @@
 
 **ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
 すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、実用的なアプリ風の
-四つのショーケースで実演・検証する。
+五つのショーケースで実演・検証する。
 
 - React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
   `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
@@ -10,12 +10,13 @@
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
 - Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
 
-## 4つの画面
+## 5つの画面
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
 | Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、楽観的追加 |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務から拾った3パターン: フィルタチップ、もっと見る、詳細連動 |
+| Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
 | UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
 
@@ -130,6 +131,28 @@ $ bin/rails server     # http://localhost:3000
 - 選択解除は `data-herb-reset="selected_id"`。消えた行の ID が選択された場合は
   値が空の詳細パネル側（state 条件の答え）になる。消えた行のデータが表示に残ることはない。
 
+## Pricing（server モード、`/pricing`）
+
+SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラン・席数・年払い・優先サポートは
+ブラウザ所有の state で、金額の計算はすべて Ruby 側に残す。JavaScript には料金式を書かない。
+
+- `plan` / `annual` は state 条件の分岐が反転して1往復する。`seats` / `support` は分岐が
+  反転しないため、steering 用の非反転条件（`seats > 0`、`support == true || support == false`）と
+  `data-herb-action="$refresh"` の合成で1往復させる。サポートの条件は常に真だが、state を
+  steering ヘッダに載せるために読ませている。
+- 内訳の金額は `data-herb-name` の READ slot。ボリューム割引・年払い割引・優先サポートの行は
+  分岐の中に置かず、`hidden` の presence バインディングで出し分ける。分岐の中のサーバー読みは
+  切替後に branch refetch を1回呼ぶため（0.6.0 実測）、金額は分岐の外に置くのが定石だ。
+- headless Chromium で、プラン・席数・年払い・サポートの各操作が **1 リクエスト**で
+  内訳と合計を更新することを確認済み。ページはリロードされない。
+- JavaScript を切ると初期表示のみで、再計算はできない（no-JS の再計算は対象外）。
+- 画像/GIF は未収録（必要なら撮影環境で追加）。
+
+```erb
+<%# herb:state (plan: "team", seats: 5, annual: false, support: false) %>
+<p data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
+```
+
 ## Client Lab（client モード、`/lab`）
 
 この画面の未描画の分岐（タブの裏側・モーダル・hover の表示）は、初回 HTML に `<template data-herb-region>`
@@ -220,10 +243,10 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ## 検証の進め方
 
-- **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `showcase_controller_test` /
-  `ui_controller_test` が検証する振る舞いは、
-  HTML レンダ / `herb_state` による並び替え・絞り込み / slots 応答の形状（items+order / 分岐 / スカラー混在）/
-  201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
+- **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
+  `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
+  HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
+  （items+order / 分岐 / スカラー混在）/ 201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。
 - 初期 HTML には `<template data-herb-manifests>` として、クライアントへの命令書が載る
   （`states.declarations` / `reads` / `conditionals` / `presence` / `computed` / `server`）。DevTools で覗くと

@@ -12,6 +12,8 @@
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
 さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
 ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（docs/ui-kit.md）。
+5画面目 `Pricing`（`/pricing`）: server mode の SaaS 見積もり。プラン・席数・年払い・サポートの4 state、
+サーバー計算、金額は READ slot、表示は hidden の presence（docs/hotwire-comparison.md の対比5）。
 
 ## 作業規約（必ず守る）
 
@@ -92,11 +94,12 @@
 - **aria-pressedはpresenceバインディングでなく文字列補間**: `aria-pressed="<%= tab == "all" %>"` は
   "true"/"false" の文字列属性として出る（checked/selected/disabled の boolean属性バインディングとは別物）。
   client mode では純状態比較なのでクライアント評価＝往復なし。CSSは `[aria-pressed="true"]` で引く
-- **serverモードではブラウザ所有statesを条件にした分岐を書くな**: 分岐先がparkedされずクライアントに
+- **serverモードでは行ごとのブラウザ所有statesを条件にした分岐を書くな**: 分岐先がparkedされずクライアントに
   materializeできず → switchBranch失敗 → refetch が追加されるが、steeringにitem状態(done)や
   counted(done_count)は載らないのでサーバー回答が常に行禁化→要求storm。見た目は presence＋CSSで、
   数値はREAD slot（`<%= done_count %>`）で置く。行の文言ピルも同様（両方の文言をDOMに置き
-  `:has(input:checked)` で切替）
+  `:has(input:checked)` で切替）。トップレベルの state 分岐（Pricing の plan / annual）は
+  サーバー応答の statics で切り替わり、1往復で済む（実測）
 - **POST 201 の応答で適用されるのは collection のspliceのみ**: region級のサーバー読み（`Task.count` 等）は
   GET応答でしか適用されない（検索の往復ではバッジが動くのに、追加直後には動かない — 実測）。
   追加直後は `$refresh`（または次のGET）でheroが追いつく。GIF／レポートではこの手順を見せる
@@ -157,22 +160,54 @@
 - **fold で金額合計は作れない**: fold の増分は整数リテラルのみ（`fold_increment` が
   `Prism::IntegerNode` を要求）。`total += price * qty` 系は設計段階で諦める
 
+## Pricing 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **`plan` / `annual` はトップレベルの state 分岐**: 分岐の反転が1往復を運ぶ。応答の statics が
+  切り替わり、金額は READ slot で差し替わる。行ごとの分岐とは挙動が違う（上の「行ごと」の注意は
+  そのまま）。
+- **`seats` / `support` は常に真の条件を steering 用に読ませ、`$refresh` で1往復**: `seats > 0` と
+  `support == true || support == false` は値が変わっても分岐が反転しない。`data-herb-action="$refresh"`
+  を同じ要素に合成し、ヘッダの state を1リクエストに載せる。条件を消すと state が steering に載らず、
+  合計が古いままになる。
+- **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ**: `annual_discount` / `support_fee` /
+  `volume_discount` を分岐の中に置くと、分岐の切替後に値スロットを取りに行き、年払い・サポートの
+  切替が2リクエストになった（headless Chromium 実測）。金額を分岐の外へ出し、行の表示だけ
+  `hidden` の presence で切り替えると1リクエストに収まる。分岐は static な文言の切替に使う。
+- **サポートのチェックボックスは2リクエスト**: `checked` のバインドは `input` と `change` の両方で
+  state を書くため、条件分岐の反転と合わせて2回飛んだ。`data-herb-set` の2ボタン（`support=false` /
+  `support=true`）＋`$refresh` に変えると1回になる。
+- **年払いの条件を2つに分けると2リクエスト**: 小計ラベルと割引ノートが別々に annual を読むと、
+  それぞれが refetch を予約して2回飛ぶ。文言を小計ラベル側に畳んで1つにすると1回になる。
+- **ボリューム割引の10席しきい値は分岐でなく presence**: `hidden="<%= seats < 10 %>"` と
+  `hidden="<%= seats >= 10 %>"` で行を出し分け、金額は分岐外の READ slot。`seats > 0` の常真条件が
+  steering を担い、`$refresh` が往復を運ぶ。しきい値の分岐を置くと9→10で2リクエストになる。
+- **Boolean / Integer の防御的キャスト**: `boolean_state` は `true` / `"true"` だけを真にし、
+  `integer_state` は `Integer(...)` でキャストする。PricingController は席数を 1..50 に clamp する。
+- **no-JS の再計算は対象外**: state の初期値が literal なので、URL パラメータからの種付けは別設計。
+  初期表示だけは通常の HTML として読める。
+- **1操作1リクエストをブラウザで確認**: plan / seats / annual / support の各操作で `?format=slots` が
+  1回、document request は1回のまま、URL は `/pricing` のまま（headless Chromium）。
+
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 
 録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。
 ツールはリポジトリに入れない（「Node/yarn を導入しない」はアプリの前提で、録画道具は別物）。
 
-- **server mode の往復トリガは「state条件分岐の答えの切替」だけ**。state を書いても、
+- **server mode の基本の往復トリガは「state条件分岐の答えの切替」**。state を書いても、
   その state を読む分岐の答えが反転しない限り GET slots は飛ばない（ソートの select 単体は
   リクエスト0で実測。hub の検索が動くのはノートの「全件表示↔絞り込み中」反転がトリガだから）。
+  `$refresh` を合成した操作は、分岐が反転しなくても1回飛ぶ（Pricing の席数・サポート）。
   さらに**連続タイピングで分岐が反転しない間は行が古いまま**（ノートの文字だけ client 評価で更新され、
   行は初回の絞り込み結果で止まる — 実測）
 - **steering ヘッダ（Herb-State）に載る state も「分岐の条件が読んでいる state」に限る**
   （クライアントの `steering()` が conditionals + server.reads から収集。server-mode ページの
   `server.reads` は常に空）。**だから往復させたい state は、必ずどこかの state 条件分岐に読ませる**。
   Patterns 画面では ① ノートを priority の if/elsif 連鎖に（全遷移でどこかの分岐が反転）②
-  ページインジケータを `page > 1` の if に ③ 詳細の条件を `selected_id > 0` に、の3本で賄う
-- **反転しない反復操作（行→行、2→3ページ目）は `data-herb-action="$refresh"` を合成する**。
+  ページインジケータを `page > 1` の if に ③ 詳細の条件を `selected_id > 0` に、の3本で賄う。
+  Pricing の `seats > 0` と `support == true || support == false` は、常に真の条件を steering に
+  載せる例（分岐は反転しない）
+- **反転しない反復操作（行→行、2→3ページ目、Pricing の席数・サポート）は
+  `data-herb-action="$refresh"` を合成する**。
   同一要素に action と set が併置できる。action が先に評価されて `request(0)` を予約するが、
   実際のヘッダは timer 発火時に組み立てられるので、同 dispatch 中に書いた state が載る（1リクエストに合流）
 - **per-item 分岐の実測**: 静的テキスト（＋/－マーカー）は materialize されるが、
@@ -238,5 +273,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - 行クラスのstate補間（`class="<%= … if done %>"` のようなもの）を戻さない
   → 属性補間はサーバー読みスロットになりチェックごとに往復する。
   見た目の状態は presence バインディング（`checked`）+ CSS `:has(input:checked)` で即時追随させる
+- 金額計算をクライアントに写さない → fold は整数リテラルの加算のみで、掛け算・税率・割引を表現できない。
+  料金式を二重管理せず、サーバーの READ slot に置く（Pricing の実装）
 - モーダルフォームを `board_path` にPOSTさせない → board はGETルートのみ。CRUDの入口は
   `tasks_path`（正攻法の分離）。`data-herb-into` は差し込み先コレクションの名前指定に過ぎない
