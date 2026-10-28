@@ -17,6 +17,8 @@ class SettingsFlowTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Settings"
     assert_select ".settings-nav button", count: 3
     assert_select '.settings-nav button[aria-pressed="true"]', count: 1
+    assert_select ".settings-tab-panel", count: 3
+    assert_select ".settings-tab-panel[hidden]", count: 2
     assert_select "#settings_name"
     assert_select "#settings_email"
     assert_select "#settings_bio"
@@ -49,14 +51,15 @@ class SettingsFlowTest < ActionDispatch::IntegrationTest
       .flat_map { |c| Array(c["arms"]) }
       .map { |a| a["condition"]&.first }
       .compact
-    %w[tab public_profile dirty saved].each { |name| assert_includes conditions, name }
+    %w[dirty saved].each { |name| assert_includes conditions, name }
 
     presence = states["presence"].values.select { |p| p.is_a?(Array) }.map(&:first)
-    assert_includes presence, "can_save", "the save button's disabled is a presence read"
-    assert_includes presence, "public_profile", "the switch binds its boolean state"
+    %w[tab public_profile can_save].each do |name|
+      assert_includes presence, name, "#{name} is a hidden/checked/disabled presence read"
+    end
   end
 
-  test "notifications and billing panels are parked with dependent fields" do
+  test "notifications and billing panels are hidden with dependent fields" do
     get settings_path
 
     assert_includes response.body, "まとめ通知"
@@ -66,6 +69,9 @@ class SettingsFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'data-herb-set="plan=starter dirty=true saved=false"'
     assert_includes response.body,
       'data-herb-reset="name email bio public_profile handle digest frequency updates plan annual invoice_name dirty saved"'
+    assert_select "#settings_handle[hidden]", count: 0
+    assert_select "div[hidden] #settings_handle", count: 1
+    assert_select "div[hidden] #settings_invoice_name", count: 1
   end
 
   test "the manifest declares the notification and billing states" do
@@ -76,12 +82,6 @@ class SettingsFlowTest < ActionDispatch::IntegrationTest
     %w[digest frequency updates plan annual invoice_name].each do |name|
       assert_includes names, name
     end
-
-    conditions = states["conditionals"].values
-      .flat_map { |c| Array(c["arms"]) }
-      .map { |a| a["condition"]&.first }
-      .compact
-    %w[digest annual].each { |name| assert_includes conditions, name }
 
     presence = states["presence"].values.select { |p| p.is_a?(Array) }.map(&:first)
     %w[digest updates annual].each { |name| assert_includes presence, name }

@@ -2,7 +2,7 @@
 
 **ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
 すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、実用的なアプリ風の
-五つのショーケースで実演・検証する。
+六つのショーケースで実演・検証する。
 
 - React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
   `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
@@ -10,13 +10,14 @@
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
 - Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
 
-## 5つの画面
+## 6つの画面
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
 | Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、ピン/星の同時連動、楽観的追加 |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務から拾った3パターン: フィルタチップ、もっと見る、詳細連動 |
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
+| Settings `/settings` | `<%# herb:slots client %>` | タブ・依存フィールド・未保存状態・デモ保存（全操作 0 往復） |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
 | UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
 
@@ -169,6 +170,35 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 <p data-herb-name="total"><%= number_to_currency(@total, unit: "¥", precision: 0) %></p>
 ```
 
+## Settings（client モード、`/settings`）
+
+設定フォームのタブ・依存フィールド・未保存状態を、すべてブラウザ内で扱う。保存はデモで、DB には書かない。
+リロードすると初期値に戻る。
+
+<div><img src="docs/media/settings-light.png" alt="Settings (light)" width="49%"/> <img src="docs/media/settings-dark.png" alt="Settings (dark)" width="49%"/></div>
+
+### 機能⑰ タブ・依存フィールド・未保存状態
+
+![タブ・依存フィールド・dirty/save/reset がすべて0往復](docs/media/17-settings.gif)
+
+- 3つのタブは **hidden の presence パネル**だ。`hidden="<%= tab != "profile" %>"` で表示だけを切り替え、
+  DOM からは外さない。トップレベルの parked 分岐にすると、分岐内の boolean バインディングと入れ子の分岐が
+  初期値で materialize され、`digest: true` の switch が off、頻度フィールドが非表示になった（0.6.0 の実測）。
+  パネルを残せば、入力値も switch の見た目もそのまま保たれる。
+- 依存フィールドは3組ある。まとめ通知→頻度、公開プロフィール→ハンドル名、年払い→請求書の宛名。
+  どれも `hidden` の presence で出し分ける。
+- 未保存状態は明示する。パネルの
+  `data-herb-set="input->dirty=true saved=false change->dirty=true saved=false"` が、自動バインドされた
+  入力・switch の書き込みに合流する。タブ切替はパネルの外なので dirty にならない。
+- 保存可否は派生 `can_save: dirty && form_ok`。`form_ok` は `name_ok` / `email_ok` / `bio_ok` / `handle_ok`
+  の AND に分け、保存ボタンは `disabled="<%= !can_save %>"` の単一否定だけを読む。
+- プランと頻度は `<select>` でなくボタン（literal の `data-herb-set`）。リセット後も `aria-pressed` が
+  state から戻る。
+- 保存は `dirty=false saved=true` のデモ。リセットは書き込み可能な state だけを初期値へ戻す
+  （派生 state と `tab` は含めない）。
+- ブラウザプローブで、タブ切替・依存フィールド・dirty/save/reset・タブの往復・リロードのすべてが
+  **0 slots リクエスト**であることを確認した。
+
 ## Client Lab（client モード、`/lab`）
 
 この画面の未描画の分岐（タブの裏側・モーダル・hover の表示）は、初回 HTML に `<template data-herb-region>`
@@ -260,7 +290,7 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
-  `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
+  `settings_controller_test` / `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。

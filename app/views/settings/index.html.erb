@@ -16,7 +16,7 @@
 
   <div class="settings-panel"
     data-herb-set="input->dirty=true saved=false change->dirty=true saved=false">
-    <% if tab == "profile" %>
+    <section class="settings-tab-panel" hidden="<%= tab != "profile" %>">
       <div class="field-group">
         <label class="field-label" for="settings_name">表示名</label>
         <input class="field" id="settings_name" value="<%= name %>" autocomplete="name">
@@ -29,34 +29,35 @@
           <input type="checkbox" class="switch" checked="<%= public_profile %>">
           <span>公開プロフィール</span>
         </label>
-        <% if public_profile %>
+        <div hidden="<%= !public_profile %>">
           <label class="field-label" for="settings_handle">ハンドル名</label>
           <input class="field" id="settings_handle" value="<%= handle %>" autocomplete="username">
-        <% end %>
+        </div>
       </div>
-    <% elsif tab == "notifications" %>
+    </section>
+
+    <section class="settings-tab-panel" hidden="<%= tab != "notifications" %>">
       <label class="task-check">
         <input type="checkbox" class="switch" checked="<%= digest %>">
         <span>まとめ通知</span>
       </label>
-      <% if digest %>
-        <div class="toolbar">
-          <span class="field-label">頻度</span>
-          <div class="seg">
-            <button class="seg-btn" data-herb-set="frequency=daily dirty=true saved=false"
-              aria-pressed="<%= frequency == "daily" %>">毎日</button>
-            <button class="seg-btn" data-herb-set="frequency=weekly dirty=true saved=false"
-              aria-pressed="<%= frequency == "weekly" %>">毎週</button>
-          </div>
+      <div class="toolbar" hidden="<%= !digest %>">
+        <span class="field-label">頻度</span>
+        <div class="seg">
+          <button class="seg-btn" data-herb-set="frequency=daily dirty=true saved=false"
+            aria-pressed="<%= frequency == "daily" %>">毎日</button>
+          <button class="seg-btn" data-herb-set="frequency=weekly dirty=true saved=false"
+            aria-pressed="<%= frequency == "weekly" %>">毎週</button>
         </div>
-      <% else %>
-        <p class="toolbar-note">まとめ通知はオフです。</p>
-      <% end %>
+      </div>
+      <p class="toolbar-note" hidden="<%= digest %>">まとめ通知はオフです。</p>
       <label class="task-check">
         <input type="checkbox" class="switch" checked="<%= updates %>">
         <span>プロダクト更新</span>
       </label>
-    <% else %>
+    </section>
+
+    <section class="settings-tab-panel" hidden="<%= tab != "billing" %>">
       <span class="field-label">プラン</span>
       <div class="seg" role="group" aria-label="プラン">
         <button class="seg-btn" data-herb-set="plan=starter dirty=true saved=false"
@@ -70,11 +71,11 @@
         <input type="checkbox" class="switch" checked="<%= annual %>">
         <span>年払い</span>
       </label>
-      <% if annual %>
+      <div hidden="<%= !annual %>">
         <label class="field-label" for="settings_invoice_name">請求書の宛名</label>
         <input class="field" id="settings_invoice_name" value="<%= invoice_name %>">
-      <% end %>
-    <% end %>
+      </div>
+    </section>
   </div>
 
   <div class="settings-save">

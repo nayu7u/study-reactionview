@@ -31,7 +31,7 @@ Stimulus を書くこと自体が「Turbo 外の生 JS 層」。client mode で�
 状態と分岐をコンパイル解析し、クライアントへの命令書（manifest）を自動生成 —
 操作は**全てブラウザ内で完結（0 往復）**。
 
-実装: `/lab`（Client Lab）と `/ui`（UI Kit）
+実装: `/lab`（Client Lab）、`/ui`（UI Kit）、`/settings`（Settings）
 
 ### JS の実体（実ファイル・全4行）
 
@@ -48,7 +48,7 @@ import "reactionview"
 
 ---
 
-## ② 証明マップ — 5画面が消している Hotwire の部品
+## ② 証明マップ — 6画面が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 
@@ -63,6 +63,8 @@ import "reactionview"
 | | | もっと見る | `link_to …, data: { turbo_stream: … }`＋append ストリーム / フレーム増設 | `data-herb-increment="page"`＋`$refresh`（キー付き差分で既存行は動かない） |
 | | | 詳細連動 | 行クリック → 別フレーム再描画、選択状態を Stimulus で管理 | 同じ往復が詳細の分岐と `data-herb-name` スロットに答える |
 | **Pricing** (`/pricing`) | server | プラン・席数・年払い・サポートの見積もり | Stimulus に価格式を写す／フォーム再送で全体を再描画 | `herb_state` + READ slot + 席数/年払い/サポートの `$refresh` |
+| **Settings** (`/settings`) | client | 3タブ・依存フィールド | Stimulus のタブ切替と、依存フィールドの表示制御 | `tab` の hidden presence＋依存の `hidden`＋派生 `can_save`（0往復） |
+| | | 未保存状態・保存/リセット | dirty 管理と保存ボタンの disabled 同期 | パネルの `input`/`change` で `dirty` を立て、`disabled="<%= !can_save %>"` |
 | **Client Lab** (`/lab`) | client | タブ・カウンタ・パレット | Stimulus ×3（tab / unread / palette） | `herb:state` 宣言＋`data-herb-set / -increment / -reset` |
 | | | ライブ入力・バリデーション | 文字数・妥当性・disabled 同期のコントローラ | 派生宣言（`ready_bio: bio != "" && bio.length <= 60`）＋presence の `disabled` |
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
@@ -358,11 +360,13 @@ export default class extends Controller {
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
   - **Hub のピン/星** は per-row `pinned` と `pinned_count` のカウントfold。星は presence、
     行の見た目は CSS `:has`。0 slots リクエストで行とリスト直後のサマリーが同時に変わる。
-- **client mode（`/lab`, `/ui`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
+- **client mode（`/lab`, `/ui`, `/settings`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
   （states / reads / conditionals / presence / computed の命令書）に従って
   ブラウザ内で分岐の materialize・presence・fold が進む。
   UI Kit の9コンポーネント全操作は slot 往復 0 を実測（`docs/ui-kit.md`）。
+  Settings のタブ・依存フィールド・dirty/save/reset も 0 往復で、タブは分岐でなく
+  `hidden` の presence パネルで切り替える（後述の境界）。
   意図的に同期を取り直したい時だけ `data-herb-action="$refresh"` が脱出ハッチ。
 - **共通の帳尻**:
   - `$refresh` 等の action は `data-herb-set` と同要素に併置できる（同 dispatch の state は 1 リクエストに合流）
@@ -394,6 +398,10 @@ export default class extends Controller {
   `hidden` の presence）で行を出し分けると1リクエストに収まる。分岐は static な表示の切替に使う。
 - **パーシャル内の分岐先は parked されない** — client mode でも region テンプレート
   自体が出ない（ui-kit 実測）。パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
+- **トップレベルの parked 分岐でも、分岐内の boolean バインディングと入れ子の分岐は初期値で materialize される**
+  — Settings のタブ分岐で、`digest: true` の switch が unchecked、入れ子の頻度分岐が false 側で出た
+  （0.6.0 実測）。タブと依存フィールドは分岐でなく `hidden` の presence パネルに置き、DOM に残したまま
+  表示だけ切り替えると、入力値も見た目も 0 往復で保たれる。
 - **POST 201 の splice は collection のみ** — region 級のサーバー読み（`Task.count` 等）
   は次の GET でしか追いつかない。追加直後の hero は `$refresh` 頼み、という手順を
   見せるのが誠実。
@@ -410,7 +418,7 @@ export default class extends Controller {
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は `/settings` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 

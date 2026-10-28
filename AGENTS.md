@@ -15,6 +15,8 @@
 5画面目 `Pricing`（`/pricing`）: server mode の SaaS 見積もり。プラン・席数・年払い・サポートの4 state、
 サーバー計算、金額は READ slot、表示は state の表示属性（`data-active` / `hidden` の presence）
 （docs/hotwire-comparison.md の対比5）。
+6画面目 `Settings`（`/settings`）: client mode の設定フォーム。3タブ・依存フィールド・明示 dirty・
+デモ保存を、全操作 0 往復で扱う（下の実測メモ）。
 
 ## 作業規約（必ず守る）
 
@@ -208,9 +210,36 @@
   スコープしない既存ルールが pin にも当たり、done の取り消し線/背景が星で発火する。
 - **done と pin は独立**: ピンを2つ点けても done_count は動かず、done を1つ点けても
   pinned_count は 2 のまま（プローブで確認）。リロードで pin は消える（クライアント所有）。
-- **Hub の静止画/GIF は日本語フォントスタック**: `app.css` の `"Hiragino Sans"` /
+- **Hub と Settings の静止画/GIF は日本語フォントスタック**: `app.css` の `"Hiragino Sans"` /
   `"Noto Sans CJK JP"` / Meiryo / `"Yu Gothic"` を先に置き、キャプチャ側で `system-ui` だけの
   fallback に戻さない。
+
+## Settings 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **トップレベルの parked タブ分岐は、分岐内の boolean バインディングと入れ子の分岐を初期値で
+  materialize する**: Settings のタブを `<% if tab == ... %>` で組むと、Notifications タブを開いても
+  `digest: true` の switch が unchecked、`if digest` の頻度フィールドが false 側で出た（headless Chromium）。
+  `hidden="<%= tab != ... %>"` の3パネルを常に DOM に置くと、switch の見た目も入力値も正しく保たれ、
+  タブ切替は 0 slots リクエストになる。依存フィールドも同じ `hidden` の presence で出し分ける。
+- **パネル単位の input/change ラッパーで dirty を合成できる**: パネルの
+  `data-herb-set="input->dirty=true saved=false change->dirty=true saved=false"` は、
+  自動バインドされた value / checked の書き込みと同居する。タブ切替はラッパーの外なので dirty にならない。
+- **`can_save: dirty && form_ok` を分割する**: `form_ok` は `name_ok` / `email_ok` / `bio_ok` / `handle_ok`
+  の AND、`handle_ok` は `!public_profile || handle != ""` の OR。保存ボタンは
+  `disabled="<%= !can_save %>"` の単一否定だけを読む。空の表示名・公開プロフィールで空のハンドル・
+  121字の自己紹介が、それぞれ保存を無効にすることをプローブで確認した。
+- **プランと頻度は literal set のボタン**: `data-herb-set="frequency=daily dirty=true saved=false"` は
+  空白区切りの別 binding として1クリックで両方動く。`data-herb-reset` の後も `aria-pressed` が
+  state から戻る（Team と毎週に戻ることをプローブで確認）。`<select>` は使わない — リセット後の
+  選択表示を state の読みで保証するため。
+- **保存はデモ**: `dirty=false saved=true` にするだけで、DB には書かない。リセットは書き込み可能な
+  state だけを初期値へ戻す（派生 state と `tab` は含めない）。リロードで全 state が初期値に戻る。
+  タブ切替・依存フィールド・dirty/save/reset・タブの往復・リロードは、すべて 0 slots リクエスト
+  （`/tmp/opencode/capture/settings-probe.js`）。
+- **6リンクナビに合わせて既存メディアを撮り直した**: Settings をグローバルナビに足したため、
+  Hub / Patterns / Client Lab / Pricing の stills と Hub の 03 / 04 GIF を再撮影した。
+  Settings の静止画/GIF は日本語フォントスタックで撮り、CDP の `CSS.getPlatformFontsForNode` で
+  実フォントが `Noto Sans CJK JP` であることを確認した。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 

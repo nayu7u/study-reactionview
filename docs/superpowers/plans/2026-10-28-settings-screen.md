@@ -6,6 +6,8 @@
 
 **Architecture:** A single client-mode template declares the form states and their derived gates (`name_ok`, `email_ok`, `bio_ok`, `handle_ok`, `form_ok`, `can_save`, `over`). Tabs and dependent fields are top-level parked branches. A panel-level `input`/`change` wrapper marks the form dirty; plan/frequency buttons carry their own literal sets so no `$value` + literal mixing is needed. Save/reset are browser state only.
 
+> **Implementation ruling (2026-10-28, Task 3):** the parked tab branches were replaced with `hidden` presence panels. The browser probe showed the parked branch materialized its nested `digest` arm false and left the boolean `checked` binding unapplied, so the frequency controls disappeared while the switch rendered off. The tab/dependent markup in Tasks 1–2 below is superseded by that ruling; the measured result is 0 slots requests.
+
 **Tech Stack:** Rails 8.1, Ruby 4.0.9, ReActionView 0.6.0, Herb 0.11.1, Minitest integration tests, plain CSS, Playwright capture outside the repo.
 
 **Spec:** `docs/superpowers/specs/2026-10-28-settings-screen-design.md`
