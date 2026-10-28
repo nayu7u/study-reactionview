@@ -223,7 +223,8 @@
   タブ切替は 0 slots リクエストになる。依存フィールドも同じ `hidden` の presence で出し分ける。
 - **パネル単位の input/change ラッパーで dirty を合成できる**: パネルの
   `data-herb-set="input->dirty=true saved=false change->dirty=true saved=false"` は、
-  自動バインドされた value / checked の書き込みと同居する。タブ切替はラッパーの外なので dirty にならない。
+  自動バインドされた value / checked の書き込みと同居する。switch だけを切り替えても dirty が立ち、
+  保存が有効になることをプローブで確認した。タブ切替はラッパーの外なので dirty にならない。
 - **`can_save: dirty && form_ok` を分割する**: `form_ok` は `name_ok` / `email_ok` / `bio_ok` / `handle_ok`
   の AND、`handle_ok` は `!public_profile || handle != ""` の OR。保存ボタンは
   `disabled="<%= !can_save %>"` の単一否定だけを読む。空の表示名・公開プロフィールで空のハンドル・
@@ -277,7 +278,11 @@
   `value=` 形式なら BINDABLE_ELEMENTS（textarea 第一次級）として双方向に結び付けられ、reset が表示まで追従する
 - **録画の細部**: 要素クリップの高さがビューポートを超えると stitch され、sticky ヘッダが
   画像の途中に混入する。GIF はクリップが収まる高さのビューポートで撮る（patterns は
-  split が横並びになる 1000px 幅も必要 — 832px 未満はメディアクエリで縦積みになる）
+  split が横並びになる 1000px 幅も必要 — 832px 未満はメディアクエリで縦積みになる）。
+  **要素の高さがフレームごとに変わるとフレーム寸法も変わる**: Settings の `.settings-layout` は
+  Profile 456px / Notifications 234px で、要素スクリーンショットの GIF に前フレームの残像と
+  保存バーの二重写りが出た。初期レイアウトの bounding box を固定 clip にして撮り、
+  全フレームの寸法一致を assert する（`settings-capture.js`）
 
 ## reactionview-ui キットで実測した事実（0.6.0 / herb 0.11.1）
 
