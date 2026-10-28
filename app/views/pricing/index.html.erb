@@ -54,7 +54,7 @@
 
     <p class="task-note">
       席数の増減は分岐が反転しないため、<code>$refresh</code> を合成しています。
-      表示の切替は <code>hidden</code> 属性で行い、金額は分岐の外の READ slot で受けます。
+      表示の切替は <code>data-active</code> / <code>hidden</code> で行い、金額は分岐の外の READ slot で受けます。
     </p>
   </section>
 
@@ -73,12 +73,12 @@
         <dt>ボリューム割引</dt>
         <dd>10席以上で10%OFF</dd>
       </div>
-      <div class="price-line-support" hidden="<%= !@support %>">
+      <div class="price-line-support" data-active="<%= support %>">
         <dt>優先サポート</dt>
         <dd data-herb-name="support_fee"><%= number_to_currency(@support_fee, unit: "¥", precision: 0) %></dd>
       </div>
       <div><dt><%= @annual ? "小計（12か月・年払い割引）" : "小計" %></dt><dd data-herb-name="subtotal"><%= number_to_currency(@subtotal, unit: "¥", precision: 0) %></dd></div>
-      <div class="price-line-discount price-line-annual" hidden="<%= !@annual %>">
+      <div class="price-line-discount price-line-annual" data-active="<%= annual %>">
         <dt>年払い割引（15%）</dt>
         <dd>-<span data-herb-name="annual_discount"><%= number_to_currency(@annual_discount, unit: "¥", precision: 0) %></span></dd>
       </div>
@@ -89,7 +89,7 @@
     <p class="toolbar-note">現在 <%= @seats %> 席で見積もり中。</p>
     <p class="toolbar-note">優先サポートは任意です。</p>
 
-    <p class="task-note">金額はすべてサーバーで計算しています。内訳は READ slot なので、同じ <code>?format=slots</code> 応答で値だけが差し替わります。表示の切替は <code>hidden</code> 属性（ボリュームは state の presence、年払い・サポートは正規化した値）で行い、金額は分岐の外に置いています。JavaScript を切ると初期表示のみで、再計算はできません。</p>
+    <p class="task-note">金額はすべてサーバーで計算しています。内訳は READ slot なので、同じ <code>?format=slots</code> 応答で値だけが差し替わります。表示の切替は state の表示属性（年払い・サポートは <code>data-active</code>、ボリュームは <code>hidden</code> の presence）で行い、金額は分岐の外に置いています。JavaScript を切ると初期表示のみで、再計算はできません。</p>
   </aside>
 </div>
 

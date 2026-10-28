@@ -1021,6 +1021,8 @@ textarea.field-over { border-color: #b91c1c; }
   padding-bottom: 0.4rem;
 }
 
+.price-lines > div[data-active="false"] { display: none; }
+
 .price-lines dt { color: var(--muted); }
 .price-lines dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .price-line-discount dd { color: var(--ok); }

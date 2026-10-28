@@ -13,7 +13,8 @@
 さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
 ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（docs/ui-kit.md）。
 5画面目 `Pricing`（`/pricing`）: server mode の SaaS 見積もり。プラン・席数・年払い・サポートの4 state、
-サーバー計算、金額は READ slot、表示は hidden の presence（docs/hotwire-comparison.md の対比5）。
+サーバー計算、金額は READ slot、表示は state の表示属性（`data-active` / `hidden` の presence）
+（docs/hotwire-comparison.md の対比5）。
 
 ## 作業規約（必ず守る）
 
@@ -169,15 +170,19 @@
   `seats > 0`、`annual == true || annual == false`、`support == true || support == false` は
   値が変わっても分岐が反転しない。`data-herb-action="$refresh"` を同じ要素に合成し、ヘッダの state を
   1リクエストに載せる。条件を消すと state が steering に載らず、合計が古いままになる。
-- **可視の値は正規化した ivar、生の state は hidden の steering 条件**: 範囲外の席数や文字列 boolean を
-  表示に漏らさないため、可視出力は `@plan_key` / `@seats` / `@annual` / `@support` で作り、生の state は
-  hidden の条件分岐にだけ読ませる。手作りヘッダの 999 席や "false" が画面に出ない（テスト済み）。
-  可視値はサーバー読みなので、往復後に更新される。
+- **可視の金額と選択表示は正規化した ivar、生の state は hidden の steering 条件と表示属性**:
+  範囲外の席数や文字列 boolean を表示に漏らさないため、金額と選択表示は `@plan_key` / `@seats` /
+  `@annual` / `@support` で作り、生の state は hidden の条件分岐と `data-active` / `hidden` に読ませる。
+  手作りヘッダの 999 席や "false" が画面に出ない（テスト済み）。可視値はサーバー読みなので、
+  往復後に更新される。
+- **`hidden` を ivar で書くと表示が追随しない**: `hidden="<%= !@annual %>"` は boolean attribute の
+  サーバー読みになり、クライアントは値を書き換えない。state の `data-active="<%= annual %>"` と
+  CSS `[data-active="false"]` にすると、state の変化で行が追随する（Pricing の GIF 撮影で発見）。
 - **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ**: `annual_discount` / `support_fee` /
   `volume_discount` を分岐の中に置くと、分岐の切替後に値スロットを取りに行き、年払い・サポートの
   切替が2リクエストになった（headless Chromium 実測）。金額を分岐の外へ出し、行の表示だけ
-  `hidden` 属性（ボリュームは presence、年払い・サポートは正規化した値）で切り替えると1リクエストに収まる。
-  分岐は static な文言の切替に使う。
+  state の表示属性（年払い・サポートは `data-active`、ボリュームは `hidden` の presence）で
+  切り替えると1リクエストに収まる。分岐は static な文言の切替に使う。
 - **サポートのチェックボックスは2リクエスト**: `checked` のバインドは `input` と `change` の両方で
   state を書くため、条件分岐の反転と合わせて2回飛んだ。`data-herb-set` の2ボタン（`support=false` /
   `support=true`）＋`$refresh` に変えると1回になる。

@@ -319,7 +319,7 @@ export default class extends Controller {
 
 > 料金式はコントローラだけにある。`?format=slots` の応答は内訳の値だけで、
 > プランは分岐の反転、席数・年払い・サポートは非反転条件＋`$refresh` が1往復を運ぶ。
-> 金額の行は分岐の外に置き、`hidden` 属性で表示を切り替える（§⑥）。
+> 金額の行は分岐の外に置き、state の表示属性で表示を切り替える（§⑥）。
 
 ---
 
@@ -353,7 +353,7 @@ export default class extends Controller {
     Pricing の `seats > 0`、`annual == true || annual == false`、`support == true || support == false` は
     常に真の条件で、分岐を反転させずに steering へ載せるためだけに読ませている。
   - **Pricing** は `plan` が分岐の反転、`seats` / `annual` / `support` が非反転条件＋`$refresh`。
-    金額は分岐の外の READ slot に置き、表示は `hidden` 属性で切り替える。
+    金額は分岐の外の READ slot に置き、表示は state の表示属性で切り替える。
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
 - **client mode（`/lab`, `/ui`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
@@ -387,8 +387,8 @@ export default class extends Controller {
   （lab 機能⑭、ui コンポーネント全体）。
 - **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ** — 分岐の切替後に
   値スロットを取りに行くため、年払い・サポートの切替が2リクエストになった（Pricing の実測）。
-  金額は分岐の外に置き、`hidden` 属性（ボリュームは presence、年払い・サポートは正規化した値）で
-  行を出し分けると1リクエストに収まる。分岐は static な表示の切替に使う。
+  金額は分岐の外に置き、`state` の表示属性（年払い・サポートは `data-active`、ボリュームは
+  `hidden` の presence）で行を出し分けると1リクエストに収まる。分岐は static な表示の切替に使う。
 - **パーシャル内の分岐先は parked されない** — client mode でも region テンプレート
   自体が出ない（ui-kit 実測）。パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
 - **POST 201 の splice は collection のみ** — region 級のサーバー読み（`Task.count` 等）
