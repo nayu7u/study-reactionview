@@ -7,7 +7,7 @@
 機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.1
 （0.11.0 から 0.11.1 への更新は bin/ci 全ゲートで再検証済み。ワイヤ形式の実測メモは変らず通用）。
 
-2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ドロワー/楽観的追加）、
+2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ピン/星/ドロワー/楽観的追加）、
 `Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務から拾ったパターン集）、
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
 さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
@@ -198,6 +198,19 @@
   初期表示だけは通常の HTML として読める。
 - **1操作1リクエストをブラウザで確認**: plan / seats / annual / support の各操作で `?format=slots` が
   1回、document request は1回のまま、URL は `/pricing` のまま（headless Chromium）。
+
+## Hub ピン/星で実測した事実（0.6.0 / herb 0.11.1）
+
+- **per-row `pinned` + `pinned_count` fold**: 行の星は presence バインディング
+  （`checked="<%= pinned %>"`）、行の見た目は CSS `:has(.task-pin input:checked)`。カウントは
+  リスト直後で読み、星の切替は **0 slots リクエスト**（headless Chromium で確認）。
+- **done の `:has(input:checked)` は `.task-check` にスコープ**: ピンのチェックボックスを足すと、
+  スコープしない既存ルールが pin にも当たり、done の取り消し線/背景が星で発火する。
+- **done と pin は独立**: ピンを2つ点けても done_count は動かず、done を1つ点けても
+  pinned_count は 2 のまま（プローブで確認）。リロードで pin は消える（クライアント所有）。
+- **Hub の静止画/GIF は日本語フォントスタック**: `app.css` の `"Hiragino Sans"` /
+  `"Noto Sans CJK JP"` / Meiryo / `"Yu Gothic"` を先に置き、キャプチャ側で `system-ui` だけの
+  fallback に戻さない。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 

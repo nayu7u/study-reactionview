@@ -56,6 +56,7 @@ import "reactionview"
 |---|---|---|---|---|
 | **Sprint Hub** (`/`) | server | 検索・並び替え | form + `turbo-frame` + 部分テンプレ＋（文字入力単位にするなら）Stimulus debounce | `data-herb-set="query=$value"` + `data-herb-debounce` |
 | | | 完了チェック・統計 | 行の class 切替の Stimulus＋統計の再描画 | presence バインディング（`checked`）＋CSS `:has()`＋カウントfold（`done_count`） |
+| | | ピン/星とサマリー | 行とヘッダの2箇所を Stimulus で同期 | `pinned` の presence＋`pinned_count` のカウントfold（0往復） |
 | | | 作成ドロワー | Stimulus での dialog 開閉、focus・backdrop 処理 | `<% if drawer_open %>`＋`data-herb-set="click@outside->… esc@window->…"` |
 | | | 楽観的追加 | Stimulus で先に DOM を挿入 or Turbo Stream 追従（順序・キーの整合は自前） | `data-herb-into="tasks"` → POST 201 の splice |
 | **Patterns** (`/patterns`) | server | フィルタチップ | chips 用の form submit、aria 状態の保守 | `data-herb-set="priority=3 page=1"`＋`aria-pressed` スロット |
@@ -355,6 +356,8 @@ export default class extends Controller {
   - **Pricing** は `plan` が分岐の反転、`seats` / `annual` / `support` が非反転条件＋`$refresh`。
     金額は分岐の外の READ slot に置き、表示は state の表示属性で切り替える。
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
+  - **Hub のピン/星** は per-row `pinned` と `pinned_count` のカウントfold。星は presence、
+    行の見た目は CSS `:has`。0 slots リクエストで行とリスト直後のサマリーが同時に変わる。
 - **client mode（`/lab`, `/ui`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
   （states / reads / conditionals / presence / computed の命令書）に従って
@@ -407,17 +410,11 @@ export default class extends Controller {
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-1. **行とヘッダの同時連動（ピン/星）— 最有力**: 行の星を押すと、行の見た目とヘッダの
-   「ピン済み N」が即時に揃う。星の塗りは presence バインディング＋CSS、`N` はカウントfold
-   （`when: "pinned"`）でクライアント評価 — **0 往復**。Hotwire なら2か所の DOM 同期
-   （Stimulus）か Stream 往復が要る。既存の実測パターン（presence + fold + toggle）の
-   組合せのみで組める。
-2. **横並べ比較画面（`/compare`）**: `turbo-rails` を Gemfile に足し（importmap pin のみ・
-   ビルドレス）、同じタスク管理を Turbo Frame/Stream 版と ReActionView 版で並べ、
-   Network 往復とコード量を横に対応させる。決定的な説得力はあるが、Gemfile 変更の
-   範囲確認が必要。
+現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub に実装済みです。
+Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
+主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
 ---
 
 実測の経緯と制約の詳細は `AGENTS.md`（ReActionView メモ / 実測済みワイヤ形式）と
-`docs/ui-kit.md` 参照。更新日: 2026-10-27。
+`docs/ui-kit.md` 参照。更新日: 2026-10-28。

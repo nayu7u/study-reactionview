@@ -14,7 +14,7 @@
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
-| Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、楽観的追加 |
+| Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、ピン/星の同時連動、楽観的追加 |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務から拾った3パターン: フィルタチップ、もっと見る、詳細連動 |
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
@@ -78,6 +78,16 @@ $ bin/rails server     # http://localhost:3000
   要素の外（window）にリスナーを張る句だ。`modifier AND match` の設計上、`meta+b` と `ctrl+b` は別句にする
   （1 行では OR にできない）。
 - 閉じる側は `click@outside->…=false` と `keydown.esc@window->…=false` の複合だ。
+
+### 機能⑯ 行とサマリーの同時連動（ピン／星）
+
+![行の星と「N件ピン留め」が0往復で揃う](docs/media/16-pin.gif)
+
+- 行の星は `pinned` の presence バインディング。星の塗りと行の強調は CSS `:has(.task-pin input:checked)` で行う。
+- 「N件ピン留め」は `pinned_count` のカウントfold。カウントはループの後でしか読めないため、
+  ヘッダではなくリスト直後のサマリーに置いている。
+- 星はブラウザ所有の state。リロードで消えるが、行の見た目とサマリーは **0 往復**で揃う。
+- done の `:has(input:checked)` は `.task-check` にスコープし、ピンのチェックと干渉させない。
 
 ## Patterns（server モード、`/patterns`）
 
