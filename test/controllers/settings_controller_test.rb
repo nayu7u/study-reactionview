@@ -55,4 +55,35 @@ class SettingsFlowTest < ActionDispatch::IntegrationTest
     assert_includes presence, "can_save", "the save button's disabled is a presence read"
     assert_includes presence, "public_profile", "the switch binds its boolean state"
   end
+
+  test "notifications and billing panels are parked with dependent fields" do
+    get settings_path
+
+    assert_includes response.body, "まとめ通知"
+    assert_includes response.body, "年払い"
+    assert_includes response.body, "請求書の宛名"
+    assert_includes response.body, 'data-herb-set="frequency=daily dirty=true saved=false"'
+    assert_includes response.body, 'data-herb-set="plan=starter dirty=true saved=false"'
+    assert_includes response.body,
+      'data-herb-reset="name email bio public_profile handle digest frequency updates plan annual invoice_name dirty saved"'
+  end
+
+  test "the manifest declares the notification and billing states" do
+    get settings_path
+    states = manifest.dig("states")
+
+    names = states["declarations"].map { |d| d["name"] }
+    %w[digest frequency updates plan annual invoice_name].each do |name|
+      assert_includes names, name
+    end
+
+    conditions = states["conditionals"].values
+      .flat_map { |c| Array(c["arms"]) }
+      .map { |a| a["condition"]&.first }
+      .compact
+    %w[digest annual].each { |name| assert_includes conditions, name }
+
+    presence = states["presence"].values.select { |p| p.is_a?(Array) }.map(&:first)
+    %w[digest updates annual].each { |name| assert_includes presence, name }
+  end
 end
