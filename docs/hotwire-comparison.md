@@ -56,7 +56,7 @@ import "reactionview"
 |---|---|---|---|---|
 | **Sprint Hub** (`/`) | server | 検索・並び替え | form + `turbo-frame` + 部分テンプレ＋（文字入力単位にするなら）Stimulus debounce | `data-herb-set="query=$value"` + `data-herb-debounce` |
 | | | 完了チェック・統計 | 行の class 切替の Stimulus＋統計の再描画 | presence バインディング（`checked`）＋CSS `:has()`＋カウントfold（`done_count`） |
-| | | ピン/星とサマリー | 行とヘッダの2箇所を Stimulus で同期 | `pinned` の presence＋`pinned_count` のカウントfold（0往復） |
+| | | ピン/星とサマリー | 行とサマリーの2箇所を Stimulus で同期 | `pinned` の presence＋`pinned_count` のカウントfold（0往復） |
 | | | 作成ドロワー | Stimulus での dialog 開閉、focus・backdrop 処理 | `<% if drawer_open %>`＋`data-herb-set="click@outside->… esc@window->…"` |
 | | | 楽観的追加 | Stimulus で先に DOM を挿入 or Turbo Stream 追従（順序・キーの整合は自前） | `data-herb-into="tasks"` → POST 201 の splice |
 | **Patterns** (`/patterns`) | server | フィルタチップ | chips 用の form submit、aria 状態の保守 | `data-herb-set="priority=3 page=1"`＋`aria-pressed` スロット |

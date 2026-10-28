@@ -34,8 +34,6 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
       assert_select 'span[data-herb-name="title"]'
     end
     assert_select '.task-check input[type="checkbox"]', count: 3
-    assert_select '.task-pin input[type="checkbox"]', count: 3
-    assert_select ".pin-stat", text: "0 件ピン留め"
   end
 
   test "each task row has a pin checkbox and the pinned count summary" do
@@ -44,6 +42,11 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".task-pin input[type='checkbox']", count: 3
     assert_select ".pin-stat", text: "0 件ピン留め"
+
+    titles = css_select(".task-title").map { |node| node.text.strip }
+    labels = css_select(".task-pin input").map { |node| node["aria-label"] }
+    assert_equal titles.map { |title| "#{title} をピン留め" }, labels
+    assert_equal labels.uniq.size, labels.size, "each star names its task"
   end
 
   test "a typed query filters server-side through herb_state" do
