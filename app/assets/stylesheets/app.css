@@ -1066,3 +1066,61 @@ textarea.field-over { border-color: #b91c1c; }
 
 .feature[data-feature="pricing"] .feature-tag { --tag: #0f766e; }
 .feature[data-feature="pricing-summary"] .feature-tag { --tag: #b45309; }
+
+/* ---------- settings ---------- */
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 52rem) {
+  .settings-layout { grid-template-columns: 1fr; }
+}
+
+.settings-nav {
+  display: grid;
+  gap: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.6rem;
+}
+
+.settings-nav .seg-btn {
+  text-align: left;
+  width: 100%;
+}
+
+.settings-nav .seg-btn[aria-pressed="true"] {
+  background: var(--accent-soft);
+}
+
+.settings-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.35rem 1.5rem;
+}
+
+.settings-save {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  position: sticky;
+  bottom: 1rem;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 52rem) {
+  .settings-save { grid-column: 1; }
+}

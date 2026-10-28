@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   get "/board", to: "tasks#index"
   get "/patterns", to: "patterns#index"
   get "/pricing", to: "pricing#index"
+  get "/settings", to: "settings#index"
   get "/lab", to: "showcase#lab"
   get "/ui", to: "ui#index"
 

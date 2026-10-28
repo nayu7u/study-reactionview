@@ -1,0 +1,51 @@
+<%# herb:slots client %>
+<%# herb:state (tab: "profile", name: "山田 太郎", email: "taro@example.com", bio: "", public_profile: false, handle: "", dirty: false, saved: false, name_ok: name != "", email_ok: email != "", bio_ok: bio.length <= 120, handle_ok: !public_profile || handle != "", form_ok: name_ok && email_ok && bio_ok && handle_ok, can_save: dirty && form_ok, over: bio.length > 120) %>
+
+<section class="hero">
+  <div class="hero-badge">Client mode — 0往復</div>
+  <h1>Settings</h1>
+  <p class="hero-sub">タブ・依存フィールド・未保存状態を、ブラウザ内だけで組み立てます。</p>
+</section>
+
+<div class="settings-layout">
+  <nav class="settings-nav" aria-label="設定">
+    <button class="seg-btn" data-herb-set="tab=profile" aria-pressed="<%= tab == "profile" %>">Profile</button>
+    <button class="seg-btn" data-herb-set="tab=notifications" aria-pressed="<%= tab == "notifications" %>">Notifications</button>
+    <button class="seg-btn" data-herb-set="tab=billing" aria-pressed="<%= tab == "billing" %>">Billing</button>
+  </nav>
+
+  <div class="settings-panel"
+    data-herb-set="input->dirty=true saved=false change->dirty=true saved=false">
+    <% if tab == "profile" %>
+      <div class="field-group">
+        <label class="field-label" for="settings_name">表示名</label>
+        <input class="field" id="settings_name" value="<%= name %>" autocomplete="name">
+        <label class="field-label" for="settings_email">メール</label>
+        <input class="field" id="settings_email" type="email" value="<%= email %>" autocomplete="email">
+        <label class="field-label" for="settings_bio">自己紹介</label>
+        <textarea class="field" id="settings_bio" value="<%= bio %>" placeholder="120字以内で自己紹介…"></textarea>
+        <p class="char-hint"><%= bio.length %>/120字</p>
+        <% if over %><p class="over-pill">⚠ 120字を超えています</p><% end %>
+        <label class="task-check">
+          <input type="checkbox" class="switch" checked="<%= public_profile %>">
+          <span>公開プロフィール</span>
+        </label>
+        <% if public_profile %>
+          <label class="field-label" for="settings_handle">ハンドル名</label>
+          <input class="field" id="settings_handle" value="<%= handle %>" autocomplete="username">
+        <% end %>
+      </div>
+    <% elsif tab == "notifications" %>
+      <p class="task-note">通知タブ（Task 2 で実装）</p>
+    <% else %>
+      <p class="task-note">請求タブ（Task 2 で実装）</p>
+    <% end %>
+  </div>
+
+  <div class="settings-save">
+    <% if dirty %><span class="pill settings-dirty">未保存の変更があります</span><% end %>
+    <% if saved %><span class="pill settings-saved">保存しました（デモ）</span><% end %>
+    <button class="btn btn-primary" disabled="<%= !can_save %>" data-herb-set="dirty=false saved=true">保存</button>
+    <button class="btn btn-ghost" data-herb-reset="name email bio public_profile handle dirty saved">リセット</button>
+  </div>
+</div>
