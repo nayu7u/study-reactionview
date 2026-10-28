@@ -33,7 +33,17 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
       assert_select "li", 3
       assert_select 'span[data-herb-name="title"]'
     end
-    assert_select 'input[type="checkbox"]', count: 3
+    assert_select '.task-check input[type="checkbox"]', count: 3
+    assert_select '.task-pin input[type="checkbox"]', count: 3
+    assert_select ".pin-stat", text: "0 件ピン留め"
+  end
+
+  test "each task row has a pin checkbox and the pinned count summary" do
+    get root_path
+
+    assert_response :success
+    assert_select ".task-pin input[type='checkbox']", count: 3
+    assert_select ".pin-stat", text: "0 件ピン留め"
   end
 
   test "a typed query filters server-side through herb_state" do
@@ -107,6 +117,8 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     names = manifest.dig("states", "declarations").map { |d| d["name"] }
     assert_includes names, "drawer_open"
     assert_includes names, "done_count"
+    assert_includes names, "pinned"
+    assert_includes names, "pinned_count"
 
     # The drawer branch is registered as a conditional read, not parked (server mode)
     conditionals = manifest.dig("states", "conditionals")
@@ -125,5 +137,11 @@ class TasksFlowTest < ActionDispatch::IntegrationTest
     fold = manifest.dig("states", "declarations").find { |d| d["name"] == "done_count" }
     assert_equal 1, fold.dig("count", "by"), "the fold counts one step per row"
     assert_equal "done", fold.dig("count", "when", 0), "the fold is conditioned on the row state"
+
+    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "pinned" },
+      "the star checkbox binds the row state"
+    pin_fold = manifest.dig("states", "declarations").find { |d| d["name"] == "pinned_count" }
+    assert_equal 1, pin_fold.dig("count", "by"), "the pin fold counts one step per row"
+    assert_equal "pinned", pin_fold.dig("count", "when", 0), "the pin fold is conditioned on the row state"
   end
 end

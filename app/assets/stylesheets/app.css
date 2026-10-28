@@ -373,12 +373,12 @@ input[type="checkbox"]:checked {
 .task-title { flex: 1 1 auto; font-weight: 520; overflow-wrap: anywhere; }
 
 /* the done visual hangs purely on the presence-bound checkbox */
-.task-list li:has(input:checked) {
+.task-list li:has(.task-check input:checked) {
   border-color: color-mix(in srgb, var(--ok) 35%, var(--line));
   background: var(--ok-soft);
 }
 
-.task-list li:has(input:checked) .task-title {
+.task-list li:has(.task-check input:checked) .task-title {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: color-mix(in srgb, var(--muted) 55%, transparent);
@@ -401,14 +401,44 @@ input[type="checkbox"]:checked {
 .task-status .pill-done { display: none; color: var(--ok); }
 .task-status .pill-open { color: var(--muted); }
 
-.task-list li:has(input:checked) .task-status {
+.task-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.task-pin input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.task-pin:focus-within .pin-glyph { color: var(--accent); }
+
+.pin-glyph {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.task-list li:has(.task-pin input:checked) {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface-2));
+}
+
+.task-list li:has(.task-pin input:checked) .pin-glyph { color: var(--accent); }
+
+.task-list li:has(.task-check input:checked) .task-status {
   color: var(--ok);
   border-color: color-mix(in srgb, var(--ok) 45%, transparent);
   background: color-mix(in srgb, var(--ok) 10%, transparent);
 }
 
-.task-list li:has(input:checked) .pill-done { display: inline; }
-.task-list li:has(input:checked) .pill-open { display: none; }
+.task-list li:has(.task-check input:checked) .pill-done { display: inline; }
+.task-list li:has(.task-check input:checked) .pill-open { display: none; }
 
 .task-note {
   margin: 0;

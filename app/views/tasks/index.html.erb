@@ -1,5 +1,5 @@
 <%# herb:slots server %>
-<%# herb:state (drawer_open: false, query: "", order: "oldest", title: "", done_count: 0) %>
+<%# herb:state (drawer_open: false, query: "", order: "oldest", title: "", done_count: 0, pinned_count: 0) %>
 
 <section class="hero">
   <div class="hero-badge"><%= Task.count %> tasks on the sprint board</div>
@@ -34,18 +34,23 @@
     <ul class="task-list" data-herb-name="tasks">
       <% @tasks.each do |task| %>
         <%# herb:key task.id %>
-        <%# herb:state (done: false) %>
+        <%# herb:state (done: false, pinned: false) %>
         <li class="task-item">
           <% if done %><% done_count += 1 %><% end %>
+          <% if pinned %><% pinned_count += 1 %><% end %>
           <label class="task-check">
             <input type="checkbox" checked="<%= done %>">
             <span class="task-title" data-herb-name="title"><%= task.title %></span>
           </label>
           <span class="task-status"><span class="pill-done">✔ 完了</span><span class="pill-open">未完了</span></span>
+          <label class="task-pin">
+            <input type="checkbox" aria-label="ピン留め" checked="<%= pinned %>">
+            <span class="pin-glyph" aria-hidden="true">★</span>
+          </label>
         </li>
       <% end %>
     </ul>
-    <p class="task-stat" aria-live="polite"><%= done_count %>/<%= Task.count %> 件完了</p>
+    <p class="task-stat" aria-live="polite"><%= done_count %>/<%= Task.count %> 件完了 ・ <span class="pin-stat"><%= pinned_count %> 件ピン留め</span></p>
     <p class="task-note">取り消し線は presence バインディング＋CSS で即時。<code>done_count</code> fold が統計を即時に動かし、行の文言は同じ往復の答えで追随します。</p>
   </section>
 
