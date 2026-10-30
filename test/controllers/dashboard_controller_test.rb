@@ -73,7 +73,7 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     fragments = manifest.dig("states", "fragments")
     async = fragments.values.find { |fragment| fragment["mode"] == "async" }
 
-    assert_equal 1, fragments.count { |_index, fragment| fragment["mode"] == "async" }
+    assert_equal 2, fragments.count { |_index, fragment| fragment["mode"] == "async" }
     assert_equal 150, async["delay"]
     assert_equal 400, async["hold"]
   end
@@ -141,5 +141,28 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     stats = block_partial(payload, "app/views/dashboard/_focus_stats.html.erb")
     assert stats, "the slots response carries the focus stats"
     assert_includes stats["slots"].values, "1"
+  end
+
+  test "the manifest declares the polling heartbeat" do
+    get dashboard_path
+
+    asyncs = manifest.dig("states", "fragments").values.select { |entry| entry["mode"] == "async" }
+    assert_equal 2, asyncs.length
+    heartbeat = asyncs.find { |entry| entry["poll"] }
+    assert_equal 3000, heartbeat["poll"]
+    assert_match(/\A_herb_block_\d+\z/, heartbeat["state"])
+  end
+
+  test "the heartbeat block request answers with the sync time" do
+    get dashboard_path
+    index = block_index(mode: "async", poll: true)
+
+    get dashboard_path(format: :slots), headers: block_headers(index)
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    beat = block_partial(payload, "app/views/dashboard/_heartbeat.html.erb")
+    assert beat, "the block answers with the heartbeat partial"
+    assert_match(/\d{2}:\d{2}:\d{2}/, beat["slots"].values.join)
   end
 end

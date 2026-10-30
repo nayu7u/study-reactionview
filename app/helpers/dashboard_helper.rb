@@ -45,6 +45,11 @@ module DashboardHelper
     }
   end
 
+  def heartbeat
+    slow_slots
+    { at: Time.current, queue: (Time.current.to_i / 3) % 6 }
+  end
+
   private
 
   # Why memoize: a slots refetch renders the whole template, so every block

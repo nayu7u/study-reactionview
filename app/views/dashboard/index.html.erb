@@ -72,7 +72,16 @@
   </div>
 
   <aside class="dashboard-side">
-    <!-- Task 4: heartbeat -->
+    <section class="dashboard-card dashboard-heartbeat">
+      <h2>ハートビート</h2>
+      <Async poll="3000" delay="150" hold="400">
+        <%= render "dashboard/heartbeat" %>
+        <Fallback>
+          <p class="skeleton-note">同期中…</p>
+        </Fallback>
+      </Async>
+    </section>
+
     <section class="dashboard-card dashboard-notes">
       <h2>リクエストの数え方</h2>
       <ul class="dashboard-note-list">
