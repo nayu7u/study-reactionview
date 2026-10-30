@@ -24,7 +24,8 @@ module DashboardHelper
 
   def dashboard_time_ago(time)
     seconds = (Time.current - time).to_i
-    return "#{seconds / 3600}時間前" if seconds >= 3600
+    return "#{seconds / 86_400}日前" if seconds >= 86_400
+    return "#{seconds / 3_600}時間前" if seconds >= 3_600
     return "#{seconds / 60}分前" if seconds >= 60
 
     "たった今"
