@@ -30,6 +30,21 @@ module DashboardHelper
     "たった今"
   end
 
+  FOCUS_PRIORITIES = { "high" => 3, "medium" => 2, "low" => 1 }.freeze
+
+  def focus_stats(focus)
+    slow_slots
+    priority = FOCUS_PRIORITIES[focus]
+    scope = priority ? Task.where(priority: priority) : Task.all
+
+    {
+      label: priority ? dashboard_priority_label(priority) : "すべて",
+      total: scope.count,
+      week: scope.where(created_at: 7.days.ago..).count,
+      month: scope.where(created_at: 30.days.ago..).count
+    }
+  end
+
   private
 
   # Why memoize: a slots refetch renders the whole template, so every block

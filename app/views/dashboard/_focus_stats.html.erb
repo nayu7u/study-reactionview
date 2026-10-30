@@ -1,0 +1,9 @@
+<% stats = focus_stats(focus) %>
+<div class="focus-card" data-focus="<%= focus %>">
+  <p class="focus-kind"><%= stats[:label] %>のタスク</p>
+  <p class="focus-total" data-focus-total="<%= stats[:total] %>"><%= stats[:total] %> 件</p>
+  <dl class="focus-breakdown">
+    <div><dt>7日</dt><dd><%= stats[:week] %></dd></div>
+    <div><dt>30日</dt><dd><%= stats[:month] %></dd></div>
+  </dl>
+</div>

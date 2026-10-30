@@ -114,4 +114,32 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     assert_includes payload.to_s, "テンプレートを壊してオーバーレイを見る"
     assert_includes payload.to_s, "時間前"
   end
+
+  test "the manifest declares the focus state and the fragment read" do
+    get dashboard_path
+
+    focus = manifest.dig("states", "declarations").find { |declaration| declaration["name"] == "focus" }
+    assert_equal "string", focus["kind"]
+    assert_equal "all", focus["value"]
+
+    fragment = manifest.dig("states", "fragments").values.find { |entry| entry["on"] == ["focus"] }
+    assert fragment, "the Fragment is registered"
+    assert fragment["reads"].all? { |read| read.is_a?(Integer) }
+    assert_includes manifest.dig("states", "server", "reads").keys, "focus"
+  end
+
+  test "the focus buttons drive the server read" do
+    get dashboard_path
+    assert_select "[data-focus-total='3']"
+
+    path = template_path
+    get dashboard_path(format: :slots),
+      headers: { "Herb-State" => { path => { "focus" => "high" } }.to_json }
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    stats = block_partial(payload, "app/views/dashboard/_focus_stats.html.erb")
+    assert stats, "the slots response carries the focus stats"
+    assert_includes stats["slots"].values, "1"
+  end
 end
