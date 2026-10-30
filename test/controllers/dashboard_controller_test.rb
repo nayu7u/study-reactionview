@@ -31,6 +31,7 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
   def block_headers(index)
     fragment = manifest.dig("states", "fragments").fetch(index)
     {
+      "Accept" => "application/vnd.herb.slots+json",
       "Herb-Block" => index,
       "Herb-State" => { template_path => { fragment["state"] => true } }.to_json
     }
@@ -55,6 +56,7 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Dashboard"
     assert_select "header nav a", count: 7
     assert_select ".dashboard-summary .skeleton"
+    assert_select ".dashboard-heartbeat .skeleton-note", text: "同期中…"
     assert_select ".slow-toggle[href=?]", dashboard_path(slow: 1)
     assert_select ".slow-toggle", text: /遅延デモ: OFF/
     assert_select "noscript"
@@ -98,8 +100,9 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
   test "dashboard renders the lazy fallback and manifest" do
     get dashboard_path
 
-    assert_select ".dashboard-activity .skeleton-note", text: /0\.6\.0/
+    assert_select ".dashboard-activity .skeleton-note", text: /読み込み中/
     assert_select ".dashboard-activity .activity-title", count: 3
+    assert_select ".dashboard-main .dashboard-activity"
     fragments = manifest.dig("states", "fragments")
     assert_equal 1, fragments.count { |_index, fragment| fragment["mode"] == "lazy" }
   end
@@ -135,7 +138,10 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
 
     path = template_path
     get dashboard_path(format: :slots),
-      headers: { "Herb-State" => { path => { "focus" => "high" } }.to_json }
+      headers: {
+        "Accept" => "application/vnd.herb.slots+json",
+        "Herb-State" => { path => { "focus" => "high" } }.to_json
+      }
 
     assert_response :success
     payload = JSON.parse(response.body)

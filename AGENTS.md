@@ -249,17 +249,19 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **`<Async>` のブロック内容は inline で書く**: ブロック応答は partial の statics を運ばず、初期ページの
   `data-herb-dependencies` も空になるため、`render` した partial は描画されない（実測）。サマリーと
   ハートビートは inline にした。`<Async>` はマウント直後に `Herb-Block` 付きの slots 要求を送る。
-- **`<Lazy>` は 0.6.0 でブロック要求も materialize もしない**: スクロールしても slots 要求は0で、
-  Fallback のまま（実測）。Fallback に最新3件と注記を置いて読める形にし、タグと manifest は残した。
-  Lazy の中のコレクションはブロック応答で `items` が空になるため、明示的な行で描画する。
+- **`<Lazy>` は初期表示の位置では block 1 で内容が届き、下段では 0**: 初期 viewport 内なら block 1
+  （slow 2703ms / fast 6ms）で Fallback の「読み込み中…」と最新3件が本文に置き換わる。カードを
+  初期 viewport の外に置くと、スクロールしても slots 要求は0で Fallback のまま（0.6.0 の配置依存ギャップ）。
+  カードは初期表示の位置に置く。Lazy の中のコレクションはブロック応答で `items` が空になるため、
+  明示的な行で描画する。
 - **`<Fragment>` の Fallback は観測されなかった**: `focus: focus`、`on="focus"`、`server.reads` は
   manifest に載り、focus 変更は slots 1回（910ms）で集計を 10→3 に更新する。ただし Fallback は
   表示されない（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として扱う。
 - **`poll` は 3秒間隔**: `<Async poll="3000">` のブロックが応答後3秒で再要求される。`?slow=1` では
   各907ms、実効約3.9秒。クライアントは `document.hidden` の間、poll を止める（実装済み）。
 - **`?slow=1` は slots だけを900ms遅らせる**: `slow_slots` を1リクエスト1回にメモ化する。初回HTMLは
-  約30ms、Async 2本は 907ms / 1812ms（サーバーが直列）、focus 910ms、poll 907ms。`slow=0` は
-  Async 11/13ms、focus 8ms。Lazy は 0 要求のため遅延の対象外。
+  約30ms、Async 2本は 907ms / 1812ms（サーバーが直列）、focus 910ms、poll 907ms、Lazy は
+  初期表示で2703ms（直列）/ 下段は0。`slow=0` は Async 11/13ms、focus 8ms、Lazy 6ms。
 - **7リンクナビは 800px / 1000px で1行**: `@media (max-width: 56rem)` で header の padding、
   nav の gap、link の padding / font-size を詰める。プローブで link の `top` が1種類であることを確認。
   Hub / Patterns / Client Lab / Pricing / Settings の stills、Hub 03 / 04、`ui-dialog.png` を

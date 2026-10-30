@@ -1155,10 +1155,6 @@ textarea.field-over { border-color: #b91c1c; }
   font-size: 1rem;
 }
 
-.dashboard-activity {
-  margin-top: 4rem;
-}
-
 .metric-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

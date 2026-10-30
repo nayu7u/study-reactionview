@@ -52,35 +52,6 @@
         </Fallback>
       </Fragment>
     </section>
-  </div>
-
-  <aside class="dashboard-side">
-    <section class="dashboard-card dashboard-heartbeat">
-      <h2>ハートビート</h2>
-      <Async poll="3000" delay="150" hold="400">
-        <% beat = heartbeat %>
-        <div class="heartbeat" data-heartbeat-at="<%= beat[:at].iso8601 %>">
-          <p class="heartbeat-label">最終同期</p>
-          <p class="heartbeat-time"><%= beat[:at].strftime("%H:%M:%S") %></p>
-          <p class="heartbeat-queue">デモキュー: <span data-heartbeat-queue><%= beat[:queue] %></span></p>
-        </div>
-        <Fallback>
-          <p class="skeleton-note">同期中…</p>
-        </Fallback>
-      </Async>
-    </section>
-
-    <section class="dashboard-card dashboard-notes">
-      <h2>リクエストの数え方</h2>
-      <ul class="dashboard-note-list">
-        <li>初回: document 1 + Async 2</li>
-        <li>Lazy: 0.6.0 では要求なし（Fallback 表示）</li>
-        <li>フォーカス変更: Fragment 1（Fallback は未観測）</li>
-        <li>poll: 3秒ごとに 1</li>
-      </ul>
-    </section>
-  </aside>
-</div>
 
     <section class="dashboard-card dashboard-activity">
       <h2>最近のアクティビティ</h2>
@@ -108,7 +79,7 @@
           </div>
         <% end %>
         <Fallback>
-          <p class="skeleton-note">Lazy のブロックは 0.6.0 では materialize されないため、初期表示の最新3件を Fallback に置いています。</p>
+          <p class="skeleton-note">読み込み中…</p>
           <% fallback_activity = recent_activity.limit(3).to_a %>
           <% if fallback_activity[0] %>
             <div class="activity-row">
@@ -133,4 +104,35 @@
           <% end %>
         </Fallback>
       </Lazy>
+    </section>  </div>
+
+  <aside class="dashboard-side">
+    <section class="dashboard-card dashboard-heartbeat">
+      <h2>ハートビート</h2>
+      <Async poll="3000" delay="150" hold="400">
+        <% beat = heartbeat %>
+        <div class="heartbeat" data-heartbeat-at="<%= beat[:at].iso8601 %>">
+          <p class="heartbeat-label">最終同期</p>
+          <p class="heartbeat-time"><%= beat[:at].strftime("%H:%M:%S") %></p>
+          <p class="heartbeat-queue">デモキュー: <span data-heartbeat-queue><%= beat[:queue] %></span></p>
+        </div>
+        <Fallback>
+          <p class="skeleton-note">同期中…</p>
+        </Fallback>
+      </Async>
     </section>
+
+    <section class="dashboard-card dashboard-notes">
+      <h2>リクエストの数え方</h2>
+      <ul class="dashboard-note-list">
+        <li>初回: document 1 + Async 2 + Lazy 1</li>
+        <li>Lazy: 初期表示で1（内容が届く）</li>
+        <li>下段の Lazy はスクロール要求なし（0.6.0）</li>
+        <li>フォーカス変更: Fragment 1（Fallback は未観測）</li>
+        <li>poll: 3秒ごとに 1</li>
+      </ul>
+    </section>
+  </aside>
+</div>
+
+

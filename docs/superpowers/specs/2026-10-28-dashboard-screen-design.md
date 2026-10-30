@@ -72,8 +72,9 @@ Client Lab はブラウザ内の操作、Settings はフォーム、Pricing は�
 - 初回HTMLでは Fallback。ブロックが viewport に近づいたときだけブロック要求が飛ぶ。
 - 内容は最新3件。タイトル、優先度、相対時刻。
 - `<Lazy>` 内のコレクションは、0.6.0 のブロック応答では `items` が空で返る（実測）。`each` やコレクションの partial を使わず、配列の先頭3件を明示的に描画する。
-- **0.6.0 では Lazy のブロック要求自体が発生せず、内容も materialize されない（実測）**: スクロールしても slots リクエストは0で、Fallback のまま。カードの Fallback に最新3件と注記を置き、初期表示から読めるようにする。Lazy のタグと manifest は残し、この制約を画面とドキュメントに明記する。
-- ファーストビューに入れず、スクロールして初めて要求される位置に置く。GIF ではスクロールして Fallback のままであることを見せる。
+- **初期表示の位置では Lazy のブロックが1回飛び、内容が届く（実測）**: Fallback は「読み込み中…」と最新3件。`?slow=1` ではサーバーが直列なら2703ms、`slow=0` では6ms。Fallback は本文に置き換わる。
+- **カードを下段（初期 viewport の外）に置くと、スクロールしても slots 要求が0で Fallback のまま（実測）**: 0.6.0 のスクロールトリガのギャップ。カードは初期表示の位置に置き、この配置依存の制約を画面とドキュメントに明記する。
+- カードは初期表示の位置に置く。下段に置くと 0.6.0 のスクロールトリガが効かず、要求0のまま Fallback になる（実測）。
 
 ### `<Fragment>` 優先度フォーカス集計
 
@@ -163,7 +164,7 @@ end
 | 操作 | リクエスト | 遅延 |
 |---|---|---|
 | 初回表示 | document 1 + Async 2（サマリー / ハートビート） | document は即時、各 Async は 900ms（サーバーが直列なら合計1800ms） |
-| アクティビティまでスクロール | Lazy 0（0.6.0 は要求なし） | — |
+| アクティビティ | Lazy 1（初期表示の位置） | 2703ms（サーバー直列）/ 6ms（slow=0）。下段に置くとスクロール要求0 |
 | 優先度ボタン | slots 1（Fragment 再取得） | 910ms（Fallback は未観測） |
 | poll | 3秒ごとに block 1 | 各 900ms（次回は応答後3秒） |
 | 遅延リンク | document 1（再読み込み） | 即時 |
@@ -180,7 +181,7 @@ end
 - 初回HTML: 見出し、7リンクのナビ、遅延リンク、フォーカスボタン、Async / Lazy の Fallback、Fragment の初期集計。
 - manifest: `focus` の宣言、`states.fragments` に async 2（片方は `poll: 3000`）、lazy 1、Fragment 1 が載る。
   - Fragment の `reads` はスロット番号の配列で、state 名ではない。`on` に `"focus"`、`server.reads` に `"focus"` があることを見る。
-- 初回HTMLにサマリー / アクティビティの内容がなく、Fallback だけがあること。
+- 初回HTMLのサマリーは Fallback のみ。アクティビティは Fallback に最新3件が入る（0.6.0 の配置依存ギャップ用）。
 - 遅延リンク: 通常時は `?slow=1` へ、`?slow=1` 時は `/dashboard` へ戻る。
 - ブロック要求: manifest の `fragments` から async / lazy のブロック番号を引き、`format: :slots` と `Herb-Block` ヘッダで要求する。応答の JSON にサマリー / アクティビティの内容が入る。番号は直書きしない。
 - Fragment 再取得: `Herb-State` に `focus=high` を載せた slots 要求で、高優先度の集計に変わる。テンプレートパスは manifest のキーから引く。
@@ -189,10 +190,10 @@ end
 ブラウザプローブ（`/tmp/opencode/capture/dashboard-probe.js`）。
 
 - `?slow=1` で初期 document 1、Async block 2 を確認。各ブロックが 800ms 以上かかること、Fallback が見えてから内容に変わることを確認（サーバーが直列なら2本目は約1800ms）。
-- Lazy はスクロール後も slots 要求0で、Fallback の最新3件と注記が残ることを確認（0.6.0 のギャップ）。
+- Lazy は初期表示の位置で block 1（2703ms、サーバー直列）で内容が届くことを確認。下段に置いた場合のスクロール0は 0.6.0 の配置ギャップとして記録する。
 - フォーカス変更は slots 1（`Herb-Block` なし、910ms）で集計が変わることを確認。Fallback は観測されない（ログに残す）。
 - poll で 3秒後に block 1 を確認。900ms 以上。
-- `?slow=0` で同じ操作をして、Async / focus が 500ms 未満で返ることを確認。Lazy は要求0のまま。
+- `?slow=0` で同じ操作をして、Async / focus / Lazy が 500ms 未満で返ることを確認。
 - 7リンクのナビが 800px / 1000px で1行に収まること。
 - 日本語フォントスタックと、CDP の実フォントが `Noto Sans CJK JP` であること。
 - pageerror / console error がないこと。
@@ -200,7 +201,7 @@ end
 ## メディア
 
 - `docs/media/dashboard-light.png` / `dashboard-dark.png`（1000×900、fullPage）。
-- `docs/media/18-dashboard.gif`（1000×900 の viewport。フレームは 初期 Fallback → Async 内容 → フォーカス高の内容 → Lazy の Fallback カード → poll 更新。Fragment の Fallback と Lazy の内容遷移は 0.6.0 では撮れないため含めない）。
+- `docs/media/18-dashboard.gif`（1000×900 の viewport。フレームは 初期 Fallback → Async 内容 → フォーカス高の内容 → Lazy の内容 → poll 更新。Fragment の Fallback は 0.6.0 では撮れないため含めない）。
 - 7リンクナビになるため、Hub / Patterns / Client Lab / Pricing / Settings の stills と Hub 03 / 04 の GIF、`ui-dialog.png`（ナビが写る full-page still）を撮り直す。ナビが写らない要素クリップの GIF はそのまま。
 - 静止画・GIF とも日本語フォントスタックで撮り、CDP で実フォントを確認する。GIF は固定の viewport サイズで撮り、フレーム寸法を揃える（Settings の教訓）。
 

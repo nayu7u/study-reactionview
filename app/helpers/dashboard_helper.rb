@@ -19,7 +19,7 @@ module DashboardHelper
 
   def recent_activity
     slow_slots
-    Task.order(created_at: :desc).limit(5)
+    Task.order(created_at: :desc)
   end
 
   def dashboard_time_ago(time)
