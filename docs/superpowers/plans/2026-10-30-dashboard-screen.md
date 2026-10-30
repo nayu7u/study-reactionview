@@ -900,6 +900,8 @@ git commit -m "feat(dashboard): pollハートビートを追加 — 一定間隔
 
 ### Task 5: Browser probe and Dashboard media
 
+> **Implementation findings (2026-10-30):** Async content must be inline; partials inside a deferred block do not render because the block response does not carry their statics and the initial dependency map is empty. `<Lazy>` sends no block request and never materializes in 0.6.0, so its Fallback carries the latest three rows and a note. The Fragment focus change updates the stats in one 910ms slots request but the Fallback was not observed. The probe records these gaps; the media shows the Fallback cards and the working Async/poll content.
+
 **Files:**
 - Create: `/tmp/opencode/capture/dashboard-probe.js` (outside the repo)
 - Create: `/tmp/opencode/capture/dashboard-capture.js` (outside the repo)

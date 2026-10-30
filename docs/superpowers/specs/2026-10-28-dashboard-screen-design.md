@@ -56,6 +56,7 @@ Client Lab はブラウザ内の操作、Settings はフォーム、Pricing は�
 - 初回HTMLには Fallback だけが入る。ページのマウント直後にブロック要求が飛び、内容が差し替わる。
 - `delay="150"` で、速い応答では Fallback をちらつかせない。`?slow=1` では 900ms 待つので、150ms 後に Fallback が見える。
 - 内容は全タスク数、優先度高（`priority: 3`）の件数、直近24時間の件数。Task に完了列はないため、完了率は出さない。
+- **ブロック内の partial は 0.6.0 では描画されない（実測）**: ブロック応答は partial の statics を運ばず、初期ページの dependency も空になる。Async の内容は partial にせず、インラインで書く。
 
 ### `<Lazy>` アクティビティ
 
@@ -71,7 +72,8 @@ Client Lab はブラウザ内の操作、Settings はフォーム、Pricing は�
 - 初回HTMLでは Fallback。ブロックが viewport に近づいたときだけブロック要求が飛ぶ。
 - 内容は最新3件。タイトル、優先度、相対時刻。
 - `<Lazy>` 内のコレクションは、0.6.0 のブロック応答では `items` が空で返る（実測）。`each` やコレクションの partial を使わず、配列の先頭3件を明示的に描画する。
-- ファーストビューに入れず、スクロールして初めて要求される位置に置く。GIF ではスクロールして Fallback → 内容の順を見せる。
+- **0.6.0 では Lazy のブロック要求自体が発生せず、内容も materialize されない（実測）**: スクロールしても slots リクエストは0で、Fallback のまま。カードの Fallback に最新3件と注記を置き、初期表示から読めるようにする。Lazy のタグと manifest は残し、この制約を画面とドキュメントに明記する。
+- ファーストビューに入れず、スクロールして初めて要求される位置に置く。GIF ではスクロールして Fallback のままであることを見せる。
 
 ### `<Fragment>` 優先度フォーカス集計
 
@@ -92,6 +94,7 @@ Client Lab はブラウザ内の操作、Settings はフォーム、Pricing は�
 ```
 
 - 初回HTMLには `all` の集計が入る。優先度ボタンを押すと `focus` が変わり、`focus_stats` のサーバー読みが古くなる。Fallback を出してから、新しい集計が届く。
+- **0.6.0 のブラウザでは Fallback が観測されなかった（実測）**: 優先度変更は slots 1回（910ms）で集計が `10` から `3` に更新されるが、Fallback は表示されない。manifest の `on` / `server.reads` と状態読みは確認済み。可視の更新は検証できるが、Fallback の見た目は制約として記録する。
 - 優先度ボタンは `<Fragment>` の外に置く。中に置くと Fallback がボタンまで覆い、連続で切り替えられなくなる。
 - `on="focus"` を明示する。読みの自動検出に頼らず、この state の書き込みで Fallback を出す意図を固定する。
 - `focus_stats` は選択した優先度のタスク数を、7日 / 30日 / 全期間の内訳付きで返す。`all` は全タスク。
@@ -149,7 +152,7 @@ end
 
 - サマリー: `Task.count`、`Task.where(priority: 3).count`、`Task.where(created_at: 24.hours.ago..).count`
 - フォーカス集計: `focus` に応じた `Task.where(priority: ...)` の合計と、7日 / 30日 / 全期間の内訳
-- アクティビティ: 直近5件
+- アクティビティ: 最新3件（Lazy の Fallback に表示）
 - ハートビート: `Time.current` と、そこから決まるデモ用キュー値
 - 完了状態はDBにない（Hub の done はブラウザ所有）。ダッシュボードでは扱わない。
 
@@ -159,13 +162,13 @@ end
 
 | 操作 | リクエスト | 遅延 |
 |---|---|---|
-| 初回表示 | document 1 + Async 2（サマリー / ハートビート） | document は即時、各 Async は 900ms |
-| アクティビティまでスクロール | Lazy block 1 | 900ms |
-| 優先度ボタン | slots 1（Fragment 再取得） | 900ms |
+| 初回表示 | document 1 + Async 2（サマリー / ハートビート） | document は即時、各 Async は 900ms（サーバーが直列なら合計1800ms） |
+| アクティビティまでスクロール | Lazy 0（0.6.0 は要求なし） | — |
+| 優先度ボタン | slots 1（Fragment 再取得） | 910ms（Fallback は未観測） |
 | poll | 3秒ごとに block 1 | 各 900ms（次回は応答後3秒） |
 | 遅延リンク | document 1（再読み込み） | 即時 |
 
-- Async 2本は並行に飛ぶ。順序は保証しない。
+- Async 2本はクライアントが同時に発行する。サーバーが直列なら2本目は待たされる（実測: 907ms / 1812ms）。
 - 初回の Fragment 内容は document に含まれる。追加のリクエストはない。
 - `?slow=0`（またはパラメータなし）では、各ブロックは通常の速度で返る。`delay="150"` により Fallback が見えないことがある。
 - slots 再描画が複数のヘルパーを呼んでも、`slow_slots` のメモ化で1リクエスト900msに抑える。
@@ -185,9 +188,11 @@ end
 
 ブラウザプローブ（`/tmp/opencode/capture/dashboard-probe.js`）。
 
-- `?slow=1` で初期 document 1、Async block 2 を確認。各ブロックが 800ms 以上かかること、Fallback が見えてから内容に変わることを確認。
-- スクロールで Lazy block 1、フォーカス変更で slots 1（`Herb-Block` なし）、poll で 3秒後に block 1 を確認。各 800ms 以上。
-- `?slow=0` で同じ操作をして、ブロックが 500ms 未満で返ることを確認。
+- `?slow=1` で初期 document 1、Async block 2 を確認。各ブロックが 800ms 以上かかること、Fallback が見えてから内容に変わることを確認（サーバーが直列なら2本目は約1800ms）。
+- Lazy はスクロール後も slots 要求0で、Fallback の最新3件と注記が残ることを確認（0.6.0 のギャップ）。
+- フォーカス変更は slots 1（`Herb-Block` なし、910ms）で集計が変わることを確認。Fallback は観測されない（ログに残す）。
+- poll で 3秒後に block 1 を確認。900ms 以上。
+- `?slow=0` で同じ操作をして、Async / focus が 500ms 未満で返ることを確認。Lazy は要求0のまま。
 - 7リンクのナビが 800px / 1000px で1行に収まること。
 - 日本語フォントスタックと、CDP の実フォントが `Noto Sans CJK JP` であること。
 - pageerror / console error がないこと。
@@ -195,7 +200,7 @@ end
 ## メディア
 
 - `docs/media/dashboard-light.png` / `dashboard-dark.png`（1000×900、fullPage）。
-- `docs/media/18-dashboard.gif`（1000×900 の viewport。フレームは Fallback → Async 内容 → Fragment Fallback → Fragment 内容 → Lazy までスクロール → Lazy Fallback → Lazy 内容 → poll 更新）。
+- `docs/media/18-dashboard.gif`（1000×900 の viewport。フレームは 初期 Fallback → Async 内容 → フォーカス高の内容 → Lazy の Fallback カード → poll 更新。Fragment の Fallback と Lazy の内容遷移は 0.6.0 では撮れないため含めない）。
 - 7リンクナビになるため、Hub / Patterns / Client Lab / Pricing / Settings の stills と Hub 03 / 04 の GIF、`ui-dialog.png`（ナビが写る full-page still）を撮り直す。ナビが写らない要素クリップの GIF はそのまま。
 - 静止画・GIF とも日本語フォントスタックで撮り、CDP で実フォントを確認する。GIF は固定の viewport サイズで撮り、フレーム寸法を揃える（Settings の教訓）。
 

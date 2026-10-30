@@ -90,15 +90,16 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     # static labels arrive through the dependency map.
     payload = JSON.parse(response.body)
     assert_equal "app/views/dashboard/index.html.erb", payload["template"]
-    summary = block_partial(payload, "app/views/dashboard/_summary.html.erb")
-    assert summary, "the block answers with the summary partial"
+    summary = payload["slots"].values.find { |slot| slot["statics"].to_s.include?("全タスク") }
+    assert summary, "the block answers with the summary markup"
     assert_equal %w[3 1 3], summary["slots"].values
   end
 
   test "dashboard renders the lazy fallback and manifest" do
     get dashboard_path
 
-    assert_select ".dashboard-activity .skeleton-note", text: /スクロールすると/
+    assert_select ".dashboard-activity .skeleton-note", text: /0\.6\.0/
+    assert_select ".dashboard-activity .activity-title", count: 3
     fragments = manifest.dig("states", "fragments")
     assert_equal 1, fragments.count { |_index, fragment| fragment["mode"] == "lazy" }
   end
@@ -161,8 +162,8 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     payload = JSON.parse(response.body)
-    beat = block_partial(payload, "app/views/dashboard/_heartbeat.html.erb")
-    assert beat, "the block answers with the heartbeat partial"
+    beat = payload["slots"].values.find { |slot| slot["statics"].to_s.include?("最終同期") }
+    assert beat, "the block answers with the heartbeat markup"
     assert_match(/\d{2}:\d{2}:\d{2}/, beat["slots"].values.join)
   end
 end
