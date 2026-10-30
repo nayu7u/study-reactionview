@@ -416,6 +416,8 @@ git commit -m "feat(dashboard): 遅延ダッシュボードのAsyncサマリー�
 
 ### Task 2: Lazy activity
 
+> **Implementation ruling (2026-10-30):** the 0.6.0 block response carries a collection slot with empty `items`, so a loop/partial inside `<Lazy>` renders an empty list. The card renders the first three tasks with explicit rows (`activity[0]`, `activity[1]`, `activity[2]`) instead of a collection. The `_activity.html.erb` partial from the original step is not created.
+
 **Files:**
 - Modify: `app/views/dashboard/index.html.erb`
 - Create: `app/views/dashboard/_activity.html.erb`

@@ -17,6 +17,19 @@ module DashboardHelper
     PRIORITY_LABELS.fetch(priority, "?")
   end
 
+  def recent_activity
+    slow_slots
+    Task.order(created_at: :desc).limit(5)
+  end
+
+  def dashboard_time_ago(time)
+    seconds = (Time.current - time).to_i
+    return "#{seconds / 3600}時間前" if seconds >= 3600
+    return "#{seconds / 60}分前" if seconds >= 60
+
+    "たった今"
+  end
+
   private
 
   # Why memoize: a slots refetch renders the whole template, so every block

@@ -1230,3 +1230,25 @@ textarea.field-over { border-color: #b91c1c; }
   .site-nav { gap: 0; }
   .site-nav a { padding: 0.35rem 0.5rem; font-size: 0.85rem; }
 }
+
+.activity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.activity-row:first-child { border-top: 0; }
+
+.activity-title {
+  font-weight: 560;
+  overflow-wrap: anywhere;
+}
+
+.activity-time {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}

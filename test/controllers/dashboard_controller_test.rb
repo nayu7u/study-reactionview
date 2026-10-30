@@ -94,4 +94,24 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     assert summary, "the block answers with the summary partial"
     assert_equal %w[3 1 3], summary["slots"].values
   end
+
+  test "dashboard renders the lazy fallback and manifest" do
+    get dashboard_path
+
+    assert_select ".dashboard-activity .skeleton-note", text: /スクロールすると/
+    fragments = manifest.dig("states", "fragments")
+    assert_equal 1, fragments.count { |_index, fragment| fragment["mode"] == "lazy" }
+  end
+
+  test "the lazy block request answers with recent activity" do
+    get dashboard_path
+    index = block_index(mode: "lazy")
+
+    get dashboard_path(format: :slots), headers: block_headers(index)
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    assert_includes payload.to_s, "テンプレートを壊してオーバーレイを見る"
+    assert_includes payload.to_s, "時間前"
+  end
 end

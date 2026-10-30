@@ -21,7 +21,36 @@
   </section>
 
   <div class="dashboard-main">
-    <!-- Task 2: activity, Task 3: fragment -->
+    <section class="dashboard-card dashboard-activity">
+      <h2>最近のアクティビティ</h2>
+      <Lazy delay="150" hold="400">
+        <% activity = recent_activity.limit(3).to_a %>
+        <% if activity[0] %>
+          <div class="activity-row">
+            <span class="activity-title"><%= activity[0].title %></span>
+            <span class="prio prio-<%= activity[0].priority %>"><%= dashboard_priority_label(activity[0].priority) %></span>
+            <span class="activity-time"><%= dashboard_time_ago(activity[0].created_at) %></span>
+          </div>
+        <% end %>
+        <% if activity[1] %>
+          <div class="activity-row">
+            <span class="activity-title"><%= activity[1].title %></span>
+            <span class="prio prio-<%= activity[1].priority %>"><%= dashboard_priority_label(activity[1].priority) %></span>
+            <span class="activity-time"><%= dashboard_time_ago(activity[1].created_at) %></span>
+          </div>
+        <% end %>
+        <% if activity[2] %>
+          <div class="activity-row">
+            <span class="activity-title"><%= activity[2].title %></span>
+            <span class="prio prio-<%= activity[2].priority %>"><%= dashboard_priority_label(activity[2].priority) %></span>
+            <span class="activity-time"><%= dashboard_time_ago(activity[2].created_at) %></span>
+          </div>
+        <% end %>
+        <Fallback>
+          <p class="skeleton-note">スクロールすると最近のタスクを読み込みます。</p>
+        </Fallback>
+      </Lazy>
+    </section>
   </div>
 
   <aside class="dashboard-side">
