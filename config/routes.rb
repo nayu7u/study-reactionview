@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root "tasks#index"
 
+  get "/dashboard", to: "dashboard#index"
+
   resources :tasks, only: [ :index, :create ]
 
   get "/board", to: "tasks#index"

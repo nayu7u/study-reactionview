@@ -1,0 +1,39 @@
+<%# herb:slots client %>
+
+<section class="hero">
+  <div class="hero-badge">Client mode — 遅延を測る</div>
+  <h1>Dashboard</h1>
+  <p class="hero-sub">ページの外枠はすぐ返し、重い集計だけを後から届けます。</p>
+  <%= link_to slow_demo? ? "遅延デモ: ON（900ms）" : "遅延デモ: OFF",
+        dashboard_path(slow: slow_demo? ? nil : 1), class: "slow-toggle" %>
+</section>
+
+<noscript><p class="task-note">遅延ブロックの読み込みには JavaScript が必要です。</p></noscript>
+
+<div class="dashboard-layout">
+  <section class="dashboard-card dashboard-summary">
+    <Async delay="150" hold="400">
+      <%= render "dashboard/summary" %>
+      <Fallback>
+        <div class="skeleton" aria-hidden="true">…</div>
+      </Fallback>
+    </Async>
+  </section>
+
+  <div class="dashboard-main">
+    <!-- Task 2: activity, Task 3: fragment -->
+  </div>
+
+  <aside class="dashboard-side">
+    <!-- Task 4: heartbeat -->
+    <section class="dashboard-card dashboard-notes">
+      <h2>リクエストの数え方</h2>
+      <ul class="dashboard-note-list">
+        <li>初回: document 1 + Async 2</li>
+        <li>スクロール: Lazy 1</li>
+        <li>フォーカス変更: Fragment 1</li>
+        <li>poll: 3秒ごとに 1</li>
+      </ul>
+    </section>
+  </aside>
+</div>
