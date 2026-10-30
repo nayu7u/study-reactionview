@@ -222,7 +222,7 @@
   <nav class="toc" aria-label="目次">
     <span>目次:</span>
     <a href="#claim">① 主張の分解</a>
-    <a href="#screens">② 証明マップ（4画面）</a>
+    <a href="#screens">② 証明マップ（7画面）</a>
     <a href="#pairs">③ 実コード対比</a>
     <a href="#map">④ 概念読替表</a>
     <a href="#wire">⑤ 往復はいつ飛ぶか</a>
@@ -248,7 +248,7 @@
         ReActionView は <code>herb_state</code> と <code>data-herb-*</code> 属性だけで、
         同じアクションが HTML を出しつつ部分更新のワイヤも返す。
       </p>
-      <p class="mini">実装: <code>/</code>（Sprint Hub）と <code>/patterns</code>（Patterns）</p>
+      <p class="mini">実装: <code>/</code>（Sprint Hub）、<code>/patterns</code>（Patterns）、<code>/pricing</code>（Pricing）</p>
     </div>
     <div class="card">
       <span class="flag flag-h">Hotwire 層2</span>&nbsp;&nbsp;<span class="flag flag-r">→ ReActionView client mode</span>
@@ -258,7 +258,7 @@
         「Turbo 外の生 JS 層」になった。client mode ではテンプレートが状態と分岐をコンパイル解析し、
         クライアントへの命令書（manifest）を自動生成 — 操作は<strong>全てブラウザ内で完結（0 往復）</strong>。
       </p>
-      <p class="mini">実装: <code>/lab</code>（Client Lab）と <code>/ui</code>（UI Kit）</p>
+      <p class="mini">実装: <code>/lab</code>（Client Lab）、<code>/ui</code>（UI Kit）、<code>/settings</code>（Settings）、<code>/dashboard</code>（Dashboard）</p>
     </div>
   </div>
   <div class="grid-2" style="margin-top:14px;">
@@ -284,7 +284,7 @@
 
 <!-- ============================================================ -->
 <section id="screens">
-  <h2><span class="num">②</span>証明マップ — 4画面が消している Hotwire の部品</h2>
+  <h2><span class="num">②</span>証明マップ — 7画面が消している Hotwire の部品</h2>
   <p class="lede">
     どの画面のどの機能が、「Hotwire では何を書かされていたか」を置き換えたかの一覧。
     全部動くので <code>bin/rails server</code> で確認できます。
@@ -295,11 +295,13 @@
       <tr><th>画面</th><th>モード</th><th>機能</th><th>Hotwire なら書かされていたもの</th><th>ReActionView での代わり</th></tr>
     </thead>
     <tbody>
-      <tr><td rowspan="4"><b>Sprint Hub</b><br><code>/</code></td><td rowspan="4">server</td>
+      <tr><td rowspan="5"><b>Sprint Hub</b><br><code>/</code></td><td rowspan="5">server</td>
         <td>検索・並び替え</td><td>form + <code>turbo-frame</code> + 部分テンプレ ＋（文字入力単位にするなら）Stimulus debounce</td>
         <td><code>data-herb-set="query=$value"</code> + <code>data-herb-debounce</code></td></tr>
       <tr><td>完了チェック・統計</td><td>行の class 切替の Stimulus ＋統計の再描画</td>
         <td>presence バインディング（<code>checked</code>）＋CSS <code>:has()</code> ＋カウントfold（<code>done_count</code>）</td></tr>
+      <tr><td>ピン/星とサマリー</td><td>行とサマリーの2箇所を Stimulus で同期</td>
+        <td><code>pinned</code> の presence ＋ <code>pinned_count</code> のカウントfold（<b>0往復</b>）</td></tr>
       <tr><td>作成ドロワー</td><td>Stimulus の dialog 開閉、focus と backdrop 処理</td>
         <td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… esc@window-&gt;…"</code></td></tr>
       <tr><td>楽観的追加</td><td>Stimulus で先に DOM を挿入するか Turbo Stream 追従（順序・キーの整合は自前）</td>
@@ -312,6 +314,22 @@
         <td><code>data-herb-increment="page"</code> ＋ <code>$refresh</code>（キー付き差分で既存行は動かない）</td></tr>
       <tr><td>詳細連動</td><td>行クリック → 別フレームの再描画、選択状態の管理を Stimulus で</td>
         <td>同じ往復が詳細の分岐と <code>data-herb-name</code> スロットに答える</td></tr>
+
+      <tr><td><b>Pricing</b><br><code>/pricing</code></td><td>server</td>
+        <td>プラン・席数・年払い・サポートの見積もり</td><td>Stimulus に価格式を写す／フォーム再送で全体を再描画</td>
+        <td><code>herb_state</code> ＋ READ slot ＋ 席数/年払い/サポートの <code>$refresh</code></td></tr>
+
+      <tr><td rowspan="2"><b>Settings</b><br><code>/settings</code></td><td rowspan="2">client</td>
+        <td>3タブ・依存フィールド</td><td>Stimulus のタブ切替と、依存フィールドの表示制御</td>
+        <td><code>tab</code> の hidden presence ＋ 依存の <code>hidden</code> ＋ 派生 <code>can_save</code>（0往復）</td></tr>
+      <tr><td>未保存状態・保存/リセット</td><td>dirty 管理と保存ボタンの disabled 同期</td>
+        <td>パネルの <code>input</code>/<code>change</code> で <code>dirty</code> を立て、<code>disabled="&lt;%= !can_save %&gt;"</code></td></tr>
+
+      <tr><td rowspan="2"><b>Dashboard</b><br><code>/dashboard</code></td><td rowspan="2">client</td>
+        <td>Async / Lazy の遅延読み</td><td>Turbo Frame の lazy loading / Stimulus の polling</td>
+        <td><code>&lt;Async&gt;</code> / <code>&lt;Lazy&gt;</code> の block 要求と <code>&lt;Fallback&gt;</code>（Lazy は下段で 0.6.0 ギャップ）</td></tr>
+      <tr><td>Fragment の stale 表示・poll</td><td>入力に連動する再取得と定期更新</td>
+        <td><code>focus: focus</code> の server read ＋ <code>on</code>、<code>poll=3000</code></td></tr>
 
       <tr><td rowspan="3"><b>Client Lab</b><br><code>/lab</code></td><td rowspan="3">client</td>
         <td>タブ・カウンタ・パレット</td><td>Stimulus ×3Controller（tab / unread / palette）</td>
@@ -333,7 +351,7 @@
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 4つの局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 5つの局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -530,6 +548,48 @@
       </div>
     </div>
   </div>
+
+  <!-- ================= pair 5 ================= -->
+  <h3 style="margin-top:34px;">対比 5 — 料金計算（サーバーに残す）</h3>
+  <div class="duo">
+    <div class="panel hot">
+      <div class="panel-head"><span class="dot"></span>Hotwire（Stimulus に価格式）<span class="grow">1ファイル</span></div>
+      <pre><code>// app/javascript/controllers/quote_controller.js
+import { Controller } from "@hotwired/stimulus"
+
+export default class extends Controller {
+  static targets = ["plan", "seats", "annual", "total"]
+
+  connect() { this.render() }
+
+  render() {
+    const seats = Number(this.seatsTarget.value)
+    const base = { starter: 1200, team: 2400, business: 4000 }[this.planTarget.value]
+    // ボリューム割引・年払い割引・消費税もここに写す
+    this.totalTarget.textContent = `¥${base * seats}`
+  }
+}</code></pre>
+      <div class="panel-foot">
+        <b>表示のたびに価格式を JS 側でも保守する</b>。サーバーの見積もりと食い違うと、どちらが正か分からなくなる。
+      </div>
+    </div>
+    <div class="panel rv">
+      <div class="panel-head"><span class="dot"></span>ReActionView（実物: 計算は Ruby）<span class="grow">READ slot</span></div>
+      <pre><code># app/controllers/pricing_controller.rb
+@seats = integer_state("seats", 5).clamp(SEAT_MIN, SEAT_MAX)
+@annual = boolean_state("annual", false)
+@support = boolean_state("support", false)</code></pre>
+      <pre style="border-top:1px solid var(--line);"><code>&lt;%# app/views/pricing/index.html.erb %&gt;
+&lt;%# herb:state (plan: "team", seats: 5, annual: false, support: false) %&gt;
+&lt;button data-herb-set="annual=true" aria-pressed="&lt;%= annual %&gt;"&gt;年払い&lt;/button&gt;
+&lt;p data-herb-name="total"&gt;&lt;%= number_to_currency(@total, unit: "¥", precision: 0) %&gt;&lt;/p&gt;</code></pre>
+      <div class="panel-foot">
+        <b>料金式はコントローラだけにある</b>。<code>?format=slots</code> の応答は内訳の値だけで、
+        プランは分岐の反転、席数・年払い・サポートは非反転条件＋<code>$refresh</code> が1往復を運ぶ。
+        金額の行は分岐の外に置き、state の表示属性で表示を切り替える（§6）。
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -544,6 +604,7 @@
       <tr><td>Turbo Stream（append / replace…）</td><td>応答後の部分操作</td><td>POST 201 の collection splice（<code>data-herb-into</code>）</td><td>tasks#create</td></tr>
       <tr><td><code>form_with</code> ＋ submit リスナー</td><td>値の往復</td><td><code>data-herb-set="query=$value"</code> ＋ <code>data-herb-debounce</code>（form不要）</td><td>tasks/index</td></tr>
       <tr><td>Stimulus（入力リアクティブ）</td><td>派生値・妥当性</td><td><code>&lt;%# herb:state (…) 派生宣言 %&gt;</code> と presence バインディング（<code>disabled</code>, <code>checked</code>, <code>hidden</code>）</td><td>lab 機能⑦⑫, ui/_switch</td></tr>
+      <tr><td>Stimulus（料金計算）</td><td>入力に連動する合計</td><td>サーバーの <code>herb_state</code> 計算＋<code>data-herb-name</code> の READ slot（1往復）</td><td>pricing</td></tr>
       <tr><td>Stimulus（per-item targets）</td><td>行ごとの状態</td><td>行内 <code>&lt;%# herb:state (qty: 0) %&gt;</code> ＋ <code>data-herb-increment/decrement</code></td><td>lab 機能⑬, ui/_stepper</td></tr>
       <tr><td>Stimulus / dialog 要素</td><td>開閉・Esc・backdrop</td><td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… keydown.esc@window-&gt;…"</code></td><td>tasks 機能③, lab 機能⑥</td></tr>
       <tr><td><code>classList.toggle</code> / <code>hidden</code> 直接操作</td><td>見た目切替</td><td><code>data-herb-toggle</code> ＋ CSS <code>:has()</code> / <code>[hidden]</code> ガード</td><td>ui/_switch, lab 機能⑭</td></tr>
@@ -559,11 +620,14 @@
   <p class="lede">「Turbo より通信が減る」は口でなく <code>?format=slots</code> のリクエスト数として読めます。</p>
   <div class="grid-3">
     <div class="card">
-      <p style="margin-bottom:6px;"><b>server mode（<code>/</code>, <code>/patterns</code>）</b></p>
+      <p style="margin-bottom:6px;"><b>server mode（<code>/</code>, <code>/patterns</code>, <code>/pricing</code>）</b></p>
       <p style="font-size:13.8px;">
         往復は<strong>state を読む分岐の答えが反転した時だけ</strong>1回。
         検索の分岐反転は <code>&lt;% if query.empty? %&gt;</code> がトリガ、ソート select 単体は 0（実測）。
         連続タイピングで分岐が反転しない間は行を触らず、文字はクライアント評価で更新。
+        Pricing は <code>plan</code> が分岐の反転、<code>seats</code> / <code>annual</code> / <code>support</code> が非反転条件＋<code>$refresh</code>。
+        金額は分岐の外の READ slot に置き、各操作1リクエストで更新する（実測）。
+        Hub のピン/星は per-row <code>pinned</code>＋<code>pinned_count</code> のカウントfoldで、<strong>0 slots</strong>。
       </p>
       <p class="mini">
         なお steering（<code>Herb-State</code> ヘッダ）に載るのは
@@ -573,14 +637,20 @@
       </p>
     </div>
     <div class="card">
-      <p style="margin-bottom:6px;"><b>client mode（<code>/lab</code>, <code>/ui</code>)</b></p>
+      <p style="margin-bottom:6px;"><b>client mode（<code>/lab</code>, <code>/ui</code>, <code>/settings</code>, <code>/dashboard</code>）</b></p>
       <p style="font-size:13.8px;">
-        全操作 <strong>0 往復</strong>。未描画ブランチは初期レスポンスの
+        lab / ui / settings は<strong>全操作 0 往復</strong>。未描画ブランチは初期レスポンスの
         <code>&lt;template data-herb-region&gt;</code> に格納済みで、
         <code>&lt;template data-herb-manifests&gt;</code>（states/reads/conditionals/presence/computed の命令書）に従って
-        ブラウザ内で分岐の materialize・presence・fold が進む。
+        ブラウザ内で分岐の materialize・presence・fold が進む。Settings のタブは分岐でなく hidden の presence パネル。
+        Dashboard は client mode だが、Async / Lazy / Fragment / poll の遅延ブロックはサーバーに取りに行く。
       </p>
-      <p class="mini">UI Kit の9コンポーネント全操作は slot 往復 0 を実測（docs/ui-kit.md）。意図的に同期取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。</p>
+      <p class="mini">
+        UI Kit の9コンポーネント全操作は slot 往復 0（docs/ui-kit.md）。Settings も 0。
+        Dashboard の <code>?slow=1</code> は document 約30ms、Async 2本 907ms / 1812ms、Lazy 2703ms（初期表示）/ 下段0、
+        focus 910ms、poll 907ms。Lazy の下段配置と Fragment の Fallback には 0.6.0 のギャップがある。
+        意図的に同期を取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。
+      </p>
     </div>
     <div class="card">
       <p style="margin-bottom:6px;"><b>共通の帳尻</b></p>
@@ -619,6 +689,49 @@
       パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
     </li>
     <li>
+      <b>トップレベルの parked 分岐でも、分岐内の boolean バインディングと入れ子の分岐は初期値で materialize される</b> — Settings のタブ分岐で、<code>digest: true</code> の switch が unchecked、入れ子の頻度分岐が false 側で出た（0.6.0 実測）。
+      タブと依存フィールドは分岐でなく <code>hidden</code> の presence パネルに置き、DOM に残したまま表示だけ切り替える。
+    </li>
+    <li>
+      <b>分岐の中のサーバー読みは branch refetch をもう1回呼ぶ</b> — Pricing で年払い・サポートの切替が2リクエストになった（実測）。
+      金額は分岐の外に置き、state の表示属性で行を出し分けると1リクエストに収まる。
+    </li>
+    <li>
+      <b>サポートのチェックボックスは2リクエスト</b> — <code>checked</code> のバインドが <code>input</code> と <code>change</code> の両方で state を書くため。
+      <code>data-herb-set</code> の2ボタン＋<code>$refresh</code> に変えると1回になる。
+    </li>
+    <li>
+      <b>年払いの条件を2つに分けると2リクエスト</b> — 小計ラベルと割引ノートが別々に <code>annual</code> を読むと、それぞれが refetch を予約する。
+      可視のラベルは ivar の三項で出し分け、steering 用の常真条件を1つだけ置く。
+    </li>
+    <li>
+      <b>ボリューム割引の10席しきい値は分岐でなく presence</b> — <code>hidden="&lt;%= seats &lt; 10 %&gt;"</code> と <code>hidden="&lt;%= seats &gt;= 10 %&gt;"</code> で行を出し分け、金額は分岐外の READ slot。
+      <code>seats &gt; 0</code> の常真条件が steering を担い、<code>$refresh</code> が往復を運ぶ。
+    </li>
+    <li>
+      <b>Boolean / Integer の防御的キャスト</b> — <code>boolean_state</code> は <code>true</code> / <code>"true"</code> だけを真にし、<code>integer_state</code> は <code>Integer(...)</code> でキャストする。
+      Pricing は席数を 1..50 に clamp する。
+    </li>
+    <li>
+      <b>deferred block の中の partial は描画されない</b> — <code>&lt;Async&gt;</code> / <code>&lt;Lazy&gt;</code> のブロック応答は partial の statics を運ばず、初期ページの dependency も空になる（Dashboard 実測）。
+      ブロックの内容は inline で書く。
+    </li>
+    <li>
+      <b><code>&lt;Lazy&gt;</code> は初期表示の位置では動き、下段では動かない</b> — 初期 viewport 内なら block 1 で内容が届く（2703ms、サーバー直列）。
+      カードを初期 viewport の外に置くと、スクロールしても slots 要求は0で Fallback のまま（Dashboard 実測）。
+    </li>
+    <li>
+      <b><code>&lt;Fragment&gt;</code> の Fallback は観測されなかった</b> — <code>focus</code> 変更は slots 1回（910ms）で集計を更新するが、Fallback は表示されない（Dashboard 実測）。
+      manifest の <code>on</code> と <code>server.reads</code> は正しく、状態読みと集計更新は動く。
+    </li>
+    <li>
+      <b>no-JS では遅延コンテンツは Fallback のまま</b> — <code>&lt;Async&gt;</code> / <code>&lt;Lazy&gt;</code> はクライアントがブロックを要求する。
+      JS を切ると初期 Fallback と <code>&lt;noscript&gt;</code> の案内だけが読める。Pricing の再計算も no-JS の対象外。
+    </li>
+    <li>
+      <b>ハートビートのキューはシミュレーション</b> — <code>Time.current</code> から決まるデモ値で、実ジョブやワーカーの状態ではない。
+    </li>
+    <li>
       <b>POST 201 の splice は collection のみ</b> — region 級のサーバー読み（<code>Task.count</code> 等）は次の GET でしか追いつかない。
       追加直後の hero は <code>$refresh</code> 頼み、という手順を見せるのが誠実。
     </li>
@@ -637,36 +750,12 @@
 <!-- ============================================================ -->
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
-  <p class="lede">既存4画面で足りないのは「まだ Hotwire で書かざるを得なかった箇所」を捨てた新局面。3候補。</p>
-  <div class="grid-3">
-    <div class="card">
-      <p style="margin-bottom:6px;"><span class="flag flag-r">最有力</span> <b>行とヘッダの同時連動（ピン/星）</b></p>
-      <p style="font-size:13.8px;">
-        行の星を押すと、行の見た目とヘッダの「ピン済み N」が即時に揃う。
-        星の塗りは presence バインディング＋CSS、<code>N</code> はカウントfold（<code>when: "pinned"</code>）でクライアント評価 —
-        <strong>0 往復</strong>。Hotwire なら2か所の DOM 同期（Stimulus）か Stream 往復が要る。
-      </p>
-      <p class="mini">既存の実測パターン（presence + fold + toggle）の組合せのみで組める。</p>
-    </div>
-    <div class="card">
-      <p style="margin-bottom:6px;"><b>横並べ比較画面（<code>/compare</code>）</b></p>
-      <p style="font-size:13.8px;">
-        <code>turbo-rails</code> を Gemfile に足し（importmap pin のみ・ビルドレス）、同じタスク管理を
-        Turbo Frame/Stream 版と ReActionView 版で並べ、Network 往復とコード量を横に対応させる。
-        決定的な説得力はあるが、Gemfile 変更の範囲確認が必要。
-      </p>
-      <p class="mini">本ページの§③の対比を実物として隣に置く形。</p>
-    </div>
-    <div class="card">
-      <p style="margin-bottom:6px;"><b>送信前計算フォーム（送料・合計）</b></p>
-      <p style="font-size:13.8px;">
-        入力に連動して合計や保存ボタンが変わるUI。<code>price * qty</code> は fold 外なので
-        READ slot の <strong>1 往復</strong>で答える「正直版」— Hotwire では Stimulus なしに書けない局面を
-        ReActionView が1往復で置く形を示せる。
-      </p>
-      <p class="mini">§⑥の境界の正面の実例になる。</p>
-    </div>
-  </div>
+  <p class="lede">
+    現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
+    遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
+    Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。
+    main の「Hotwire なし」の主張を守るため、このリポジトリには <code>turbo-rails</code> を入れません。
+  </p>
 </section>
 
 <footer class="page">
@@ -675,7 +764,7 @@
     <code>docs/ui-kit.md</code> 参照。このページは静的HTML（ビルド・外部依存なし）。
     GitHub 上で読むなら同一内容の Markdown 版:
     <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/hotwire-comparison.md">docs/hotwire-comparison.md</a>。
-    生成日: 2026-10-25。
+    生成日: 2026-10-30。
   </p>
 </footer>
 
