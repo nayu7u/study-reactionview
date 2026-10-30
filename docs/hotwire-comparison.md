@@ -31,7 +31,7 @@ Stimulus を書くこと自体が「Turbo 外の生 JS 層」。client mode で�
 状態と分岐をコンパイル解析し、クライアントへの命令書（manifest）を自動生成 —
 操作は**全てブラウザ内で完結（0 往復）**。
 
-実装: `/lab`（Client Lab）、`/ui`（UI Kit）、`/settings`（Settings）
+実装: `/lab`（Client Lab）、`/ui`（UI Kit）、`/settings`（Settings）、`/dashboard`（Dashboard）
 
 ### JS の実体（実ファイル・全4行）
 
@@ -48,7 +48,7 @@ import "reactionview"
 
 ---
 
-## ② 証明マップ — 6画面が消している Hotwire の部品
+## ② 証明マップ — 7画面が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 
@@ -65,6 +65,8 @@ import "reactionview"
 | **Pricing** (`/pricing`) | server | プラン・席数・年払い・サポートの見積もり | Stimulus に価格式を写す／フォーム再送で全体を再描画 | `herb_state` + READ slot + 席数/年払い/サポートの `$refresh` |
 | **Settings** (`/settings`) | client | 3タブ・依存フィールド | Stimulus のタブ切替と、依存フィールドの表示制御 | `tab` の hidden presence＋依存の `hidden`＋派生 `can_save`（0往復） |
 | | | 未保存状態・保存/リセット | dirty 管理と保存ボタンの disabled 同期 | パネルの `input`/`change` で `dirty` を立て、`disabled="<%= !can_save %>"` |
+| **Dashboard** (`/dashboard`) | client | Async / Lazy の遅延読み | Turbo Frame の lazy loading / Stimulus の polling | `<Async>` / `<Lazy>` の block 要求と `<Fallback>`（Lazy は 0.6.0 ギャップ） |
+| | | Fragment の stale 表示・poll | 入力に連動する再取得と定期更新 | `focus: focus` の server read＋`on`、`poll=3000` |
 | **Client Lab** (`/lab`) | client | タブ・カウンタ・パレット | Stimulus ×3（tab / unread / palette） | `herb:state` 宣言＋`data-herb-set / -increment / -reset` |
 | | | ライブ入力・バリデーション | 文字数・妥当性・disabled 同期のコントローラ | 派生宣言（`ready_bio: bio != "" && bio.length <= 60`）＋presence の `disabled` |
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
@@ -367,6 +369,8 @@ export default class extends Controller {
   UI Kit の9コンポーネント全操作は slot 往復 0 を実測（`docs/ui-kit.md`）。
   Settings のタブ・依存フィールド・dirty/save/reset も 0 往復で、タブは分岐でなく
   `hidden` の presence パネルで切り替える（後述の境界）。
+  **Dashboard は client mode だが、遅延ブロックはサーバーに取りに行く**。`?slow=1` の実測は
+  document 約30ms、Async 2本 907ms / 1812ms、focus 910ms、poll 907ms、Lazy 0。
   意図的に同期を取り直したい時だけ `data-herb-action="$refresh"` が脱出ハッチ。
 - **共通の帳尻**:
   - `$refresh` 等の action は `data-herb-set` と同要素に併置できる（同 dispatch の state は 1 リクエストに合流）
@@ -402,6 +406,13 @@ export default class extends Controller {
   — Settings のタブ分岐で、`digest: true` の switch が unchecked、入れ子の頻度分岐が false 側で出た
   （0.6.0 実測）。タブと依存フィールドは分岐でなく `hidden` の presence パネルに置き、DOM に残したまま
   表示だけ切り替えると、入力値も見た目も 0 往復で保たれる。
+- **deferred block の中の partial は描画されない** — `<Async>` / `<Lazy>` のブロック応答は partial の
+  statics を運ばず、初期ページの dependency も空になる（Dashboard 実測）。ブロックの内容は inline で書く。
+- **`<Lazy>` は 0.6.0 でブロック要求も materialize もしない** — スクロールしても slots 要求は0で、
+  Fallback のまま（Dashboard 実測）。Fallback に読ませたい内容を置くか、`<Async>` にする。
+- **`<Fragment>` の Fallback は観測されなかった** — `focus` 変更は slots 1回（910ms）で集計を更新するが、
+  Fallback は表示されない（Dashboard 実測）。manifest の `on` と `server.reads` は正しく、
+  状態読みと集計更新は動く。Fallback の見た目は 0.6.0 の制約として扱う。
 - **POST 201 の splice は collection のみ** — region 級のサーバー読み（`Task.count` 等）
   は次の GET でしか追いつかない。追加直後の hero は `$refresh` 頼み、という手順を
   見せるのが誠実。
@@ -418,7 +429,7 @@ export default class extends Controller {
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は `/settings` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 

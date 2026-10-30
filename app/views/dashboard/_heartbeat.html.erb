@@ -1,6 +1,0 @@
-<% beat = heartbeat %>
-<div class="heartbeat" data-heartbeat-at="<%= beat[:at].iso8601 %>">
-  <p class="heartbeat-label">最終同期</p>
-  <p class="heartbeat-time"><%= beat[:at].strftime("%H:%M:%S") %></p>
-  <p class="heartbeat-queue">デモキュー: <span data-heartbeat-queue><%= beat[:queue] %></span></p>
-</div>

@@ -2,7 +2,7 @@
 
 **ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
 すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、実用的なアプリ風の
-六つのショーケースで実演・検証する。
+七つのショーケースで実演・検証する。
 
 - React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
   `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
@@ -10,11 +10,12 @@
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
 - Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
 
-## 6つの画面
+## 7つの画面
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
 | Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、ピン/星の同時連動、楽観的追加 |
+| Dashboard `/dashboard` | `<%# herb:slots client %>` | Async / Lazy / Fragment / poll の遅延読み。0.6.0 で動く範囲とギャップ |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務から拾った3パターン: フィルタチップ、もっと見る、詳細連動 |
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Settings `/settings` | `<%# herb:slots client %>` | タブ・依存フィールド・未保存状態・デモ保存（全操作 0 往復） |
@@ -89,6 +90,39 @@ $ bin/rails server     # http://localhost:3000
   ヘッダではなくリスト直後のサマリーに置いている。
 - 星はブラウザ所有の state。リロードで消えるが、行の見た目とサマリーは **0 往復**で揃う。
 - done の `:has(input:checked)` は `.task-check` にスコープし、ピンのチェックと干渉させない。
+
+## Dashboard（client モード、`/dashboard`）
+
+ページの外枠を先に返し、重い集計だけを後から届ける。`<Async>` / `<Lazy>` / `<Fragment>` / `poll` の4つを1画面に並べ、0.6.0 で動く範囲と動かない範囲を分けて記録する。遅延デモは `?slow=1` で切り替える。
+
+<div><img src="docs/media/dashboard-light.png" alt="Dashboard (light)" width="49%"/> <img src="docs/media/dashboard-dark.png" alt="Dashboard (dark)" width="49%"/></div>
+
+### 機能⑱ Async サマリー
+
+![Asyncのサマリーとpollが後から届く](docs/media/18-dashboard.gif)
+
+- 初回HTMLは Fallback だけ。マウント直後に2本のブロック要求（サマリー / ハートビート）が飛ぶ。`?slow=1` では各900ms、ページ本体は約30msで返る（実測）。
+- 2本目はサーバーが直列なら待たされ、907ms / 1812ms になった（実測）。クライアントは同時に発行している。
+- ブロックの内容は **inline** で書く。0.6.0 のブロック応答は partial の statics を運ばず、`render` した partial は描画されない（実測）。
+- サマリーは全タスク、優先度高、直近24時間。Task に完了列はないため、完了率は出さない。
+
+### 機能⑲ Lazy の defer と 0.6.0 ギャップ
+
+- `<Lazy>` は viewport 接近でブロックを要求する設計だが、0.6.0 ではスクロールしても slots 要求が0で、内容も materialize されない（実測）。
+- カードの Fallback に最新3件と「0.6.0 では materialize されない」注記を置き、初期表示から読めるようにした。`<Lazy>` のタグと manifest は残している。
+- コレクションをブロック内に置くと `items` が空になるため、3件は明示的な行で描画している。
+
+### 機能⑳ Fragment の優先度フォーカス
+
+- 優先度（すべて / 高 / 中 / 低）は `focus` state。`focus: focus` でサーバー読みを登録し、`on="focus"` と `server.reads` が manifest に載る。
+- 変更は slots 1回（910ms）で集計が 10→3 に更新される。**Fallback は0.6.0のブラウザでは観測されなかった**（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として記録する。
+- ボタンは `<Fragment>` の外に置く。中に置くと Fallback がボタンまで覆う。
+
+### 機能㉑ poll ハートビート
+
+- `<Async poll="3000">` のブロックが3秒ごとに再取得される。`?slow=1` では各907ms、次回は応答後3秒。
+- クライアントは `document.hidden` の間、poll を止める。表示中の更新だけを GIF とプローブで確認した。
+- キュー値は `Time.current` から決まるデモ用のシミュレーションで、実ジョブではない。
 
 ## Patterns（server モード、`/patterns`）
 
@@ -290,7 +324,7 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
-  `settings_controller_test` / `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
+  `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。

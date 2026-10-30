@@ -17,6 +17,8 @@
 （docs/hotwire-comparison.md の対比5）。
 6画面目 `Settings`（`/settings`）: client mode の設定フォーム。3タブ・依存フィールド・明示 dirty・
 デモ保存を、全操作 0 往復で扱う（下の実測メモ）。
+7画面目 `Dashboard`（`/dashboard`）: client mode の遅延ダッシュボード。Async 2本・Lazy・Fragment・
+poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測して記録する。
 
 ## 作業規約（必ず守る）
 
@@ -241,6 +243,28 @@
   Hub / Patterns / Client Lab / Pricing の stills と Hub の 03 / 04 GIF を再撮影した。
   Settings の静止画/GIF は日本語フォントスタックで撮り、CDP の `CSS.getPlatformFontsForNode` で
   実フォントが `Noto Sans CJK JP` であることを確認した。
+
+## Dashboard 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **`<Async>` のブロック内容は inline で書く**: ブロック応答は partial の statics を運ばず、初期ページの
+  `data-herb-dependencies` も空になるため、`render` した partial は描画されない（実測）。サマリーと
+  ハートビートは inline にした。`<Async>` はマウント直後に `Herb-Block` 付きの slots 要求を送る。
+- **`<Lazy>` は 0.6.0 でブロック要求も materialize もしない**: スクロールしても slots 要求は0で、
+  Fallback のまま（実測）。Fallback に最新3件と注記を置いて読める形にし、タグと manifest は残した。
+  Lazy の中のコレクションはブロック応答で `items` が空になるため、明示的な行で描画する。
+- **`<Fragment>` の Fallback は観測されなかった**: `focus: focus`、`on="focus"`、`server.reads` は
+  manifest に載り、focus 変更は slots 1回（910ms）で集計を 10→3 に更新する。ただし Fallback は
+  表示されない（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として扱う。
+- **`poll` は 3秒間隔**: `<Async poll="3000">` のブロックが応答後3秒で再要求される。`?slow=1` では
+  各907ms、実効約3.9秒。クライアントは `document.hidden` の間、poll を止める（実装済み）。
+- **`?slow=1` は slots だけを900ms遅らせる**: `slow_slots` を1リクエスト1回にメモ化する。初回HTMLは
+  約30ms、Async 2本は 907ms / 1812ms（サーバーが直列）、focus 910ms、poll 907ms。`slow=0` は
+  Async 11/13ms、focus 8ms。Lazy は 0 要求のため遅延の対象外。
+- **7リンクナビは 800px / 1000px で1行**: `@media (max-width: 56rem)` で header の padding、
+  nav の gap、link の padding / font-size を詰める。プローブで link の `top` が1種類であることを確認。
+  Hub / Patterns / Client Lab / Pricing / Settings の stills、Hub 03 / 04、`ui-dialog.png` を
+  7リンクで撮り直した。Dashboard の stills / GIF も日本語フォントで撮り、CDP で
+  `Noto Sans CJK JP` を確認した。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 

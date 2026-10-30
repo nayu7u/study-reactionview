@@ -123,7 +123,7 @@ class DashboardFlowTest < ActionDispatch::IntegrationTest
     assert_equal "string", focus["kind"]
     assert_equal "all", focus["value"]
 
-    fragment = manifest.dig("states", "fragments").values.find { |entry| entry["on"] == ["focus"] }
+    fragment = manifest.dig("states", "fragments").values.find { |entry| entry["on"] == [ "focus" ] }
     assert fragment, "the Fragment is registered"
     assert fragment["reads"].all? { |read| read.is_a?(Integer) }
     assert_includes manifest.dig("states", "server", "reads").keys, "focus"
