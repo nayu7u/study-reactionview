@@ -99,4 +99,25 @@ class ProposalsControllerTest < ActionDispatch::IntegrationTest
     payload = JSON.parse(response.body)
     assert_includes payload["template"], "app/views/proposals/index.html.erb"
   end
+
+  test "the client filter declares one state and three hidden presences" do
+    get forms_path
+
+    assert_response :success
+    json = response.body[/<template data-herb-manifests[^>]*>(\{.*?\})<\/template>/m, 1]
+    assert json
+    manifest = JSON.parse(json).values.first
+
+    declarations = manifest.dig("states", "declarations")
+    assert_equal [ "filter_category" ], declarations.map { |d| d["name"] }
+    assert_equal "region", declarations.first["scope"]
+
+    presence = manifest.dig("states", "presence")
+    assert_equal 3, presence.size
+    assert presence.values.all? { |condition| JSON.generate(condition).include?("filter_category") }
+
+    assert_select ".filter-chip", count: 4
+    assert_select ".proposal-group[hidden]", count: 0
+    assert_equal "すべて", css_select(".filter-chip[aria-pressed='true']").first.text.strip
+  end
 end

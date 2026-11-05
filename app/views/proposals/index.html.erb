@@ -1,3 +1,6 @@
+<%# herb:slots client %>
+<%# herb:state (filter_category: "all") %>
+
 <section class="hero">
   <div class="hero-badge">サーバー検証 — 422 は標準フォームに残す</div>
   <h1>Proposal Submission</h1>
@@ -69,7 +72,15 @@
   <section class="feature">
     <h2>提出済み</h2>
 
-    <section class="proposal-group" data-category="rails">
+    <div class="chips" role="group" aria-label="カテゴリで絞り込む">
+      <button class="chip filter-chip" data-herb-set="filter_category=all" aria-pressed="<%= filter_category == "all" %>">すべて</button>
+      <button class="chip filter-chip" data-herb-set="filter_category=rails" aria-pressed="<%= filter_category == "rails" %>">Rails</button>
+      <button class="chip filter-chip" data-herb-set="filter_category=frontend" aria-pressed="<%= filter_category == "frontend" %>">フロントエンド</button>
+      <button class="chip filter-chip" data-herb-set="filter_category=infra" aria-pressed="<%= filter_category == "infra" %>">インフラ</button>
+    </div>
+
+    <section class="proposal-group" data-category="rails"
+      hidden="<%= filter_category != "all" && filter_category != "rails" %>">
       <h3>Rails <span class="group-count"><%= @proposals.fetch("rails", []).size %> 件</span></h3>
       <% @proposals.fetch("rails", []).each do |proposal| %>
         <article class="proposal-card">
@@ -83,7 +94,8 @@
       <% end %>
     </section>
 
-    <section class="proposal-group" data-category="frontend">
+    <section class="proposal-group" data-category="frontend"
+      hidden="<%= filter_category != "all" && filter_category != "frontend" %>">
       <h3>フロントエンド <span class="group-count"><%= @proposals.fetch("frontend", []).size %> 件</span></h3>
       <% @proposals.fetch("frontend", []).each do |proposal| %>
         <article class="proposal-card">
@@ -97,7 +109,8 @@
       <% end %>
     </section>
 
-    <section class="proposal-group" data-category="infra">
+    <section class="proposal-group" data-category="infra"
+      hidden="<%= filter_category != "all" && filter_category != "infra" %>">
       <h3>インフラ <span class="group-count"><%= @proposals.fetch("infra", []).size %> 件</span></h3>
       <% @proposals.fetch("infra", []).each do |proposal| %>
         <article class="proposal-card">
