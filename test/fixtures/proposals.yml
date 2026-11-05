@@ -1,0 +1,20 @@
+rails_talk:
+  speaker_name: 山田 太郎
+  email: taro@example.com
+  title: ERBだけで作るリアクティブUI
+  abstract: ReActionViewのスロットとクライアント状態を使い、ビルドなしで細粒度の更新を組み立てる話です。
+  category: rails
+
+frontend_talk:
+  speaker_name: 佐藤 花子
+  email: hanako@example.com
+  title: フォームのバリデーションをサーバーに残す
+  abstract: クライアント検証とサーバー検証の役割を分け、422の応答をどう扱うかを整理します。
+  category: frontend
+
+infra_talk:
+  speaker_name: 鈴木 一郎
+  email: ichiro@example.com
+  title: 小さなRailsアプリの運用
+  abstract: 依存を増やさずに運用するための構成と、障害時の切り分けを紹介します。
+  category: infra

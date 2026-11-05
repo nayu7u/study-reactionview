@@ -19,3 +19,18 @@ Task.destroy_all
   [ 3, "Record the load-more keyed diff as a GIF" ],
   [ 1, "Compare presence bindings against attribute interpolation" ]
 ].each { |priority, title| Task.create!(title: title, priority: priority) }
+
+# The /forms page is a server-validation experiment, so its list needs a few
+# rows in each category to make the client-side filter visible on first load.
+Proposal.destroy_all
+
+[
+  [ "山田 太郎", "taro@example.com", "ERBだけで作るリアクティブUI",
+    "ReActionViewのスロットとクライアント状態を使い、ビルドなしで細粒度の更新を組み立てる話です。", "rails" ],
+  [ "佐藤 花子", "hanako@example.com", "フォームのバリデーションをサーバーに残す",
+    "クライアント検証とサーバー検証の役割を分け、422の応答をどう扱うかを整理します。", "frontend" ],
+  [ "鈴木 一郎", "ichiro@example.com", "小さなRailsアプリの運用",
+    "依存を増やさずに運用するための構成と、障害時の切り分けを紹介します。", "infra" ]
+].each do |speaker_name, email, title, abstract, category|
+  Proposal.create!(speaker_name: speaker_name, email: email, title: title, abstract: abstract, category: category)
+end
