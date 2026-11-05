@@ -73,9 +73,11 @@ import "reactionview"
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 
+ナビ外の実務検証として `/forms` があり、標準フォームと client mode の共存を測っている（§③ 対比6、[`docs/forms.md`](./forms.md)）。
+
 ---
 
-## ③ 実コード対比 — 5つの局面
+## ③ 実コード対比 — 6つの局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -328,6 +330,33 @@ export default class extends Controller {
 
 ---
 
+### 対比 6 — サーバー検証（422）は標準フォームに残す
+
+**Hotwire なら**: Turbo の form 送信で 422 の HTML をフレーム/ストリームに差し替えるか、Stimulus でエラー表示を組む。失敗時の経路を別に持つことになる。
+
+**ReActionView の実測**: `data-herb-into` の outbox は、2xx 以外の応答で `SlotsRequestError` を投げ、楽観行に `failed` を立てるだけです。422 の本文は DOM に適用されません。サーバー検証が主役のフォームは、outbox に載せず標準の `form_with` にします。
+
+```erb
+<%= form_with model: @proposal, url: forms_path, html: { novalidate: true } do |form| %>
+  ...
+<% end %>
+```
+
+```rb
+def create
+  @proposal = Proposal.new(proposal_params)
+  if @proposal.save
+    redirect_to forms_path, notice: "プロポーザルを送信しました"
+  else
+    render :index, status: :unprocessable_entity
+  end
+end
+```
+
+> 成功は 302、失敗は 422 の HTML 全画面再描画。エラー要約・項目別エラー・入力値が残る。同じページのカテゴリ絞り込みは client mode の `hidden` presence で 0 往復。詳細は [`docs/forms.md`](./forms.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -425,6 +454,9 @@ export default class extends Controller {
 - **server モードで行ごとのブラウザ所有 state を条件にした分岐を置かない** — steering に
   載らず、要求が常に行禁化（要求 storm）。見た目は presence＋CSS、数値は READ slot へ。
   トップレベルの `plan` / `annual` 分岐はサーバー応答の statics で切り替わり、1往復で済む（Pricing 実測）。
+- **outbox（`data-herb-into`）は 422 の本文を適用しない** — クライアントは `!response.ok` で
+  `SlotsRequestError` を投げ、楽観行に `failed` を立てるだけ。サーバー検証の項目別エラーは
+  標準の `form_with` ＋ 422 の HTML に残す（`/forms` の実測）。
 
 > **この境界の読み方**: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されて
 > いるのが検証リポジトリとしての価値。`bin/rails test` は HTMLレンダ / herb_state による
@@ -435,11 +467,11 @@ export default class extends Controller {
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms` に実装済みで、標準フォームの 422 と、同じページの client mode 絞り込み（0往復）を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
 ---
 
 実測の経緯と制約の詳細は `AGENTS.md`（ReActionView メモ / 実測済みワイヤ形式）と
-`docs/ui-kit.md` 参照。更新日: 2026-10-28。
+`docs/ui-kit.md` 参照。更新日: 2026-11-05。

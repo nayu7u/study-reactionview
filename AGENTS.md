@@ -19,6 +19,8 @@
 デモ保存を、全操作 0 往復で扱う（下の実測メモ）。
 7画面目 `Dashboard`（`/dashboard`）: client mode の遅延ダッシュボード。Async 2本・Lazy・Fragment・
 poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測して記録する。
+ナビ外に実務検証 `/forms`（サーバー検証フォーム）: 標準の `form_with` + 422 の全画面再描画と、
+同じページの client mode 絞り込み（0往復）の共存を測る（docs/forms.md）。
 
 ## 作業規約（必ず守る）
 
@@ -267,6 +269,33 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   Hub / Patterns / Client Lab / Pricing / Settings の stills、Hub 03 / 04、`ui-dialog.png` を
   7リンクで撮り直した。Dashboard の stills / GIF も日本語フォントで撮り、CDP で
   `Noto Sans CJK JP` を確認した。
+
+## Forms 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **`data-herb-into` の outbox は 422 の本文を適用しない**: クライアントは `!response.ok` で
+  `SlotsRequestError` を投げ、outbox の `fail()` は楽観行に `failed` を立てるだけ。送信は
+  `preventDefault` 済みなのでブラウザも遷移せず、`render :new, status: :unprocessable_entity` の
+  HTML は画面に出ない。サーバー検証が主役のフォームは outbox に載せない。
+- **サーバー検証フォームは `data-herb-into` なしの `form_with`**: 成功は 302、失敗は 422 の
+  `text/html` 全画面再描画。エラー要約・項目別エラー・入力値（email / title / abstract）が残る。
+  `/forms` の統合テストで固定した。
+- **`html: { novalidate: true }` が必要**: `form.email_field` の `type=email` はブラウザが送信前に
+  形式を検証するため、`not-an-email` では 422 のリクエスト自体が飛ばない（ブラウザプローブで発見）。
+  サーバーを唯一の検証者にするため、ネイティブ検証は切る。
+- **`POST ?format=slots` の 422 は slots 本文で返る**: status 422、media type
+  `application/vnd.herb.slots+json`、本文は slots payload。クライアントは `!response.ok` で捨てる。
+  アプリのフォームは slots を送らない。境界は統合テストで記録した。
+- **client mode の絞り込みは同じページのフォーム値を壊さない**: `filter_category` の4チップは
+  slots 0。フォームの値は server-read なので、絞り込みでサーバーに問いに行かず上書きもされない。
+  422 の全画面再描画後は `filter_category` が `"all"` に戻る（仕様）。
+- **`hidden` の `&&` コンボは presence としてコンパイルされる**: 3セクションの
+  `filter_category != "all" && filter_category != "<category>"` は `states.presence` に3つ載り、
+  `states.declarations` は `filter_category` 1つ。チップの `aria-pressed` は state 比較。
+- **`filter_category` の4 literal 以外はサポート外**: `HerbRuntime.state.set` で `unknown` を直接入れると
+  0.6.0 の refetch が走り、表示が一時的に不整合になる（UI は生成しない）。
+- **テスト環境の media type**: 422 の HTML は `text/html`、slots の 422 は
+  `application/vnd.herb.slots+json`。`response.media_type` で比較する。
+- **`/forms` はナビ外**: 8リンク目にはしない。Patterns の footer と README / docs からリンクする。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 

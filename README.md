@@ -322,12 +322,17 @@ shadcn/ui のモデル（ソース配布 + トークン + variant API）を ERB 
 headless Chromium で全コンポーネントを操作した結果、全操作でスロット往復 0 だった。
 コンポーネントの一覧と実測の詳細は [docs/ui-kit.md](docs/ui-kit.md)。
 
+## 実務検証: サーバー検証フォーム（`/forms`、ナビ外）
+
+標準の `form_with` と 422 の全画面再描画を、client mode のカテゴリ絞り込みと同じページに置いた検証。フォームは `data-herb-into` を使わず、成功はリダイレクト、失敗は 422 の HTML でエラーと入力値を保持する。絞り込みは 0 往復で、入力途中のフォーム値を壊さない。詳細と実測は [docs/forms.md](docs/forms.md)。
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
-  `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` が検証する振る舞いは、
+  `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
+  `proposals_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
-  （items+order / 分岐 / スカラー混在）/ 201 splice / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
+  （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。
 - 初期 HTML には `<template data-herb-manifests>` として、クライアントへの命令書が載る
   （`states.declarations` / `reads` / `conditionals` / `presence` / `computed` / `server`）。DevTools で覗くと

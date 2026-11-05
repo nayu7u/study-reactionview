@@ -347,11 +347,12 @@
     </tbody>
   </table>
   </div>
+  <p class="asc">ナビ外の実務検証として <code>/forms</code> があり、標準フォームと client mode の共存を測っている（§③ 対比6、<code>docs/forms.md</code>）。</p>
 </section>
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 5つの局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 6つの局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -590,6 +591,33 @@ export default class extends Controller {
       </div>
     </div>
   </div>
+
+  <!-- ================= pair 6 ================= -->
+  <h3 style="margin-top:34px;">対比 6 — サーバー検証（422）は標準フォームに残す</h3>
+  <div class="card" style="margin-top:10px;">
+    <p style="margin:0 0 8px;">
+      <b>ReActionView の実測</b>: <code>data-herb-into</code> の outbox は 2xx 以外の応答で
+      <code>SlotsRequestError</code> を投げ、楽観行に <code>failed</code> を立てるだけ。
+      422 の本文は DOM に適用されない。サーバー検証が主役のフォームは outbox に載せず、標準の
+      <code>form_with</code> にする。
+    </p>
+    <pre><code>&lt;%= form_with model: @proposal, url: forms_path, html: { novalidate: true } do |form| %&gt;
+  ...
+&lt;% end %&gt;</code></pre>
+    <pre style="border-top:1px solid var(--line);"><code>def create
+  @proposal = Proposal.new(proposal_params)
+  if @proposal.save
+    redirect_to forms_path, notice: "プロポーザルを送信しました"
+  else
+    render :index, status: :unprocessable_entity
+  end
+end</code></pre>
+    <p style="margin:8px 0 0;">
+      成功は 302、失敗は 422 の HTML 全画面再描画。エラー要約・項目別エラー・入力値が残る。
+      同じページのカテゴリ絞り込みは client mode の <code>hidden</code> presence で 0 往復。
+      詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/forms.md">docs/forms.md</a>。
+    </p>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -739,6 +767,11 @@ export default class extends Controller {
       <b>server モードでブラウザ所有 state を条件にした分岐を置かない</b> — steering に載らず、要求が常に行禁化（要求 storm）。
       見た目は presence＋CSS、数値は READ slot へ。
     </li>
+    <li>
+      <b>outbox（<code>data-herb-into</code>）は 422 の本文を適用しない</b> — クライアントは <code>!response.ok</code> で
+      <code>SlotsRequestError</code> を投げ、楽観行に <code>failed</code> を立てるだけ。サーバー検証の項目別エラーは
+      標準の <code>form_with</code> ＋ 422 の HTML に残す（<code>/forms</code> の実測）。
+    </li>
   </ul>
   <p class="asc">
     <b>この境界の読み方</b>: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されているのが
@@ -751,7 +784,8 @@ export default class extends Controller {
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
   <p class="lede">
-    現時点でこのリポジトリ内の追加候補はありません。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
+    サーバー検証は <code>/forms</code> に実装済みです。標準フォームの 422 と、同じページの client mode
+    絞り込み（0往復）を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。
     main の「Hotwire なし」の主張を守るため、このリポジトリには <code>turbo-rails</code> を入れません。
@@ -764,7 +798,7 @@ export default class extends Controller {
     <code>docs/ui-kit.md</code> 参照。このページは静的HTML（ビルド・外部依存なし）。
     GitHub 上で読むなら同一内容の Markdown 版:
     <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/hotwire-comparison.md">docs/hotwire-comparison.md</a>。
-    生成日: 2026-10-30。
+    生成日: 2026-11-05。
   </p>
 </footer>
 
