@@ -332,9 +332,9 @@ export default class extends Controller {
 
 ### 対比 6 — サーバー検証（422）は標準フォームに残す
 
-**Hotwire なら**: Turbo の form 送信で 422 の HTML をフレーム/ストリームに差し替えるか、Stimulus でエラー表示を組む。失敗時の経路を別に持つことになる。
+**Hotwire なら**: Turbo Drive の form 送信は、4xx/5xx の HTML をそのまま描画します。標準の Rails の 422 は Turbo でも成立します。
 
-**ReActionView の実測**: `data-herb-into` の outbox は、2xx 以外の応答で `SlotsRequestError` を投げ、楽観行に `failed` を立てるだけです。422 の本文は DOM に適用されません。サーバー検証が主役のフォームは、outbox に載せず標準の `form_with` にします。
+**ReActionView の実測**: 差分は outbox 側にあります。`data-herb-into` の outbox は、2xx 以外の応答で `SlotsRequestError` を投げ、楽観行に `failed` を立てるだけです。422 の本文は DOM に適用されません。サーバー検証が主役のフォームは、outbox に載せず標準の `form_with` にします。
 
 ```erb
 <%= form_with model: @proposal, url: forms_path, html: { novalidate: true } do |form| %>
@@ -348,6 +348,7 @@ def create
   if @proposal.save
     redirect_to forms_path, notice: "プロポーザルを送信しました"
   else
+    @proposals = Proposal.order(created_at: :desc).group_by(&:category)
     render :index, status: :unprocessable_entity
   end
 end

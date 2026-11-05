@@ -596,10 +596,10 @@ export default class extends Controller {
   <h3 style="margin-top:34px;">対比 6 — サーバー検証（422）は標準フォームに残す</h3>
   <div class="card" style="margin-top:10px;">
     <p style="margin:0 0 8px;">
-      <b>ReActionView の実測</b>: <code>data-herb-into</code> の outbox は 2xx 以外の応答で
-      <code>SlotsRequestError</code> を投げ、楽観行に <code>failed</code> を立てるだけ。
-      422 の本文は DOM に適用されない。サーバー検証が主役のフォームは outbox に載せず、標準の
-      <code>form_with</code> にする。
+      <b>ReActionView の実測</b>: Turbo Drive の 422 はそのまま描画される。差分は outbox 側にあり、
+      <code>data-herb-into</code> は 2xx 以外の応答で <code>SlotsRequestError</code> を投げ、
+      楽観行に <code>failed</code> を立てるだけ。422 の本文は DOM に適用されない。
+      サーバー検証が主役のフォームは outbox に載せず、標準の <code>form_with</code> にする。
     </p>
     <pre><code>&lt;%= form_with model: @proposal, url: forms_path, html: { novalidate: true } do |form| %&gt;
   ...
@@ -609,6 +609,7 @@ export default class extends Controller {
   if @proposal.save
     redirect_to forms_path, notice: "プロポーザルを送信しました"
   else
+    @proposals = Proposal.order(created_at: :desc).group_by(&:category)
     render :index, status: :unprocessable_entity
   end
 end</code></pre>
