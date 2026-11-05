@@ -42,6 +42,7 @@
 - 422 の応答は `text/html`。ブラウザが全画面を描き直し、`@proposal.errors` と `@proposal` の値がそのまま出る。
 - フォームに `data-herb-set` も付けない。submit を状態に書かせない（outbox の横取りと二重送信を避ける）。
 - no-JS でも同じ経路。JS の有無でフォームの挙動が変わらない。
+- 実装時の裁定: ブラウザの `type=email` 検証が 422 を先に止めるため、`form_with` に `html: { novalidate: true }` を付ける。サーバーを唯一の検証者にする。
 - エラーメッセージは Rails 既定（英語）。i18n は今回の主題ではない。
 
 ## 状態と絞り込み

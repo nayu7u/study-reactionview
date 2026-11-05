@@ -11,6 +11,7 @@ class ProposalsControllerTest < ActionDispatch::IntegrationTest
     assert_select "h1", "Proposal Submission"
     assert_select "form[action='#{forms_path}'][method='post']"
     assert_select "form[data-herb-into]", count: 0
+    assert_select "form[novalidate]", count: 1
     assert_select "input[name='proposal[speaker_name]']"
     assert_select "input[name='proposal[email]'][type='email']"
     assert_select "input[name='proposal[title]']"
