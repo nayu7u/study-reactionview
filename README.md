@@ -326,6 +326,10 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 標準の `form_with` と 422 の全画面再描画を、client mode のカテゴリ絞り込みと同じページに置いた検証。フォームは `data-herb-into` を使わず、成功はリダイレクト、失敗は 422 の HTML でエラーと入力値を保持する。絞り込みは 0 往復で、入力途中のフォーム値を壊さない。詳細と実測は [docs/forms.md](docs/forms.md)。
 
+<div><img src="docs/media/forms-light.png" alt="サーバー検証フォーム (light)" width="49%"/> <img src="docs/media/forms-dark.png" alt="サーバー検証フォーム (dark)" width="49%"/></div>
+
+![無効な送信は422でエラーと入力値を保持し、修正後の送信は一覧に反映される](docs/media/19-forms.gif)
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /

@@ -296,6 +296,7 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **テスト環境の media type**: 422 の HTML は `text/html`、slots の 422 は
   `application/vnd.herb.slots+json`。`response.media_type` で比較する。
 - **`/forms` はナビ外**: 8リンク目にはしない。Patterns の footer と README / docs からリンクする。
+- **メディア**: `forms-light.png` / `forms-dark.png`（fullPage @2x）と `19-forms.gif`（無効送信 → 422 → 修正 → 成功、5フレーム）。クリップは `.forms-layout` の初期 box を固定し、422 のエラー要約が入る高さを先に測ってから撮る（実測 919px）。全フレームの寸法一致を assert。日本語フォントは CDP で `Noto Sans CJK JP` を確認した。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 
