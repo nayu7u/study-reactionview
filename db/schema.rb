@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_162951) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_183655) do
+  create_table "application_drafts", force: :cascade do |t|
+    t.string "speaker_name"
+    t.string "email"
+    t.string "title"
+    t.text "abstract"
+    t.string "category"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "messages", force: :cascade do |t|
     t.string "author"
     t.string "body"
