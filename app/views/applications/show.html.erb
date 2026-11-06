@@ -1,0 +1,119 @@
+<section class="hero">
+  <div class="hero-badge">検証つきウィザード — 各ステップは 422 の標準フォーム</div>
+  <h1>プロポーザルを応募</h1>
+  <p class="hero-sub">3ステップで入力し、各ステップの検証はサーバーが答えます。下書きはセッションに紐づきます。</p>
+</section>
+
+<div class="wizard">
+  <section class="feature">
+    <ol class="wizard-steps">
+      <% if @step == 1 %>
+        <li class="wizard-step" aria-current="step"><span>Step 1 発表者</span></li>
+      <% else %>
+        <li class="wizard-step"><%= link_to "Step 1 発表者", apply_path(step: 1) %></li>
+      <% end %>
+
+      <% if @step == 2 %>
+        <li class="wizard-step" aria-current="step"><span>Step 2 トーク</span></li>
+      <% elsif @step > 2 %>
+        <li class="wizard-step"><%= link_to "Step 2 トーク", apply_path(step: 2) %></li>
+      <% else %>
+        <li class="wizard-step"><span>Step 2 トーク</span></li>
+      <% end %>
+
+      <% if @step == 3 %>
+        <li class="wizard-step" aria-current="step"><span>Step 3 確認</span></li>
+      <% else %>
+        <li class="wizard-step"><span>Step 3 確認</span></li>
+      <% end %>
+    </ol>
+
+    <% if @application.errors.any? %>
+      <div class="form-errors" role="alert">
+        <p><%= @application.errors.count %> 件の入力エラーがあります</p>
+        <ul>
+          <% @application.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if @step == 1 %>
+      <%= form_with model: @application, url: apply_path(step: 1), method: :patch,
+        class: "wizard-form", html: { novalidate: true } do |form| %>
+        <div class="form-field">
+          <%= form.label :speaker_name, "発表者名", class: "field-label" %>
+          <%= form.text_field :speaker_name, class: "field", aria: { invalid: @application.errors[:speaker_name].any? } %>
+          <% if @application.errors[:speaker_name].any? %>
+            <p class="field-error"><%= @application.errors.full_message(:speaker_name, @application.errors[:speaker_name].first) %></p>
+          <% end %>
+        </div>
+
+        <div class="form-field">
+          <%= form.label :email, "メール", class: "field-label" %>
+          <%= form.email_field :email, class: "field", aria: { invalid: @application.errors[:email].any? } %>
+          <% if @application.errors[:email].any? %>
+            <p class="field-error"><%= @application.errors.full_message(:email, @application.errors[:email].first) %></p>
+          <% end %>
+        </div>
+
+        <div class="wizard-actions">
+          <%= link_to "戻る", forms_path, class: "btn btn-ghost" %>
+          <%= form.submit "次へ", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    <% elsif @step == 2 %>
+      <%= form_with model: @application, url: apply_path(step: 2), method: :patch,
+        class: "wizard-form", html: { novalidate: true } do |form| %>
+        <div class="form-field">
+          <%= form.label :title, "タイトル", class: "field-label" %>
+          <%= form.text_field :title, class: "field", aria: { invalid: @application.errors[:title].any? } %>
+          <% if @application.errors[:title].any? %>
+            <p class="field-error"><%= @application.errors.full_message(:title, @application.errors[:title].first) %></p>
+          <% end %>
+        </div>
+
+        <div class="form-field">
+          <%= form.label :abstract, "概要", class: "field-label" %>
+          <%= form.text_area :abstract, class: "field", rows: 6, aria: { invalid: @application.errors[:abstract].any? } %>
+          <% if @application.errors[:abstract].any? %>
+            <p class="field-error"><%= @application.errors.full_message(:abstract, @application.errors[:abstract].first) %></p>
+          <% end %>
+        </div>
+
+        <div class="form-field">
+          <%= form.label :category, "カテゴリ", class: "field-label" %>
+          <%= form.select :category,
+            Proposal::CATEGORIES.map { |category| [ Proposal::CATEGORY_LABELS.fetch(category), category ] },
+            { include_blank: "選択してください" }, class: "select" %>
+          <% if @application.errors[:category].any? %>
+            <p class="field-error"><%= @application.errors.full_message(:category, @application.errors[:category].first) %></p>
+          <% end %>
+        </div>
+
+        <div class="wizard-actions">
+          <%= link_to "戻る", apply_path(step: 1), class: "btn btn-ghost" %>
+          <%= form.submit "次へ", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="wizard-confirm">
+        <dl>
+          <div><dt>発表者名</dt><dd><%= @application.speaker_name %></dd></div>
+          <div><dt>メール</dt><dd><%= @application.email %></dd></div>
+          <div><dt>タイトル</dt><dd><%= @application.title %></dd></div>
+          <div><dt>概要</dt><dd><%= @application.abstract %></dd></div>
+          <div><dt>カテゴリ</dt><dd><%= Proposal::CATEGORY_LABELS.fetch(@application.category.to_s, @application.category) %></dd></div>
+        </dl>
+      </div>
+
+      <%= form_with url: apply_path(step: 3), method: :patch, class: "wizard-form" do |form| %>
+        <div class="wizard-actions">
+          <%= link_to "戻る", apply_path(step: 2), class: "btn btn-ghost" %>
+          <%= form.submit "送信する", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    <% end %>
+  </section>
+</div>

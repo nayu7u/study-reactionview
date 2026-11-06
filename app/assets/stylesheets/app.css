@@ -1404,3 +1404,28 @@ textarea.field-over { border-color: #b91c1c; }
 .catalog:has(.catalog-compact input:checked) .catalog-abstract { display: none; }
 
 .proposal-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.6rem; }
+
+/* ---------- apply: three-step server-validated wizard ---------- */
+
+.wizard { max-width: 52rem; }
+.wizard-steps { display: flex; gap: 0.5rem; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 1rem; }
+.wizard-step {
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+.wizard-step[aria-current="step"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.wizard-step a { color: inherit; }
+.wizard-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; }
+.wizard-confirm dl { margin: 0; }
+.wizard-confirm dl > div {
+  display: grid;
+  grid-template-columns: 6rem 1fr;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.wizard-confirm dt { color: var(--muted); font-size: 0.85rem; }
+.wizard-confirm dd { margin: 0; }
