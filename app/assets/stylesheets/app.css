@@ -1452,3 +1452,27 @@ textarea.field-over { border-color: #b91c1c; }
   background: color-mix(in srgb, #b91c1c 8%, var(--surface-2));
   border-color: color-mix(in srgb, #b91c1c 30%, transparent);
 }
+
+/* ---------- thread: nested keyed collections ---------- */
+
+.thread { max-width: 52rem; }
+.thread-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.thread-post {
+  padding: 0.8rem 0.95rem;
+  margin-bottom: 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.thread-post h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.thread-replies { list-style: none; padding: 0; margin: 0 0 0.4rem; }
+.thread-reply {
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.3rem;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--surface);
+  font-size: 0.9rem;
+}
+.thread-count { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.82rem; }
+.thread-form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.thread-form .field { max-width: 28rem; }

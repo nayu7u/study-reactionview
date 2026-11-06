@@ -1,0 +1,32 @@
+<%# herb:slots server %>
+
+<section class="hero">
+  <div class="hero-badge">入れ子スレッド — キー付きコレクションの深さ</div>
+  <h1>Thread</h1>
+  <p class="hero-sub">投稿と返信を入れ子のキー付きコレクションで描きます。返信は標準フォーム、「最新を取得」は slots の $refresh です。</p>
+</section>
+
+<div class="thread">
+  <div class="thread-head">
+    <h2>投稿</h2>
+    <button class="btn btn-ghost" data-herb-action="$refresh">最新を取得</button>
+  </div>
+
+  <% @posts.each do |post| %>
+    <%# herb:key post.id %>
+    <article class="thread-post">
+      <h3><%= post.title %></h3>
+      <ul class="thread-replies" data-herb-name="replies">
+        <% post.replies.each do |reply| %>
+          <%# herb:key reply.id %>
+          <li class="thread-reply"><%= reply.body %></li>
+        <% end %>
+      </ul>
+      <p class="thread-count"><%= post.replies.size %> 件の返信</p>
+      <%= form_with model: [ post, Reply.new ], url: post_replies_path(post), method: :post, class: "thread-form" do |form| %>
+        <%= form.text_field :body, class: "field", placeholder: "返信を書く", aria: { label: "返信" } %>
+        <%= form.submit "返信する", class: "btn btn-primary" %>
+      <% end %>
+    </article>
+  <% end %>
+</div>
