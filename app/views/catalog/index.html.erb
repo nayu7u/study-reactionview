@@ -40,7 +40,7 @@
           <article class="catalog-row">
             <h3><%= talk.title %></h3>
             <p class="catalog-meta"><%= talk.speaker %> ・ <%= Talk::CATEGORY_LABELS.fetch(talk.category) %></p>
-            <p class="catalog-abstract" hidden="<%= compact %>"><%= talk.abstract %></p>
+            <p class="catalog-abstract"><%= talk.abstract %></p>
           </article>
         <% end %>
       <% end %>

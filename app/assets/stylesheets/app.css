@@ -1400,3 +1400,5 @@ textarea.field-over { border-color: #b91c1c; }
   font-size: 0.84rem;
 }
 .pagination a[aria-current="page"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+
+.catalog:has(.catalog-compact input:checked) .catalog-abstract { display: none; }

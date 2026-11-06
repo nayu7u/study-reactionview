@@ -151,10 +151,11 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "compact" ], manifest.dig("states", "declarations").map { |d| d["name"] }
     assert_equal "region", manifest.dig("states", "declarations").first["scope"]
 
-    # The five abstracts inside the collection collapse into one presence
-    # entry; the checkbox adds the second.
+    # The abstracts are collapsed by CSS; only the checkbox carries a
+    # presence. A presence inside the server-rendered collection applies to
+    # just one row in 0.6.0.
     presence = manifest.dig("states", "presence")
-    assert_equal 2, presence.size
+    assert_equal 1, presence.size
     assert presence.values.all? { |condition| JSON.generate(condition).include?("compact") }
 
     assert_select ".catalog-compact input[type='checkbox']", count: 1
