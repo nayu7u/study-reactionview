@@ -46,13 +46,19 @@ class ApplicationsController < ApplicationController
   end
 
   def submit
-    # Why a transaction: the proposal must not exist without consuming the
-    # draft, and the draft must not vanish without the proposal.
+    # Why the lock and re-find: two final PATCHes can load the same draft
+    # before either deletes it. Lock the row, then create only if it still
+    # exists; the second request sees nil and creates nothing.
+    created = false
     ApplicationDraft.transaction do
-      Proposal.create!(@application.proposal_attributes)
-      @application.destroy!
+      draft = ApplicationDraft.lock.find_by(id: @application.id)
+      if draft
+        Proposal.create!(draft.proposal_attributes)
+        draft.destroy!
+        created = true
+      end
     end
     session.delete(:application_draft_id)
-    redirect_to forms_path, notice: "プロポーザルを送信しました"
+    redirect_to forms_path, notice: created ? "プロポーザルを送信しました" : "この応募はすでに送信済みです"
   end
 end

@@ -73,3 +73,22 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='fail_once']"
   end
 end
+
+class SubmissionsValidationTest < ActionDispatch::IntegrationTest
+  test "a blank slots title is 422, not 500" do
+    assert_no_difference -> { Submission.count } do
+      post outbox_path(format: :slots), params: { submission: { title: "" } },
+        headers: { "Accept" => "application/vnd.herb.slots+json" }
+    end
+    assert_response :unprocessable_entity
+  end
+
+  test "a blank HTML title is an alert, not 500" do
+    assert_no_difference -> { Submission.count } do
+      post outbox_path, params: { submission: { title: "" } }
+    end
+    assert_redirected_to outbox_path
+    follow_redirect!
+    assert_select ".flash-alert"
+  end
+end

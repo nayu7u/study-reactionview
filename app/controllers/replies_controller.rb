@@ -1,8 +1,13 @@
 class RepliesController < ApplicationController
   def create
     @post = Post.find(params[:post_id])
-    @post.replies.create!(reply_params)
-    redirect_to thread_path, notice: "返信しました"
+    reply = @post.replies.build(reply_params)
+
+    if reply.save
+      redirect_to thread_path, notice: "返信しました"
+    else
+      redirect_to thread_path, alert: reply.errors.full_messages.to_sentence
+    end
   end
 
   private

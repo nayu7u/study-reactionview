@@ -5,7 +5,7 @@
 七つのショーケースで実演・検証する。
 
 - React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
-  `import "reactionview"` の 1 行だけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
+  `import "reactionview"` と、`/outbox` の再試行/破棄の12行アダプタだけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
 - 細粒度の更新は Herb の slots が担う。state 変化に対して、HTML ではなく値の JSON
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
 - Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。

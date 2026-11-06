@@ -263,7 +263,7 @@
   </div>
   <div class="grid-2" style="margin-top:14px;">
     <div class="card">
-      <p style="margin:0 0 6px;"><b>JS の実体（実ファイル・全4行）</b></p>
+      <p style="margin:0 0 6px;"><b>JS の実体（runtime の import + outbox の12行アダプタ）</b></p>
       <pre style="margin:0; font-size:12.8px;"><code><span class="c-cmt">// app/javascript/application.js</span>
 <span class="c-cmt">// Why not "controllers": the showcase is a zero-custom-JS demo — Stimulus</span>
 <span class="c-cmt">// wiring would only muddy the measured claim that ERB alone carries the UI.</span>
@@ -272,7 +272,7 @@
     <div class="card">
       <p style="margin:0 0 6px;"><b>importmap も同様</b></p>
       <p style="font-size:13.8px;">
-        <code>import "reactionview"</code> の1-line で済み、<code>node_modules</code> もビルドも不要。
+        <code>import "reactionview"</code> + <code>import "outbox_retry"</code>（12行アダプタ） の1-line で済み、<code>node_modules</code> もビルドも不要。
         <code>turbo</code>/<code>stimulus</code> の pin は Rails 生成の標準配置（<code>app/javascript/controllers/</code>）には
         <strong>1ファイルも無く</strong>、このアプリは import していない（無意味に残存するだけ）。
         UI に必要なのは gem が自動 pin する reactionview クライアント 1本。
@@ -703,7 +703,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       <tr><td>Stimulus（per-item targets）</td><td>行ごとの状態</td><td>行内 <code>&lt;%# herb:state (qty: 0) %&gt;</code> ＋ <code>data-herb-increment/decrement</code></td><td>lab 機能⑬, ui/_stepper</td></tr>
       <tr><td>Stimulus / dialog 要素</td><td>開閉・Esc・backdrop</td><td><code>&lt;% if drawer_open %&gt;</code> ＋ <code>data-herb-set="click@outside-&gt;… keydown.esc@window-&gt;…"</code></td><td>tasks 機能③, lab 機能⑥</td></tr>
       <tr><td><code>classList.toggle</code> / <code>hidden</code> 直接操作</td><td>見た目切替</td><td><code>data-herb-toggle</code> ＋ CSS <code>:has()</code> / <code>[hidden]</code> ガード</td><td>ui/_switch, lab 機能⑭</td></tr>
-      <tr><td>importmap の turbo / stimulus pins</td><td>JS ランタイム</td><td><code>import "reactionview"</code> 1行（gem が pin 済み・ビルドなし）</td><td>app/javascript/application.js</td></tr>
+      <tr><td>importmap の turbo / stimulus pins</td><td>JS ランタイム</td><td><code>import "reactionview"</code> + <code>import "outbox_retry"</code>（12行アダプタ） 1行（gem が pin 済み・ビルドなし）</td><td>app/javascript/application.js</td></tr>
     </tbody>
   </table>
   </div>

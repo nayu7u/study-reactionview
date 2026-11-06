@@ -33,14 +33,15 @@ Stimulus を書くこと自体が「Turbo 外の生 JS 層」。client mode で�
 
 実装: `/lab`（Client Lab）、`/ui`（UI Kit）、`/settings`（Settings）、`/dashboard`（Dashboard）
 
-### JS の実体（実ファイル・全4行）
+### JS の実体（runtime の import + outbox の12行アダプタ）
 
 ```js
 // app/javascript/application.js
-// Why not "controllers": the showcase is a zero-custom-JS demo — Stimulus
-// wiring would only muddy the measured claim that ERB alone carries the UI.
 import "reactionview"
+import "outbox_retry"
 ```
+
+`/outbox` の再試行/破棄だけは outbox の JS API を呼ぶ12行のアダプタが必要でした。それ以外のUIは ERB だけで動きます。
 
 `node_modules` もビルドも不要。`turbo` / `stimulus` の pin は Rails 生成の標準配置だが
 **このアプリは import していない**。UI に必要なのは gem が自動 pin する reactionview クライアント 1 本。

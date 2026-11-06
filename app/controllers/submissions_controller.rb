@@ -15,7 +15,15 @@ class SubmissionsController < ApplicationController
     end
 
     session.delete(:outbox_failed_once)
-    submission = Submission.create!(submission_params)
+    submission = Submission.new(submission_params)
+
+    unless submission.save
+      respond_to do |format|
+        format.slots { head :unprocessable_entity }
+        format.html { redirect_to outbox_path, alert: submission.errors.full_messages.to_sentence }
+      end
+      return
+    end
 
     respond_to do |format|
       format.slots do

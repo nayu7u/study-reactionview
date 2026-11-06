@@ -121,3 +121,20 @@ class ApplicationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[data-herb-set]", count: 0
   end
 end
+
+class ApplicationsDuplicateTest < ActionDispatch::IntegrationTest
+  test "a second final PATCH cannot create a second proposal" do
+    get apply_path
+    patch apply_path(step: 1), params: { application_draft: { speaker_name: "山田 太郎", email: "taro@example.com" } }
+    patch apply_path(step: 2), params: { application_draft: { title: "標準フォームで作るサーバー検証", abstract: "あ" * 40, category: "rails" } }
+
+    assert_difference -> { Proposal.count }, 1 do
+      patch apply_path(step: 3)
+    end
+    assert_redirected_to forms_path
+
+    assert_no_difference -> { Proposal.count } do
+      patch apply_path(step: 3)
+    end
+  end
+end

@@ -19,3 +19,14 @@ class RepliesControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[data-herb-into]", count: 0
   end
 end
+
+class RepliesValidationTest < ActionDispatch::IntegrationTest
+  test "an empty reply is an alert, not 500" do
+    assert_no_difference -> { Reply.count } do
+      post post_replies_path(posts(:one)), params: { reply: { body: "" } }
+    end
+    assert_redirected_to thread_path
+    follow_redirect!
+    assert_select ".flash-alert"
+  end
+end

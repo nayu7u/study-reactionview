@@ -24,7 +24,7 @@
       </ul>
       <p class="thread-count"><%= post.replies.size %> 件の返信</p>
       <%= form_with model: [ post, Reply.new ], url: post_replies_path(post), method: :post, class: "thread-form" do |form| %>
-        <%= form.text_field :body, class: "field", placeholder: "返信を書く", aria: { label: "返信" } %>
+        <%= form.text_field :body, class: "field", placeholder: "返信を書く", required: true, aria: { label: "返信" } %>
         <%= form.submit "返信する", class: "btn btn-primary" %>
       <% end %>
     </article>
