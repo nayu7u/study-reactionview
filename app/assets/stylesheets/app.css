@@ -1429,3 +1429,26 @@ textarea.field-over { border-color: #b91c1c; }
 }
 .wizard-confirm dt { color: var(--muted); font-size: 0.85rem; }
 .wizard-confirm dd { margin: 0; }
+
+/* ---------- outbox: optimistic add, failure and retry ---------- */
+
+.outbox { max-width: 52rem; }
+.outbox-form { margin-bottom: 0.8rem; }
+.outbox-list { list-style: none; padding: 0; margin: 0; }
+.outbox-row {
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.outbox-row h3 { margin: 0 0 0.25rem; font-size: 0.98rem; }
+.outbox-status { min-height: 1.2rem; }
+.outbox-pending { color: var(--muted); font-size: 0.84rem; }
+.outbox-failed { color: #b91c1c; font-size: 0.84rem; font-weight: 600; }
+.outbox-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-top: 0.4rem; }
+.flash-alert {
+  color: #b91c1c;
+  background: color-mix(in srgb, #b91c1c 8%, var(--surface-2));
+  border-color: color-mix(in srgb, #b91c1c 30%, transparent);
+}

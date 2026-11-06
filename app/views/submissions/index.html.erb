@@ -1,0 +1,50 @@
+<%# herb:slots server %>
+
+<section class="hero">
+  <div class="hero-badge">失敗する送信 — 楽観的追加と再試行</div>
+  <h1>Submission Queue</h1>
+  <p class="hero-sub">送信は楽観的に行に追加されます。失敗した行は failed になり、再試行・破棄できます。</p>
+</section>
+
+<div class="outbox">
+  <section class="feature">
+    <h2>送信する</h2>
+    <%= form_with model: @submission, url: outbox_path,
+      data: { "herb-into" => "submissions" }, class: "outbox-form" do |form| %>
+      <div class="form-field">
+        <%= form.label :title, "タイトル", class: "field-label" %>
+        <%= form.text_field :title, class: "field" %>
+      </div>
+      <label class="task-check">
+        <%= check_box_tag :fail_once, "1", false %>
+        <span>次の送信を失敗させる（デモ）</span>
+      </label>
+      <%= form.submit "送信する", class: "btn btn-primary" %>
+    <% end %>
+    <p class="task-note">失敗は 500 のスロット応答で返り、楽観行に failed が立ちます。再試行は同じ FormData を送り直します。</p>
+  </section>
+
+  <section class="feature">
+    <h2>提出済み</h2>
+    <ul class="outbox-list" data-herb-name="submissions">
+      <% @submissions.each do |submission| %>
+        <%# herb:key submission.id %>
+        <%# herb:state (pending: false, failed: false) %>
+        <li class="outbox-row">
+          <h3><%= submission.title %></h3>
+          <div class="outbox-status">
+            <span class="outbox-pending" hidden="<%= !pending %>">送信中…</span>
+            <span class="outbox-failed" hidden="<%= !failed %>">送信に失敗しました</span>
+          </div>
+          <div class="outbox-actions" hidden="<%= !failed %>">
+            <button type="button" class="btn btn-ghost" data-outbox-retry>再試行</button>
+            <button type="button" class="btn btn-ghost" data-outbox-discard>破棄</button>
+          </div>
+        </li>
+      <% end %>
+    </ul>
+    <% if @submissions.empty? %>
+      <p class="task-note">まだありません。</p>
+    <% end %>
+  </section>
+</div>
