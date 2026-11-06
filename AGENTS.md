@@ -298,6 +298,7 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **テスト環境の media type**: 422 の HTML は `text/html`、slots の 422 は
   `application/vnd.herb.slots+json`。`response.media_type` で比較する。
 - **`/forms` はナビ外**: 8リンク目にはしない。Patterns の footer と README / docs からリンクする。
+- **編集・削除も標準フォーム**: 編集は `_form` パーシャル + `form_path(@proposal)` + `_method=patch`。更新失敗は 422 の HTML でエラーと入力値を保持。削除は `GET /forms/:id/delete` の確認ページ + `button_to` の DELETE。`button_to` は Rails 8 で `<button type="submit">` を出す。一覧・編集・確認・更新・削除で slots 0、no-JS も同じ経路（プローブ: document 10）。メディアは `21-forms-crud.gif`、`19-forms.gif` と stills を再撮影。
 - **メディア**: `forms-light.png` / `forms-dark.png`（fullPage @2x）と `19-forms.gif`（無効送信 → 422 → 修正 → 成功、5フレーム）。クリップは `.forms-layout` の初期 box を固定し、422 のエラー要約が入る高さを先に測ってから撮る（実測 919px）。全フレームの寸法一致を assert。日本語フォントは CDP で `Noto Sans CJK JP` を確認した。
 
 ## Catalog 画面で実測した事実（0.6.0 / herb 0.11.1）

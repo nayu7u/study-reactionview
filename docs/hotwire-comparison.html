@@ -615,7 +615,7 @@ export default class extends Controller {
 end</code></pre>
     <p style="margin:8px 0 0;">
       成功は 302、失敗は 422 の HTML 全画面再描画。エラー要約・項目別エラー・入力値が残る。
-      同じページのカテゴリ絞り込みは client mode の <code>hidden</code> presence で 0 往復。
+      同じページのカテゴリ絞り込みは client mode の <code>hidden</code> presence で 0 往復。更新も同じ 422 の標準フォーム、削除は確認ページ + <code>button_to</code> の DELETE。
       詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/forms.md">docs/forms.md</a>。
     </p>
   </div>

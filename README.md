@@ -330,6 +330,10 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ![無効な送信は422でエラーと入力値を保持し、修正後の送信は一覧に反映される](docs/media/19-forms.gif)
 
+編集と削除も標準フォームです。編集の失敗は 422 で入力値を保持し、削除は確認ページと `button_to` の DELETE で行います。
+
+![一覧から編集し、422 を直して更新、確認して削除する](docs/media/21-forms-crud.gif)
+
 ## 実務検証: 共有 URL の検索（`/catalog`、ナビ外）
 
 検索・カテゴリ・ページを URL に載せ、ブックマーク・共有・戻る・進む・リロードが成立する検索画面。検索とページ送りは標準の GET フォームとリンク、概要の開閉だけを client mode の `compact` state（0往復）にした。URL は Rails、ページ内は ReactionView という分担の実測。詳細は [docs/url-state.md](docs/url-state.md)。

@@ -354,7 +354,7 @@ def create
 end
 ```
 
-> 成功は 302、失敗は 422 の HTML 全画面再描画。エラー要約・項目別エラー・入力値が残る。同じページのカテゴリ絞り込みは client mode の `hidden` presence で 0 往復。詳細は [`docs/forms.md`](./forms.md)。
+> 成功は 302、失敗は 422 の HTML 全画面再描画。エラー要約・項目別エラー・入力値が残る。同じページのカテゴリ絞り込みは client mode の `hidden` presence で 0 往復。更新も同じ 422 の標準フォーム、削除は確認ページ + `button_to` の DELETE。詳細は [`docs/forms.md`](./forms.md)。
 
 ---
 

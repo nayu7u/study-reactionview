@@ -130,6 +130,21 @@ server mode の絞り込みにしなかったのは、slots 応答がフォー�
 - 無効な `POST ?format=slots` → `422` / `application/vnd.herb.slots+json`。本文は slots の payload だが、クライアントは `!response.ok` で捨てる。
 - マニフェスト: `filter_category` の宣言1つ、`hidden` の presence 3つ、`aria-pressed` の state 比較。
 
+## 編集・削除
+
+一覧の各カードから編集ページと削除確認ページへ移動できます。どちらも標準の HTML フォームです。
+
+- 編集は作成と同じ `_form` パーシャルを使い、`form_path(@proposal)` と `_method=patch` で送ります。更新失敗は `422 text/html` で、エラー要約・項目別エラー・入力値が残ります。
+- 削除はまず `GET /forms/:id/delete` の確認ページを出し、`button_to` の DELETE（`_method=delete`）で実行します。確認 GET に副作用はありません。
+- `button_to` は Rails 8 では `<button type="submit">` を出します。プローブは `getByRole("button", { name: "削除する" })` で押しています。
+- 一覧・編集・確認・更新・削除の document リクエストで slots 0。no-JS でも同じ経路で動きます。
+- ブラウザ実測（`/tmp/opencode/capture/forms-crud-probe.js`）: 作成 → 編集 → 無効な更新で 422 → 修正 → 更新成功 → 削除確認 → 削除。`slots: 0`, `update422: true`, `updateSuccess: true`, `deleted: true`, `noJS: true`。document 10。
+- メディア: `21-forms-crud.gif`（一覧 → 編集 → 422 → 修正 → 更新 → 確認 → 削除）。stills と `19-forms.gif` はカードの操作リンクを含めて撮り直しました。
+
+```erb
+<%= button_to "削除する", form_path(@proposal), method: :delete, class: "btn btn-primary" %>
+```
+
 ## 制約
 
 - 失敗時は全画面が再描画されます。入力値とエラーは残りますが、スクロール位置と `filter_category` は初期値に戻ります。
