@@ -2,3 +2,4 @@
 // Why not "controllers": the showcase is a zero-custom-JS demo — Stimulus
 // wiring would only muddy the measured claim that ERB alone carries the UI.
 import "reactionview"
+import "outbox_retry"

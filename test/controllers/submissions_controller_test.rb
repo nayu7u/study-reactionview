@@ -9,6 +9,7 @@ class SubmissionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action='#{outbox_path}'][data-herb-into='submissions']"
     assert_select "ul[data-herb-name='submissions']"
     assert_select ".outbox-row", count: Submission.count
+    assert_select ".outbox-row [data-herb-name='title']", minimum: 1
   end
 
   test "a normal slots post answers 201 with the new row" do

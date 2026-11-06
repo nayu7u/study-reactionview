@@ -31,7 +31,7 @@
         <%# herb:key submission.id %>
         <%# herb:state (pending: false, failed: false) %>
         <li class="outbox-row">
-          <h3><%= submission.title %></h3>
+          <h3><span data-herb-name="title"><%= submission.title %></span></h3>
           <div class="outbox-status">
             <span class="outbox-pending" hidden="<%= !pending %>">送信中…</span>
             <span class="outbox-failed" hidden="<%= !failed %>">送信に失敗しました</span>
