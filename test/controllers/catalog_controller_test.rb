@@ -136,6 +136,8 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     get catalog_path
 
     assert_select "form[method='get'][action='#{catalog_path}']"
+    assert_select ".catalog-search button[type='submit']", text: "検索"
+    assert_select ".catalog-search input[name='commit']", count: 0
     assert_select "form[data-herb-set]", count: 0
     assert_select "form[data-herb-into]", count: 0
   end

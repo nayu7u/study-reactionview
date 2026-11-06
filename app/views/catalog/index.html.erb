@@ -15,7 +15,7 @@
       <%= form.select :category,
         [ [ "すべて", "all" ] ] + Talk::CATEGORIES.map { |category| [ Talk::CATEGORY_LABELS.fetch(category), category ] },
         { selected: @category }, class: "select", aria: { label: "カテゴリ" } %>
-      <%= form.submit "検索", class: "btn btn-primary" %>
+      <button type="submit" class="btn btn-primary">検索</button>
       <%= link_to "条件をクリア", catalog_path, class: "btn btn-ghost" %>
     <% end %>
 
