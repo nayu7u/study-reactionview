@@ -67,3 +67,9 @@ Talk.destroy_all
 ].each do |title, speaker, category, abstract|
   Talk.create!(title: title, speaker: speaker, category: category, abstract: abstract)
 end
+
+Submission.destroy_all
+
+[ "最初の提出", "2番目の提出", "3番目の提出" ].each do |title|
+  Submission.create!(title: title)
+end
