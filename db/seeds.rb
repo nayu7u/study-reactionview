@@ -34,3 +34,36 @@ Proposal.destroy_all
 ].each do |speaker_name, email, title, abstract, category|
   Proposal.create!(speaker_name: speaker_name, email: email, title: title, abstract: abstract, category: category)
 end
+
+# The catalog is a read-only search dataset. rails intentionally has six rows
+# so ?category=rails&page=2 is a real page, not a redirect.
+Talk.destroy_all
+
+[
+  [ "ReActionViewのスロットを読む", "山田 太郎", "rails",
+    "スロットのwire形式を実際の応答から読み、キー付き差分がどこで起きるかを追います。" ],
+  [ "Hotwireなしでどこまで行けるか", "山田 太郎", "rails",
+    "TurboとStimulusを外したときに、どのUIが残り、どこに標準のRailsが必要かを整理します。" ],
+  [ "フォームのバリデーションをサーバーに残す", "高橋 美咲", "rails",
+    "422の全画面再描画と入力値保持を、実際のフォームで確かめた結果を共有します。" ],
+  [ "スロットのペイロードを小さく保つ", "小林 悠", "rails",
+    "何をREAD slotにし、何を分岐のstaticsに置くかで、往復の大きさがどう変わるかを測ります。" ],
+  [ "Rails 8の認証を最小で組む", "加藤 誠", "rails",
+    "認証を足すときに増えるstateと、サーバーに残すべき判断を最小構成で整理します。" ],
+  [ "リリースを小さく保つ", "松本 彩", "rails",
+    "変更を小さく出し続けるためのブランチ運用と、検証の自動化について話します。" ],
+  [ "Stimulusを捨てた先のフォーム", "佐藤 花子", "frontend",
+    "入力の派生状態と表示の切替を、宣言とpresenceだけでどこまで組めるかを紹介します。" ],
+  [ "ゼロビルドのCSS設計", "渡辺 さくら", "frontend",
+    "デザイントークンと素のCSSで、ビルドなしの画面を破綻させない方法を整理します。" ],
+  [ "フロントエンドの負債を減らす", "吉田 葵", "frontend",
+    "依存とビルドを増やさずに、画面の変更を追いやすくするための判断を共有します。" ],
+  [ "小さなRailsアプリの運用", "鈴木 一郎", "infra",
+    "依存を増やさずに運用するための構成と、障害時の切り分けを紹介します。" ],
+  [ "SQLiteで始める小さなSaaS", "中村 大地", "infra",
+    "SQLiteを前提にしたときのバックアップ、移行、監視の最小構成を話します。" ],
+  [ "監視のない運用から始める", "山本 修", "infra",
+    "最初から監視を揃えない代わりに、どこを先に見るかを決めておく運用を紹介します。" ]
+].each do |title, speaker, category, abstract|
+  Talk.create!(title: title, speaker: speaker, category: category, abstract: abstract)
+end
