@@ -21,6 +21,8 @@
 poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測して記録する。
 ナビ外に実務検証 `/forms`（サーバー検証フォーム）: 標準の `form_with` + 422 の全画面再描画と、
 同じページの client mode 絞り込み（0往復）の共存を測る（docs/forms.md）。
+ナビ外に実務検証 `/catalog`（共有 URL の検索）: 標準 GET の検索・ページ送りと、client mode の
+概要開閉（0往復）の共存を測る（docs/url-state.md）。
 
 ## 作業規約（必ず守る）
 
@@ -297,6 +299,21 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   `application/vnd.herb.slots+json`。`response.media_type` で比較する。
 - **`/forms` はナビ外**: 8リンク目にはしない。Patterns の footer と README / docs からリンクする。
 - **メディア**: `forms-light.png` / `forms-dark.png`（fullPage @2x）と `19-forms.gif`（無効送信 → 422 → 修正 → 成功、5フレーム）。クリップは `.forms-layout` の初期 box を固定し、422 のエラー要約が入る高さを先に測ってから撮る（実測 919px）。全フレームの寸法一致を assert。日本語フォントは CDP で `Noto Sans CJK JP` を確認した。
+
+## Catalog 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **URL 状態は標準 GET**: `q` / `category` / `page` をサーバーが読み、検索・ページ送りは document GET。`/catalog` の初期・概要開閉・検索・カテゴリ・ページで slots 0（headless Chromium、document GET 6）。
+- **既定値は 302 しない**: `category=all` / `page=1` は 200。不明カテゴリ、非整数/範囲外ページだけ、正規 URL へ 302。不明カテゴリは `all` として検索してから寄せる。
+- **検索は `%` / `_` / `\` をエスケープ**: `q=%` や `q=_` が全件に広がらないことをテストで固定。
+- **`compact` の 0.6.0 ギャップ**: サーバー描画の `@talks.each` 内に置いた `hidden="<%= compact %>"` の presence は最後の1件にしか当たらなかった。概要は CSS `.catalog:has(.catalog-compact input:checked) .catalog-abstract { display: none; }` で閉じ、checkbox の `checked` は state の presence として残す。0 slots、URL 不変。
+- **マニフェストの presence は1つ**: `compact` の宣言、checkbox の presence 1つ。コレクション内の presence は1エントリに畳まれる。
+- **no-JS**: 検索フォーム・ページリンクは動き、概要は既定で見える。チェックボックスは state を持たないが CSS は効く。
+- **bfcache**: ページ2から戻ると `compact` のチェックが復元された（GIF の最後のフレーム）。新規 GET/リロードでは既定に戻る。
+- **`form.submit` は `commit=検索` を URL に足す**: 検索ボタンは名前なし `<button type="submit">` にする。共有 URL 行は `request.fullpath` で、実際のリクエストを見せる。
+- **空の pagination ラッパー**: `if @pages > 1` が false でも、client mode の ivar 条件で空の `<nav class="pagination">` が残る。テストは `.pagination a` を見る。
+- **seed**: rails 6 / frontend 3 / infra 3。rails は2ページで `?category=rails&page=2` が実在。
+- **メディア**: `catalog-light/dark.png` と `20-catalog.gif`（初期 → rails → compact → page 2 → back）。日本語フォントとフレーム寸法を確認。
+- **ナビ外**: Patterns footer、README、docs からリンクする。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 

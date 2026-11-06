@@ -73,11 +73,11 @@ import "reactionview"
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 
-ナビ外の実務検証として `/forms` があり、標準フォームと client mode の共存を測っている（§③ 対比6、[`docs/forms.md`](./forms.md)）。
+ナビ外の実務検証として `/forms`（422）と `/catalog`（共有 URL）があり、標準フォームと client mode の共存を測っている（§③ 対比6・7、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)）。
 
 ---
 
-## ③ 実コード対比 — 6つの局面
+## ③ 実コード対比 — 7つの局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -358,6 +358,24 @@ end
 
 ---
 
+### 対比 7 — 共有 URL とページ内状態（URL は Rails、ページ内は slots）
+
+**Hotwire なら**: Turbo Drive のナビゲーションとフレームで URL を保ち、ページ内の表示状態を Stimulus で持つ。
+
+**ReActionView の実測**: slots 応答は値の JSON で、URL を書き換えない。検索・カテゴリ・ページは標準の GET フォームとリンクに任せ、ページ内の一時状態だけを client mode にする。
+
+```erb
+<%= form_with url: catalog_path, method: :get do |form| %>
+  ...
+  <button type="submit" class="btn btn-primary">検索</button>
+<% end %>
+<p>共有 URL: <code><%= request.fullpath %></code></p>
+```
+
+> URL はナビゲーションの領分、ページ内は ReactionView の領分。`compact` は checkbox の presence と CSS `:has` で 0 往復、URL 不変。`/catalog` は全操作で slots 0。0.6.0 ではサーバー描画コレクション内の presence が最後の1件にしか当たらないため、概要は CSS で閉じる。詳細は [`docs/url-state.md`](./url-state.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -458,6 +476,9 @@ end
 - **outbox（`data-herb-into`）は 422 の本文を適用しない** — クライアントは `!response.ok` で
   `SlotsRequestError` を投げ、楽観行に `failed` を立てるだけ。サーバー検証の項目別エラーは
   標準の `form_with` ＋ 422 の HTML に残す（`/forms` の実測）。
+- **slots 応答は URL を変えない** — 検索・カテゴリ・ページ・共有は標準 GET、ページ内の一時状態だけ
+  client mode にする（`/catalog` の実測）。0.6.0 ではサーバー描画コレクション内の presence が
+  最後の1件にしか当たらないため、一覧内の表示切替は CSS `:has` に寄せる。
 
 > **この境界の読み方**: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されて
 > いるのが検証リポジトリとしての価値。`bin/rails test` は HTMLレンダ / herb_state による
@@ -468,11 +489,11 @@ end
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms` に実装済みで、標準フォームの 422 と、同じページの client mode 絞り込み（0往復）を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
 ---
 
 実測の経緯と制約の詳細は `AGENTS.md`（ReActionView メモ / 実測済みワイヤ形式）と
-`docs/ui-kit.md` 参照。更新日: 2026-11-05。
+`docs/ui-kit.md` 参照。更新日: 2026-11-06。

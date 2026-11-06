@@ -330,11 +330,19 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ![無効な送信は422でエラーと入力値を保持し、修正後の送信は一覧に反映される](docs/media/19-forms.gif)
 
+## 実務検証: 共有 URL の検索（`/catalog`、ナビ外）
+
+検索・カテゴリ・ページを URL に載せ、ブックマーク・共有・戻る・進む・リロードが成立する検索画面。検索とページ送りは標準の GET フォームとリンク、概要の開閉だけを client mode の `compact` state（0往復）にした。URL は Rails、ページ内は ReactionView という分担の実測。詳細は [docs/url-state.md](docs/url-state.md)。
+
+<div><img src="docs/media/catalog-light.png" alt="Talk Catalog (light)" width="49%"/> <img src="docs/media/catalog-dark.png" alt="Talk Catalog (dark)" width="49%"/></div>
+
+![カテゴリとページが URL に載り、概要の開閉だけが 0 往復で動く](docs/media/20-catalog.gif)
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
   `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
-  `proposals_controller_test` が検証する振る舞いは、
+  `proposals_controller_test` / `catalog_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。
