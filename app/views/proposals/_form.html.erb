@@ -1,0 +1,58 @@
+<%= form_with model: @proposal, url: local_assigns.fetch(:url, forms_path),
+  method: local_assigns.fetch(:method, :post), class: "proposal-form",
+  html: { novalidate: true } do |form| %>
+  <% if @proposal.errors.any? %>
+    <div class="form-errors" role="alert">
+      <p><%= @proposal.errors.count %> 件の入力エラーがあります</p>
+      <ul>
+        <% @proposal.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-field">
+    <%= form.label :speaker_name, "発表者名", class: "field-label" %>
+    <%= form.text_field :speaker_name, class: "field", aria: { invalid: @proposal.errors[:speaker_name].any? } %>
+    <% if @proposal.errors[:speaker_name].any? %>
+      <p class="field-error"><%= @proposal.errors.full_message(:speaker_name, @proposal.errors[:speaker_name].first) %></p>
+    <% end %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :email, "メール", class: "field-label" %>
+    <%= form.email_field :email, class: "field", aria: { invalid: @proposal.errors[:email].any? } %>
+    <% if @proposal.errors[:email].any? %>
+      <p class="field-error"><%= @proposal.errors.full_message(:email, @proposal.errors[:email].first) %></p>
+    <% end %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :title, "タイトル", class: "field-label" %>
+    <%= form.text_field :title, class: "field", aria: { invalid: @proposal.errors[:title].any? } %>
+    <% if @proposal.errors[:title].any? %>
+      <p class="field-error"><%= @proposal.errors.full_message(:title, @proposal.errors[:title].first) %></p>
+    <% end %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :abstract, "概要", class: "field-label" %>
+    <%= form.text_area :abstract, class: "field", rows: 6, aria: { invalid: @proposal.errors[:abstract].any? } %>
+    <% if @proposal.errors[:abstract].any? %>
+      <p class="field-error"><%= @proposal.errors.full_message(:abstract, @proposal.errors[:abstract].first) %></p>
+    <% end %>
+  </div>
+
+  <div class="form-field">
+    <%= form.label :category, "カテゴリ", class: "field-label" %>
+    <%= form.select :category,
+      Proposal::CATEGORIES.map { |category| [ Proposal::CATEGORY_LABELS.fetch(category), category ] },
+      { include_blank: "選択してください" }, class: "select" %>
+    <% if @proposal.errors[:category].any? %>
+      <p class="field-error"><%= @proposal.errors.full_message(:category, @proposal.errors[:category].first) %></p>
+    <% end %>
+  </div>
+
+  <%= form.submit local_assigns.fetch(:submit_label, "送信する"), class: "btn btn-primary" %>
+<% end %>

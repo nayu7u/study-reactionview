@@ -121,4 +121,81 @@ class ProposalsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".proposal-group[hidden]", count: 0
     assert_equal "すべて", css_select(".filter-chip[aria-pressed='true']").first.text.strip
   end
+
+  test "the list links to edit and delete for every proposal" do
+    get forms_path
+
+    Proposal.find_each do |proposal|
+      assert_select "a[href='#{edit_form_path(proposal)}']", text: "編集"
+      assert_select "a[href='#{confirm_destroy_form_path(proposal)}']", text: "削除"
+    end
+  end
+
+  test "edit renders the existing values and the update button" do
+    proposal = proposals(:rails_talk)
+
+    get edit_form_path(proposal)
+
+    assert_response :success
+    assert_select "form[action='#{form_path(proposal)}']"
+    assert_select "input[name='_method'][value='patch']"
+    assert_select "input[name='proposal[title]'][value='#{proposal.title}']"
+    assert_select "input[type='submit'][value='更新する']"
+    assert_select "a[href='#{confirm_destroy_form_path(proposal)}']", text: "削除"
+  end
+
+  test "an invalid update answers 422 HTML with the PATCH URL, errors and values" do
+    proposal = proposals(:rails_talk)
+    original = proposal.title
+
+    patch form_path(proposal), params: { proposal: {
+      speaker_name: "", email: "not-an-email", title: "短い",
+      abstract: "短い", category: "unknown"
+    } }
+
+    assert_response :unprocessable_entity
+    assert_equal "text/html", response.media_type
+    assert_select "form[action='#{form_path(proposal)}']"
+    assert_select "input[name='_method'][value='patch']"
+    assert_select ".form-errors[role='alert']"
+    assert_select ".field-error", minimum: 3
+    assert_select "input[name='proposal[email]'][value='not-an-email']"
+    assert_equal original, proposal.reload.title
+  end
+
+  test "a valid update changes the proposal and redirects" do
+    proposal = proposals(:rails_talk)
+
+    patch form_path(proposal), params: { proposal: {
+      title: "更新したタイトル", abstract: "更新した概要です。" + "あ" * 30
+    } }
+
+    assert_redirected_to forms_path
+    follow_redirect!
+    assert_select ".flash", text: /プロポーザルを更新しました/
+    assert_equal "更新したタイトル", proposal.reload.title
+  end
+
+  test "the delete confirmation shows the row and a DELETE form" do
+    proposal = proposals(:rails_talk)
+
+    get confirm_destroy_form_path(proposal)
+
+    assert_response :success
+    assert_select "h1", "プロポーザルを削除"
+    assert_select "form[action='#{form_path(proposal)}'] input[name='_method'][value='delete']"
+    assert_select "a[href='#{forms_path}']", text: "キャンセル"
+  end
+
+  test "delete removes the proposal and redirects" do
+    proposal = proposals(:rails_talk)
+
+    assert_difference -> { Proposal.count }, -1 do
+      delete form_path(proposal)
+    end
+
+    assert_redirected_to forms_path
+    follow_redirect!
+    assert_select ".flash", text: /プロポーザルを削除しました/
+  end
 end

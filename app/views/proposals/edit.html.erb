@@ -1,0 +1,16 @@
+<section class="hero">
+  <div class="hero-badge">サーバー検証 — 更新も 422 の標準フォーム</div>
+  <h1>プロポーザルを編集</h1>
+  <p class="hero-sub">更新の失敗も、422 の HTML 全画面再描画でエラーと入力値を保持します。</p>
+</section>
+
+<div class="forms-layout">
+  <section class="feature">
+    <%= render "form", url: form_path(@proposal), method: :patch, submit_label: "更新する" %>
+
+    <p class="proposal-actions">
+      <%= link_to "削除", confirm_destroy_form_path(@proposal), class: "btn btn-ghost" %>
+      <%= link_to "キャンセル", forms_path, class: "btn btn-ghost" %>
+    </p>
+  </section>
+</div>

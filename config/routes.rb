@@ -14,6 +14,10 @@ Rails.application.routes.draw do
 
   get "/forms", to: "proposals#index", as: :forms
   post "/forms", to: "proposals#create"
+  get "/forms/:id/edit", to: "proposals#edit", as: :edit_form
+  get "/forms/:id/delete", to: "proposals#confirm_destroy", as: :confirm_destroy_form
+  patch "/forms/:id", to: "proposals#update", as: :form
+  delete "/forms/:id", to: "proposals#destroy"
 
   get "/catalog", to: "catalog#index", as: :catalog
 

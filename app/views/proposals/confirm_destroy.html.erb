@@ -1,0 +1,18 @@
+<section class="hero">
+  <div class="hero-badge">削除の確認 — 標準の DELETE</div>
+  <h1>プロポーザルを削除</h1>
+  <p class="hero-sub">この操作は取り消せません。確認してから削除してください。</p>
+</section>
+
+<div class="forms-layout">
+  <section class="feature">
+    <h2><%= @proposal.title %></h2>
+    <p class="proposal-meta"><%= @proposal.speaker_name %> ・ <%= Proposal::CATEGORY_LABELS.fetch(@proposal.category, @proposal.category) %></p>
+    <p><%= @proposal.abstract %></p>
+
+    <div class="proposal-actions">
+      <%= button_to "削除する", form_path(@proposal), method: :delete, class: "btn btn-primary" %>
+      <%= link_to "キャンセル", forms_path, class: "btn btn-ghost" %>
+    </div>
+  </section>
+</div>
