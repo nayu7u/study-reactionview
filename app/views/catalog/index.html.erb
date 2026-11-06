@@ -1,0 +1,58 @@
+<section class="hero">
+  <div class="hero-badge">共有 URL の検索 — 検索は Rails、ページ内は ReactionView</div>
+  <h1>Talk Catalog</h1>
+  <p class="hero-sub">検索・カテゴリ・ページは URL に載ります。概要の開閉だけがページ内の状態です。</p>
+</section>
+
+<div class="catalog">
+  <section class="feature">
+    <%= form_with url: catalog_path, method: :get, class: "catalog-search" do |form| %>
+      <%= form.search_field :q, value: @query, class: "field",
+        placeholder: "タイトルか発表者で検索", aria: { label: "キーワード" } %>
+      <%= form.select :category,
+        [ [ "すべて", "all" ] ] + Talk::CATEGORIES.map { |category| [ Talk::CATEGORY_LABELS.fetch(category), category ] },
+        { selected: @category }, class: "select", aria: { label: "カテゴリ" } %>
+      <%= form.submit "検索", class: "btn btn-primary" %>
+      <%= link_to "条件をクリア", catalog_path, class: "btn btn-ghost" %>
+    <% end %>
+
+    <p class="share-url">共有 URL: <code><%= request.fullpath %></code></p>
+    <p class="catalog-meta">
+      <%= @total %> 件中
+      <%= @total.zero? ? 0 : (@page - 1) * CatalogController::PER_PAGE + 1 %>–
+      <%= [ @page * CatalogController::PER_PAGE, @total ].min %> 件 /
+      <%= @pages %> ページ
+    </p>
+
+    <div class="catalog-list">
+      <% if @talks.empty? %>
+        <p class="catalog-empty">該当するトークはありません。条件を変えてください。</p>
+      <% else %>
+        <% @talks.each do |talk| %>
+          <article class="catalog-row">
+            <h3><%= talk.title %></h3>
+            <p class="catalog-meta"><%= talk.speaker %> ・ <%= Talk::CATEGORY_LABELS.fetch(talk.category) %></p>
+            <p class="catalog-abstract"><%= talk.abstract %></p>
+          </article>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if @pages > 1 %>
+      <nav class="pagination" aria-label="ページ送り">
+        <% if @page > 1 %>
+          <%= link_to "前へ", catalog_path(catalog_params(page: @page - 1)) %>
+        <% end %>
+        <% (1..@pages).each do |number| %>
+          <%= link_to number, catalog_path(catalog_params(page: number)),
+            aria: { current: (number == @page ? "page" : nil) } %>
+        <% end %>
+        <% if @page < @pages %>
+          <%= link_to "次へ", catalog_path(catalog_params(page: @page + 1)) %>
+        <% end %>
+      </nav>
+    <% end %>
+
+    <p class="task-note">プロポーザルを送るなら <%= link_to "サーバー検証フォーム", forms_path %> へ。</p>
+  </section>
+</div>

@@ -1369,3 +1369,34 @@ textarea.field-over { border-color: #b91c1c; }
 .proposal-card h4 { margin: 0 0 0.25rem; font-size: 0.95rem; }
 .proposal-card p { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--muted); }
 .proposal-meta { font-size: 0.8rem !important; }
+
+/* ---------- catalog: URL search + in-page compact toggle ---------- */
+
+.catalog { max-width: 52rem; }
+.catalog-search { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+.catalog-search .field { max-width: 22rem; }
+.share-url { margin: 0.9rem 0 0.35rem; font-size: 0.82rem; color: var(--muted); }
+.share-url code { overflow-wrap: anywhere; }
+.catalog-meta { color: var(--muted); font-size: 0.84rem; }
+.catalog-list { margin-top: 0.8rem; }
+.catalog-row {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.catalog-row h3 { margin: 0 0 0.25rem; font-size: 1rem; }
+.catalog-row p { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--muted); }
+.catalog-abstract { line-height: 1.6; }
+.catalog-empty { color: var(--muted); font-size: 0.9rem; }
+.pagination { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 1rem 0 0.5rem; }
+.pagination a {
+  min-width: 2rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  text-align: center;
+  font-size: 0.84rem;
+}
+.pagination a[aria-current="page"] { border-color: var(--accent); color: var(--accent); font-weight: 700; }
