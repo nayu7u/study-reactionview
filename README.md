@@ -350,11 +350,19 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ![ステップ1の422、ステップ2、確認、送信成功まで](docs/media/22-apply.gif)
 
+## 実務検証: 失敗する送信（`/outbox`、ナビ外）
+
+楽観的追加（`data-herb-into`）の 500 失敗を、`failed` 行・再試行・破棄で扱う検証。`failed` の表示は ERB、再試行/破棄は outbox の JS API を呼ぶ12行のアダプタ。no-JS の失敗は flash alert。詳細は [docs/outbox-failure.md](docs/outbox-failure.md)。
+
+<div><img src="docs/media/outbox-light.png" alt="Outbox failure (light)" width="49%"/> <img src="docs/media/outbox-dark.png" alt="Outbox failure (dark)" width="49%"/></div>
+
+![失敗した行が failed になり、再試行で確定する](docs/media/23-outbox.gif)
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
   `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
-  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` が検証する振る舞いは、
+  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` / `submissions_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。

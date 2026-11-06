@@ -327,6 +327,18 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **メディア**: `apply-light/dark.png` と `22-apply.gif`（ステップ1 → 422 → ステップ2 → 確認 → 成功）。`/forms` のメディアは変えない。
 - **ナビ外**: Patterns footer、README、docs からリンク。
 
+## Outbox 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **500 は failed**: outbox は `!response.ok` で `failed` を立てる。楽観行は pending → failed になり、`hidden` の presence で失敗ピルと操作が出る。`head :internal_server_error` で確認。
+- **retry/discard は JS API**: `HerbRuntime.outbox.retry/discard` しかなく、属性からは呼べない。`app/javascript/outbox_retry.js` の12行が `data-outbox-retry` / `data-outbox-discard` を拾う。runtime 以外の最初のアプリ JS。
+- **one-shot の失敗**: `session[:outbox_failed_once]`。最初の slots POST は 500、同じ FormData の再試行は 201。no-JS の失敗は flash alert。
+- **楽観行の title は `data-herb-name` が要る**: 無いと outbox の `text: true` がタイトルを埋められず、空の行になる。ビューで `data-herb-name="title"` を付ける。
+- **`data-herb-into` の属性**: `data: { "herb-into" => "submissions" }` と直接指定する。`data: { herb: { into: ... } }` では属性が出なかった（テストで確認）。
+- **no-JS**: fail_once の HTML POST は redirect + alert。レイアウトに `alert` の flash を追加した。
+- **プローブ**: failed/retry/discard/noJS、slots 3、documents 1。
+- **メディア**: `outbox-light/dark.png` と `23-outbox.gif`（失敗 → failed → 再試行 → 成功）。`/forms` / `/apply` のメディアは変えない。
+- **ナビ外**: Patterns footer、README、docs からリンク。
+
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 
 録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。

@@ -73,11 +73,11 @@ import "reactionview"
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 
-ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）があり、標準フォームと client mode の共存を測っている（§③ 対比6〜8、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)）。
+ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）があり、標準フォーム・client mode・outbox の共存を測っている（§③ 対比6〜9、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)）。
 
 ---
 
-## ③ 実コード対比 — 8つの局面
+## ③ 実コード対比 — 9つの局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -391,6 +391,21 @@ patch "/apply", to: "applications#update"
 
 ---
 
+### 対比 9 — 楽観的追加の失敗と再試行
+
+**Hotwire なら**: Turbo Stream の失敗を Stimulus で扱い、再送を自前で組む。
+
+**ReActionView の実測**: outbox は 500 で楽観行に `failed` を立てる。`failed` の表示は ERB、再試行/破棄は `HerbRuntime.outbox.retry/discard` を呼ぶ12行のアダプタ。`/outbox` は失敗・再試行・破棄を slots 3 で確認。no-JS は flash alert。
+
+```js
+window.HerbRuntime?.outbox?.retry(button);
+window.HerbRuntime?.outbox?.discard(button);
+```
+
+> 楽観的追加の失敗は outbox の領分。再試行/破棄の操作だけは API の糊が要る。詳細は [`docs/outbox-failure.md`](./outbox-failure.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -504,7 +519,7 @@ patch "/apply", to: "applications#update"
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
