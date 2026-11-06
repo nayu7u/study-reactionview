@@ -316,6 +316,17 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **メディア**: `catalog-light/dark.png` と `20-catalog.gif`（初期 → rails → compact → page 2 → back）。日本語フォントとフレーム寸法を確認。
 - **ナビ外**: Patterns footer、README、docs からリンクする。
 
+## Wizard 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **ステップは `?step=` の GET/PATCH**: 1..3 に clamp。`ApplicationDraft` の仮想 `step` でステップ別 validation。無効は 422 の HTML で同じステップに戻る。
+- **下書きはセッション**: `session[:application_draft_id]`。URL に id は出さない。2セッションは別の下書き。
+- **最後はトランザクション**: `Proposal.create!` + 下書き削除 + セッション削除 → `/forms` に flash。
+- **飛ばし URL は最後の検証で弾く**: `?step=3` が空なら 422、Proposal は作らない。
+- **slots 0 / no-JS**: プローブは document 12、全ステップで slots 0。no-JS でも 3ステップが動く。
+- **テスト環境の `aria-current`**: ステップインジケータは明示的な静的な `<li aria-current="step">` にする。コレクション内の動的属性はテスト環境で slot 化され、属性が落ちた（ブラウザでは動く）。テスト環境とブラウザの差として記録。
+- **メディア**: `apply-light/dark.png` と `22-apply.gif`（ステップ1 → 422 → ステップ2 → 確認 → 成功）。`/forms` のメディアは変えない。
+- **ナビ外**: Patterns footer、README、docs からリンク。
+
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 
 録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。

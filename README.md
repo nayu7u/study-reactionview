@@ -342,11 +342,19 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ![カテゴリとページが URL に載り、概要の開閉だけが 0 往復で動く](docs/media/20-catalog.gif)
 
+## 実務検証: 検証つきウィザード（`/apply`、ナビ外）
+
+3ステップの応募フォーム。各ステップは標準フォームでサーバー検証し、失敗は 422 でエラーと入力値を保持する。下書きはセッションに紐づき、戻る・リロード・no-JS でも同じ状態に戻る。最後の確認で Proposal を作成する。詳細は [docs/wizard.md](docs/wizard.md)。
+
+<div><img src="docs/media/apply-light.png" alt="Apply wizard (light)" width="49%"/> <img src="docs/media/apply-dark.png" alt="Apply wizard (dark)" width="49%"/></div>
+
+![ステップ1の422、ステップ2、確認、送信成功まで](docs/media/22-apply.gif)
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
   `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
-  `proposals_controller_test` / `catalog_controller_test` が検証する振る舞いは、
+  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。

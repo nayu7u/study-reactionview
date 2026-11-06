@@ -347,12 +347,12 @@
     </tbody>
   </table>
   </div>
-  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）と <code>/catalog</code>（共有 URL）があり、標準フォームと client mode の共存を測っている（§③ 対比6・7、<code>docs/forms.md</code>、<code>docs/url-state.md</code>）。</p>
+  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）があり、標準フォームと client mode の共存を測っている（§③ 対比6〜8、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>）。</p>
 </section>
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 7つの局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 8つの局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -639,6 +639,22 @@ end</code></pre>
       詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/url-state.md">docs/url-state.md</a>。
     </p>
   </div>
+
+  <!-- ================= pair 8 ================= -->
+  <h3 style="margin-top:34px;">対比 8 — 多段フォームの検証は各ステップの 422</h3>
+  <div class="card" style="margin-top:10px;">
+    <p style="margin:0 0 8px;">
+      <b>ReActionView の実測</b>: ステップは標準の GET/PATCH。<code>ApplicationDraft</code> をセッションで引き、
+      各ステップの 422 が同じステップを描き直す。最後の確認で <code>Proposal</code> をトランザクションに作成する。
+      <code>/apply</code> は全操作 slots 0。
+    </p>
+    <pre><code>get "/apply", to: "applications#show", as: :apply
+patch "/apply", to: "applications#update"</code></pre>
+    <p style="margin:8px 0 0;">
+      多段フォームはナビゲーションとサーバー検証の領分。ReActionView の slots はページ内の細粒度更新に残す。
+      詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/wizard.md">docs/wizard.md</a>。
+    </p>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -810,7 +826,7 @@ end</code></pre>
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
   <p class="lede">
-    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code> に実装済みです。標準フォームの 422 と、
+    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code> に実装済みです。標準フォームの 422 と、
     同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。

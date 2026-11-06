@@ -73,11 +73,11 @@ import "reactionview"
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 
-ナビ外の実務検証として `/forms`（422）と `/catalog`（共有 URL）があり、標準フォームと client mode の共存を測っている（§③ 対比6・7、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)）。
+ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）があり、標準フォームと client mode の共存を測っている（§③ 対比6〜8、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)）。
 
 ---
 
-## ③ 実コード対比 — 7つの局面
+## ③ 実コード対比 — 8つの局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -376,6 +376,21 @@ end
 
 ---
 
+### 対比 8 — 多段フォームの検証は各ステップの 422
+
+**Hotwire なら**: Turbo Frame/Stream でステップを差し替え、Stimulus で戻る/進むの状態を持つ。検証は各ステップの form。
+
+**ReActionView の実測**: ステップは標準の GET/PATCH。`ApplicationDraft` をセッションで引き、各ステップの 422 が同じステップを描き直す。最後の確認で `Proposal` をトランザクションに作成する。`/apply` は全操作 slots 0。
+
+```ruby
+get "/apply", to: "applications#show", as: :apply
+patch "/apply", to: "applications#update"
+```
+
+> 多段フォームはナビゲーションとサーバー検証の領分。ReActionView の slots はページ内の細粒度更新に残す。詳細は [`docs/wizard.md`](./wizard.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -489,7 +504,7 @@ end
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
