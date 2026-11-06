@@ -10,6 +10,12 @@ require "generators/reactionview_ui/component/component_generator"
 class ReactionviewUiComponentGeneratorTest < Rails::Generators::TestCase
   tests ReactionviewUi::ComponentGenerator
   destination File.join(Dir.tmpdir, "reactionview_ui_generator_test")
+  setup do
+    # Why per test: parallel workers can run methods of this class at the
+    # same time, and a class-level path lets prepare_destination delete
+    # another run's generated file before the assert.
+    self.class.destination(File.join(Dir.tmpdir, "reactionview_ui_generator_test_#{Process.pid}_#{object_id}"))
+  end
   setup :prepare_destination
 
   test "copies the fragment verbatim into app/views/components/ui" do
