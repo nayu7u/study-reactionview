@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_190358) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_191219) do
   create_table "application_drafts", force: :cascade do |t|
     t.string "speaker_name"
     t.string "email"
@@ -28,6 +28,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_190358) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "posts", force: :cascade do |t|
+    t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "proposals", force: :cascade do |t|
     t.string "speaker_name"
     t.string "email"
@@ -36,6 +42,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_190358) do
     t.string "category"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "replies", force: :cascade do |t|
+    t.integer "post_id", null: false
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_replies_on_post_id"
   end
 
   create_table "submissions", force: :cascade do |t|
@@ -59,4 +73,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_190358) do
     t.datetime "updated_at", null: false
     t.integer "priority", default: 2, null: false
   end
+
+  add_foreign_key "replies", "posts"
 end

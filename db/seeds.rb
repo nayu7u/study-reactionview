@@ -73,3 +73,15 @@ Submission.destroy_all
 [ "最初の提出", "2番目の提出", "3番目の提出" ].each do |title|
   Submission.create!(title: title)
 end
+
+Post.destroy_all
+
+first = Post.create!(title: "スロットの質問")
+first.replies.create!(body: "キー付き差分は入れ子でも効きますか？")
+first.replies.create!(body: "まずは外側のキーから確認します。")
+
+second = Post.create!(title: "返信の順序")
+second.replies.create!(body: "作成順で並んでいます。")
+second.replies.create!(body: "追加すると末尾に入ります。")
+
+Post.create!(title: "no-JSの返信")

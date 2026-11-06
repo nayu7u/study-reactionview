@@ -1,0 +1,11 @@
+one:
+  post: one
+  body: 最初の返信
+
+two:
+  post: one
+  body: 2番目の返信
+
+three:
+  post: two
+  body: 別の投稿への返信
