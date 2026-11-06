@@ -121,7 +121,7 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select ".catalog-row", count: 0
     assert_select ".catalog-empty"
-    assert_select ".pagination", count: 0
+    assert_select ".pagination a", count: 0
   end
 
   test "the initial HTML shows abstracts without JavaScript" do
@@ -138,5 +138,27 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[method='get'][action='#{catalog_path}']"
     assert_select "form[data-herb-set]", count: 0
     assert_select "form[data-herb-into]", count: 0
+  end
+
+  test "the compact switch is one client state with hidden abstracts" do
+    get catalog_path
+
+    assert_response :success
+    json = response.body[/<template data-herb-manifests[^>]*>(\{.*?\})<\/template>/m, 1]
+    assert json
+    manifest = JSON.parse(json).values.first
+
+    assert_equal [ "compact" ], manifest.dig("states", "declarations").map { |d| d["name"] }
+    assert_equal "region", manifest.dig("states", "declarations").first["scope"]
+
+    # The five abstracts inside the collection collapse into one presence
+    # entry; the checkbox adds the second.
+    presence = manifest.dig("states", "presence")
+    assert_equal 2, presence.size
+    assert presence.values.all? { |condition| JSON.generate(condition).include?("compact") }
+
+    assert_select ".catalog-compact input[type='checkbox']", count: 1
+    assert_select ".catalog-compact input[checked]", count: 0
+    assert_select ".catalog-abstract[hidden]", count: 0
   end
 end

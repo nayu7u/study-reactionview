@@ -1,3 +1,6 @@
+<%# herb:slots client %>
+<%# herb:state (compact: false) %>
+
 <section class="hero">
   <div class="hero-badge">共有 URL の検索 — 検索は Rails、ページ内は ReactionView</div>
   <h1>Talk Catalog</h1>
@@ -24,6 +27,11 @@
       <%= @pages %> ページ
     </p>
 
+    <label class="task-check catalog-compact">
+      <input type="checkbox" checked="<%= compact %>">
+      <span>概要を閉じる</span>
+    </label>
+
     <div class="catalog-list">
       <% if @talks.empty? %>
         <p class="catalog-empty">該当するトークはありません。条件を変えてください。</p>
@@ -32,7 +40,7 @@
           <article class="catalog-row">
             <h3><%= talk.title %></h3>
             <p class="catalog-meta"><%= talk.speaker %> ・ <%= Talk::CATEGORY_LABELS.fetch(talk.category) %></p>
-            <p class="catalog-abstract"><%= talk.abstract %></p>
+            <p class="catalog-abstract" hidden="<%= compact %>"><%= talk.abstract %></p>
           </article>
         <% end %>
       <% end %>
