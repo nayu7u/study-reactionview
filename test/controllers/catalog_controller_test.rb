@@ -22,6 +22,7 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     assert_select ".catalog-row", count: 1
     assert_select ".catalog-row h3", text: "ReActionViewのスロットを読む"
     assert_select "input[name='q'][value='ReActionView']"
+    assert_select ".share-url code", text: /q=ReActionView/
 
     get catalog_path(q: "佐藤")
     assert_response :success
