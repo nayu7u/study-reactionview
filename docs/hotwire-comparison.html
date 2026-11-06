@@ -347,12 +347,12 @@
     </tbody>
   </table>
   </div>
-  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）があり、標準フォーム・client mode・outbox の共存を測っている（§③ 対比6〜9、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>）。</p>
+  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）、<code>/thread</code>（入れ子キー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜10、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>、<code>docs/thread.md</code>）。</p>
 </section>
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 9つの局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 10の局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -671,6 +671,20 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/outbox-failure.md">docs/outbox-failure.md</a>。
     </p>
   </div>
+
+  <!-- ================= pair 10 ================= -->
+  <h3 style="margin-top:34px;">対比 10 — 入れ子コレクションのキー付き差分</h3>
+  <div class="card" style="margin-top:10px;">
+    <p style="margin:0 0 8px;">
+      <b>ReActionView の実測</b>: 外側/内側の <code>herb:key</code> で、<code>$refresh</code> の slots 応答に
+      nested collection が items/order/statics として載る。クライアントは外側の行を保ち、内側だけを差し替える。
+      返信は標準フォーム。<code>data-herb-into="replies"</code> は静かな no-op だった。
+    </p>
+    <p style="margin:8px 0 0;">
+      入れ子は読みと差分に強い。書き込みは標準フォームに残す。
+      詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/thread.md">docs/thread.md</a>。
+    </p>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -842,7 +856,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
   <p class="lede">
-    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code> に実装済みです。標準フォームの 422 と、
+    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code>、入れ子スレッドは <code>/thread</code> に実装済みです。標準フォームの 422 と、
     同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。

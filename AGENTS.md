@@ -339,6 +339,17 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **メディア**: `outbox-light/dark.png` と `23-outbox.gif`（失敗 → failed → 再試行 → 成功）。`/forms` / `/apply` のメディアは変えない。
 - **ナビ外**: Patterns footer、README、docs からリンク。
 
+## Thread 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **入れ子の `herb:key` は wire に載る**: 外側の collection item のパートに、内側の collection が `items` / `order` / `statics` として入る。`$refresh` の slots 応答で確認。
+- **クライアントは外側の行を保つ**: `$refresh` の前後で外側の `.thread-post` に付けた `data-probe-preserved` が残り、内側の返信だけが差分適用された（プローブ: `outerPreserved: "yes"`、`refreshSlots: 1`）。
+- **入れ子の outbox は no-op**: `data-herb-into="replies"` を付けた返信フォームは、返信を追加せず、ページエラーも出なかった。本実装は標準フォーム + 全画面。
+- **返信は標準フォーム**: POST → redirect + flash。no-JS でも追加できる。
+- **返信数はサーバー読み**: `post.replies.size`（`includes`）。nested の count fold は未検証。
+- **`data-herb-name="replies"` は重複**: 今回の `$refresh` は nested の位置で解決されたが、outbox の名前解決には使えない。
+- **メディア**: `thread-light/dark.png` と `24-thread.gif`（返信 → 最新を取得 → 入れ子の差分）。既存メディアは変えない。
+- **ナビ外**: Patterns footer、README、docs からリンク。
+
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実
 
 録画のために Playwright + Chromium をリポジトリ外（`/tmp/opencode/capture`）に導入して実測した。
