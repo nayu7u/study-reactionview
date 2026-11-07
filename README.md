@@ -1,16 +1,18 @@
 # Study ReActionView
 
-**ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**であり、Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
-すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、実用的なアプリ風の
-七つのショーケースで実演・検証する。
+**ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**。Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
+すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、7つのナビ画面と
+6つの実務検証で実演する。
 
-- React / Stimulus / Node / yarn / ビルドパイプライン: 一切なし。`app/javascript/application.js` は
-  `import "reactionview"` と、`/outbox` の再試行/破棄の12行アダプタだけ。スタイルは `app.css` 1 枚の素の CSS（デザイントークン含む）。
+- React / Stimulus / Node / yarn / ビルドパイプラインは、アプリのコードからは一切使っていない。
+  `app/javascript/application.js` は `import "reactionview"` と、`/outbox` の再試行/破棄を拾う小さなアダプタだけ。
+  Rails 標準の `turbo-rails` / `stimulus-rails` は Gemfile と importmap に残るが、import していない。
+- スタイルは `app.css` と UI Kit 用の `reactionview_ui.css` の2枚。どちらも素の CSS で、ビルドはない。
 - 細粒度の更新は Herb の slots が担う。state 変化に対して、HTML ではなく値の JSON
   （`application/vnd.herb.slots+json`）だけが往復し、クライアントが差分を当てはめる。
-- Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比ノートは [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
+- Hotwire（Turbo + Stimulus）が担っていた役割ごとの対比は [docs/hotwire-comparison.md](docs/hotwire-comparison.md)。
 
-## 7つの画面
+## 7つのナビ画面
 
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
@@ -22,9 +24,43 @@
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
 | UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
 
+機能番号は画面内の検証項目番号で、README の並びは画面順だ。Hub の ⑯ は ② のリスト内、
+Settings の ⑰ と Dashboard の ⑱〜㉑ は各画面のタグに対応する。
+
+## ナビ外の6つの実務検証
+
+| 画面 | 見せていること | ドキュメント |
+|---|---|---|
+| `/forms` | 標準 `form_with` と 422 の全画面再描画。同じページの client mode 絞り込み（0往復） | [docs/forms.md](docs/forms.md) |
+| `/catalog` | 検索・カテゴリ・ページを URL に載せる。概要の開閉だけ client mode（0往復） | [docs/url-state.md](docs/url-state.md) |
+| `/apply` | 3ステップの応募フォーム。各ステップは標準フォームでサーバー検証、下書きはセッション | [docs/wizard.md](docs/wizard.md) |
+| `/outbox` | 楽観的追加の 500 失敗を `failed` 行・再試行・破棄で扱う | [docs/outbox-failure.md](docs/outbox-failure.md) |
+| `/thread` | 入れ子のキー付きコレクション。外側の投稿を再構築せず返信だけを差分適用 | [docs/thread.md](docs/thread.md) |
+| `/tree` | 4階層のファイルツリー。深さ2以上の開閉も per-node state で 0往復 | [docs/tree.md](docs/tree.md) |
+
+ナビには出さない。Patterns の footer、README、各 docs からリンクしている。
+
+## 2つのモード
+
+| | server mode | client mode |
+|---|---|---|
+| state | ブラウザ所有。リクエストごとに `Herb-State` で送る | 初回 HTML に宣言と未描画分岐を格納する |
+| 更新 | 同じアクションが slots 応答で値だけを返す | クライアントが格納済みの分岐と state を評価する |
+| サーバー読み | DB 検索・計算・一覧など何でも読める | 初回のサーバー読みが基本。ループ内のサーバー読みは branch refetch になる |
+| 向く用途 | 検索・並び替え・詳細・料金計算 | タブ・フォーム・ウィザード・アコーディオン |
+| 0.6.0 の境界 | state 条件の分岐が反転したときだけ自動で往復する。反転しない操作は `$refresh` を合成する | パーシャル内の分岐は materialize されないため、presence（`hidden`）と CSS で切り替える |
+
+GIF は操作の見た目を示す。0往復/1往復の回数は headless Chromium のプローブで測った値で、GIF 単体では分からない。
+
+## セットアップ
+
+Ruby 4.0.9 / Rails 8.1.4 / SQLite で動く。Node / yarn は不要。
+
 ```console
-$ bin/rails db:setup   # または db:seed
-$ bin/rails server     # http://localhost:3000
+$ bin/setup --skip-server  # bundle install + db:prepare
+$ bin/rails db:setup       # seed 込みで作り直す場合
+$ bin/rails server         # http://localhost:3000
+$ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再投入
 ```
 
 ## Sprint Hub（server モード、`/`）
@@ -45,9 +81,9 @@ $ bin/rails server     # http://localhost:3000
   （再構築しない）。並び替え GIF で行がアニメーションせず“その場で並び替わる”のは、キーのおかげだ。
 - `$refresh`（🔄 同期）だけが明示的な「サーバーに全部問い合わせ直す」手段だ。
 
-### 機能② 細粒度更新＋カウントfold
+### 機能② 細粒度更新＋楽観的追加
 
-![行のチェックは往復なし、統計はfoldで即時](docs/media/02-row-state.gif)
+![行のチェックとピン/星は0往復、統計はfoldで即時](docs/media/02-row-state.gif)
 
 - 取り消し線・行の文言ピルは **presence バインディング**（`checked="<%= done %>"`）＋ CSS `:has(input:checked)`
   で即時描画する。ピルは「✔ 完了」「未完了」の両方を DOM に置いて CSS で表示を切り替えている。
@@ -57,8 +93,9 @@ $ bin/rails server     # http://localhost:3000
   `count: {by: 1, when: ["done"]}` として現れ、チェックのたびにサーバー往復なしで client が計算し直す。
 - 「行の見た目を属性値の補間で表現しない」（`class="<%= … if done %>"` を書かない）のが原則だ。
   属性補間はサーバー読みスロットになり、チェックのたびの往復を生む。見た目は CSS、数値は read slot で分担する。
+- ピン/星も同じリストの中で動く。詳細は機能⑯にまとめた。
 
-### 機能③ 楽観的追加
+#### 楽観的追加
 
 ![追加は 201 の新規行だけで入り、同期で確定](docs/media/03-optimistic-add.gif)
 
@@ -68,20 +105,22 @@ $ bin/rails server     # http://localhost:3000
 - 送信に成功するとドロワーは閉じ、打ち込んだ title もリセットされる
   (`data-herb-set="submit->drawer_open=false"` と `data-herb-reset="submit->title"` の二本立て)。
 - hero の合計（`Task.count`）は GET 応答では更新されるが、POST splice ではされない。
-  0.6.0 のクライアントが 201 で適用するのは collection だけだ。だからシーンの最後で 🔄 同期を押して
-  「楽観 → 確認」の流れを見せている（実測の制約は AGENTS.md にある）。
+  0.6.0 のクライアントが 201 で適用するのは collection だけだ。GIF の最後で 🔄 同期を押し、
+  hero が 10→11 に変わって「楽観 → 確認」が完了する（実測の制約は AGENTS.md にある）。
+- 検索中に追加すると、201 の splice は query を無視して新しい行を差し込む。同期すると検索結果に戻る。
 - JS を切っても成立する。hidden token 付きのふつうの `<form method="post">` として POST し、flash 付き redirect が返る。
 
-### 機能④ window 句
+### 機能③ ドロワーとフォームのバインディング（window句を含む）
 
-![⌘B で開き、Esc で閉じる](docs/media/04-window-clauses.gif)
+![Ctrl+B で開き、Esc で閉じる](docs/media/04-window-clauses.gif)
 
 - `data-herb-set="keydown.meta+b@window->drawer_open=true"` で、⌘B（Ctrl+B）でもドロワーが開く。
-  要素の外（window）にリスナーを張る句だ。`modifier AND match` の設計上、`meta+b` と `ctrl+b` は別句にする
-  （1 行では OR にできない）。
+  要素の外（window）にリスナーを張る句だ。`modifier AND match` の設計上、`meta+b` と `ctrl+b` は
+  **1つの binding では OR にできない**。空白区切りの別 binding として並べる。
 - 閉じる側は `click@outside->…=false` と `keydown.esc@window->…=false` の複合だ。
+- 送信の成功でドロワーを閉じる処理と、title のリセットは機能②の楽観的追加で使っている。
 
-### 機能⑯ 行とサマリーの同時連動（ピン／星）
+### 機能⑯ ピン／星（機能②のリスト内）
 
 ![行の星と「N件ピン留め」が0往復で揃う](docs/media/16-pin.gif)
 
@@ -99,7 +138,7 @@ $ bin/rails server     # http://localhost:3000
 
 ### 機能⑱ Async サマリー
 
-![Asyncのサマリーとpollが後から届く](docs/media/18-dashboard.gif)
+![Async・poll・Fragment・Lazy の遅延読みが後から届く](docs/media/18-dashboard.gif)
 
 - 初回HTMLは Fallback だけ。マウント直後に2本のブロック要求（サマリー / ハートビート）が飛ぶ。`?slow=1` では各900ms、ページ本体は約30msで返る（実測）。
 - 2本目はサーバーが直列なら待たされ、907ms / 1812ms になった（実測）。クライアントは同時に発行している。
@@ -160,6 +199,7 @@ $ bin/rails server     # http://localhost:3000
 - 「全部読み込みました」を表示する分岐は **ivar 条件の分岐**（`<% if @remaining > 0 %>`）だ。
   server モードでは state 条件でなくても wire に `branch` 値と分岐の statics が乗り、
   初期 HTML の `<!--herb-branch:N:現在の分岐-->` マーカーと突き合わせて切替が起きる。
+- ⑨ のタグは ⑧ のカード内に置いている。読み込みは ⑧ のチップと同じ受信箱で起きる。
 
 ### 機能⑩ 詳細連動（行選択→同じアクションが詳細を答える）
 
@@ -232,7 +272,7 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 - 保存は `dirty=false saved=true` のデモ。リセットは書き込み可能な state だけを初期値へ戻す
   （派生 state と `tab` は含めない）。
 - ブラウザプローブで、タブ切替・依存フィールド・dirty/save/reset・タブの往復・リロードのすべてが
-  **0 slots リクエスト**であることを確認した。
+  **0 slots リクエスト**であることを確認した。GIF の後半では Billing のプラン切替とリセットも見せている。
 
 ## Client Lab（client モード、`/lab`）
 
@@ -241,7 +281,7 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 
 <div><img src="docs/media/lab-light.png" alt="Client Lab (light)" width="49%"/> <img src="docs/media/lab-dark.png" alt="Client Lab (dark)" width="49%"/></div>
 
-### 機能⑤ 分岐の格納とセグメント切替
+### 機能④ 分岐の格納とセグメント切替
 
 ![タブの切替は往復ゼロ](docs/media/05-client-mode.gif)
 
@@ -252,13 +292,15 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
   （checked/selected の boolean 属性バインディングとは別物）。client モードでは状態の比較だけだから、
   クライアント側で評価でき、往復はない。CSS は `[aria-pressed="true"]` で引く。
 
-### 機能⑥ カウンタとコマンドパレット
+### 機能⑤・⑥ カウンタとコマンドパレット
 
-![⌘Kパレットも往復ゼロ](docs/media/06-palette.gif)
+![カウンタ・hoverプレビュー・⌘Kパレットが往復ゼロ](docs/media/06-palette.gif)
 
 - `data-herb-increment / decrement / reset` でカウンタを操作する。`data-herb-by="2"` を付けると一度に ±2 動く。
 - ⌘K（Ctrl+K）またはクリックで開く palette 型モーダル。Esc と backdrop のクリックで閉じる。入力の文字数は即時に表示される。
-- `data-herb-reset`（引数なし）は「全部戻す」で、全 states を既定値へ戻す。
+- ホバーは `data-herb-set="mouseenter->preview=true mouseleave->preview=false"` と `if preview` の分岐で、
+  プレビュー pill が 0往復で出る。`data-herb-reset`（引数なし）は「全部戻す」で、全 states を既定値へ戻す。
+- 画面のタグは ⑤ がカウンタ、⑥ が palette。GIF は両方を1本にまとめている。
 
 ### 機能⑦ switch バインディングと派生状態
 
@@ -316,11 +358,19 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 
 ## UI Kit（client モード、`/ui`）
 
-shadcn/ui のモデル（ソース配布 + トークン + variant API）を ERB で再現した検証キット。9コンポーネントのソースを
+shadcn/ui のモデル（ソース配布 + トークン + variant API）を ERB で再現した検証キット。9コンポーネントは
+Button / Badge / Card / Switch / Stepper / Field / Accordion / Tabs / Dialog。ソースを
 `lib/reactionview_ui/` に置き、ジェネレータ（`reactionview_ui:install` / `reactionview_ui:component`）で
 `app/views/components/ui/` にコピーして使う。断片は `herb:state` 宣言を内蔵する。ページ側の wiring は不要。
-headless Chromium で全コンポーネントを操作した結果、全操作でスロット往復 0 だった。
-コンポーネントの一覧と実測の詳細は [docs/ui-kit.md](docs/ui-kit.md)。
+UI Kit のトークンと CSS は `reactionview_ui.css` にまとまり、`app.css` とは別に読み込む。
+headless Chromium で操作できるコンポーネントをすべて動かした結果、スロット往復は 0 だった。
+
+![9コンポーネントのデモ。操作はすべて0往復](docs/media/26-ui-kit.gif)
+
+Button / Badge / Card は state を持たず、manifest で `"states": null` になる。Switch は同一断片の2 instance が
+occurrence index で独立し、Stepper は行ごとの qty とカウントfold、Field は派生 `ready` / `over`、
+Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、Dialog はトリガ + state + 背景を
+1断片で持つ。コンポーネントの一覧と実測の詳細は [docs/ui-kit.md](docs/ui-kit.md)。
 
 ## 実務検証: サーバー検証フォーム（`/forms`、ナビ外）
 
@@ -352,7 +402,7 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ## 実務検証: 失敗する送信（`/outbox`、ナビ外）
 
-楽観的追加（`data-herb-into`）の 500 失敗を、`failed` 行・再試行・破棄で扱う検証。`failed` の表示は ERB、再試行/破棄は outbox の JS API を呼ぶ12行のアダプタ。no-JS の失敗は flash alert。詳細は [docs/outbox-failure.md](docs/outbox-failure.md)。
+楽観的追加（`data-herb-into`）の 500 失敗を、`failed` 行・再試行・破棄で扱う検証。`failed` の表示は ERB、再試行/破棄は outbox の JS API を呼ぶ小さなアダプタ。no-JS の失敗は flash alert。詳細は [docs/outbox-failure.md](docs/outbox-failure.md)。
 
 <div><img src="docs/media/outbox-light.png" alt="Outbox failure (light)" width="49%"/> <img src="docs/media/outbox-dark.png" alt="Outbox failure (dark)" width="49%"/></div>
 
@@ -376,21 +426,40 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ## 検証の進め方
 
-- **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
-  `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
-  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` / `submissions_controller_test` / `posts_controller_test` / `replies_controller_test` / `trees_controller_test` が検証する振る舞いは、
-  HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
-  （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
+- **テスト: `bin/rails test`**。controller 14本、model 7本、generator 1本を実行する。
+  controller tests は HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot /
+  slots 応答の形状（items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 /
+  no-JS フォールバック / fold が manifest に現れることを検証する。model tests は下書き・提案・投稿・
+  ツリーなどのドメイン、generator test は `reactionview_ui` のコピー生成を見る。テストは What を、
   コードは How を、コミットログは Why を書く約束。
+- **フルゲート: `bin/ci`**。`bin/setup --skip-server`、Rubocop、bundler-audit、importmap audit、Brakeman、
+  `bin/rails test`、seed の再投入を順に実行する。
 - 初期 HTML には `<template data-herb-manifests>` として、クライアントへの命令書が載る
   （`states.declarations` / `reads` / `conditionals` / `presence` / `computed` / `server`）。DevTools で覗くと
   「何が往復せず動くか」が読める。
 - dev モードでは右上に Herb バッジが出る。テンプレートタグをわざと壊すと、ファイル名＋行番号付きの
   エラーオーバーレイが出る（各 footer に案内あり）。tests + curl + ブラウザでも説明がつかない局面では、
   `docs/debug-mcp-runbook.md`（debug-mcp の adopt-on-demand 手順）を参照する。
+- 0往復/1往復は headless Chromium のプローブで計測する。撮影スクリプトとプローブはリポジトリ外の
+  録画環境（`/tmp/opencode/capture`）にあり、アプリの Node 依存にはしない。再実行の手順は AGENTS.md と
+  各 docs の実測節に記録している。
+
+## ドキュメント
+
+| ドキュメント | 内容 |
+|---|---|
+| [docs/hotwire-comparison.md](docs/hotwire-comparison.md) | Hotwire の役割と ReActionView の置き換えを11の局面で対比する |
+| [docs/forms.md](docs/forms.md) | 標準フォームの 422 と client mode 絞り込みの共存 |
+| [docs/url-state.md](docs/url-state.md) | 共有 URL の検索。URL は Rails、ページ内は slots |
+| [docs/wizard.md](docs/wizard.md) | セッション下書き付きの3ステップフォーム |
+| [docs/outbox-failure.md](docs/outbox-failure.md) | 楽観的追加の失敗・再試行・破棄 |
+| [docs/thread.md](docs/thread.md) | 入れ子キー付きコレクションの差分 |
+| [docs/tree.md](docs/tree.md) | 深さ4のツリーと per-node state の制約 |
+| [docs/ui-kit.md](docs/ui-kit.md) | reactionview-ui の9コンポーネントと0往復の実測 |
+| [docs/debug-mcp-runbook.md](docs/debug-mcp-runbook.md) | debug-mcp の adopt-on-demand 手順 |
 
 ## テンプレートの実測メモ
 
 この検証で判明したエンジンの事実（fold の決まった形、server モードと client モードの制約、slots ワイヤの形、
-`<%# herb:state %>`を controller でも宣言する必要性など）は、[AGENTS.md](AGENTS.md) に随時記録している。
+`<%# herb:state %>` を controller でも宣言する必要性など）は、[AGENTS.md](AGENTS.md) に随時記録している。
 テンプレートを改変する前には必ずそこを当たること（境界を意図的に押して壊した記録が多い）。

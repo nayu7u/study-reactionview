@@ -49,7 +49,7 @@ import "outbox_retry"
 
 ---
 
-## ② 証明マップ — 7画面＋ナビ外の Tree が消している Hotwire の部品
+## ② 証明マップ — 7画面＋ナビ外の6検証が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 

@@ -440,6 +440,31 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   **slot 往復 0**。herb dev tools の浮きメニューがポインタを吸うので、プローブは
   `[class*="herb-dev-tools"]` への恒久CSS + `force: true` クリックで回避
 
+## README・メディア整合（2026-11-07）
+
+- **機能番号は画面タグを正とした**。① server reads / ② 細粒度更新＋楽観的追加（ピン/星は⑯）/ ③ ドロワーと
+  フォームのバインディング（window句を含む）/ ④ Lab の分岐格納 / ⑤ カウンタ / ⑥ パレット（hover を含む）/
+  ⑦ switch と派生 / ⑧ チップ / ⑨ もっと見る / ⑩ 詳細 / ⑪ ウィザード / ⑫ バリデーション / ⑬ 数量 / ⑭ アコーディオン /
+  ⑮ Pricing / ⑯ ピン・星（②のリスト内）/ ⑰ Settings / ⑱〜㉑ Dashboard。README の並びは画面順で、番号は画面タグに対応する。
+- **01-server-reads.gif は行が見える**。`load-more` で2行に絞り、`.feature-grid` の固定 clip（784x800 CSS）で
+  検索→新しい順→古い順→クリアを撮る。`02-row-state.gif` は②のタグに⑯を併記し、ピン/星も同じクリップで見せる。
+- **03-optimistic-add.gif は同期まで撮る**。追加後の hero は10のままで、🔄同期で11になる。検索中に追加した行は
+  201 splice で入り、同期で検索結果に戻る。POST 201 の応答は region の `Task.count` を適用しない（実測どおり）。
+- **04-window-clauses.gif はキー操作をオーバーレイ表示**する。`Ctrl+B で開く` → `Esc で閉じる` → `閉じた（Esc）`。
+- **06-palette.gif は⑤⑥を1本にまとめた**。カウンタ +2 → リセット → hover プレビュー → ⌘K → Esc。0 slots。
+- **09-load-more.gif は固定 clip 916x2362（2x）**。カードが伸びるため locator screenshot では「全部読み込みました」が
+  切れる。2ページ目→全件読み込み済みの2フレームにした。
+- **17-settings.gif は8フレーム**。Billing の Business 選択 → Profile の名前変更 → 保存 → リセットまで撮る。
+- **18-dashboard.gif は⑱〜㉑のタグ入り**。Async / Lazy / Fragment / poll の4タグが画面に出る。
+- **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、全操作 0 slots。
+- README の前提は Ruby 4.0.9 / Rails 8.1.4 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
+  （controller 14 / model 7 / generator 1）を明記した。
+- README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /
+  `stimulus-rails` は Gemfile と importmap に残るが、`application.js` から import していない。
+- 録画スクリプトはリポジトリ外（`/tmp/opencode/capture`）。`hub-capture.js` / `pin-capture.js` /
+  `settings-capture.js` / `dashboard-capture.js` / `patterns-09-capture.js` / `lab-06-capture.js` /
+  `ui-kit-capture.js` が今回の再撮影に対応する。
+
 ## 調査ツール
 
 - debug-mcp（Kaigi on Rails 2026・riraさんの講演）は **adopt-on-demand**: 実行時状態に依存するバグで

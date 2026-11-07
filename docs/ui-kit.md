@@ -5,6 +5,7 @@
 アプリにコピーする — shadcn と同じ**ソース配布モデル**を ERB + 素の CSS + ビルドステップゼロで再現した。
 
 デモ: `/ui`(client mode)。テスト: `test/controllers/ui_controller_test.rb`。
+操作を1本にまとめたGIF: [media/26-ui-kit.gif](media/26-ui-kit.gif)。
 
 ## 検証結果(ブラウザ実測)
 
