@@ -1076,6 +1076,12 @@ textarea.field-over { border-color: #b91c1c; }
   align-items: start;
 }
 
+.settings-feature-tag {
+  grid-column: 1 / -1;
+  justify-self: start;
+  margin-bottom: 0;
+}
+
 @media (max-width: 52rem) {
   .settings-layout { grid-template-columns: 1fr; }
 }

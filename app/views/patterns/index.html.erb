@@ -46,6 +46,7 @@
         </li>
       <% end %>
     </ul>
+    <div class="feature-tag">機能⑨ もっと見る（キー付き差分）</div>
     <% if page > 1 %>
       <p class="toolbar-note"><%= page %> ページ目を表示中 — 既存行はそのまま、新しい行だけ追加</p>
     <% end %>
@@ -84,6 +85,6 @@
 </div>
 
 <footer class="page-meta">
-  楽観的追加（Sprint Hub機能③）と同じ201 spliceを、削除・更新でも試す余地があります。まずはここまでを読み込んでください。
+  楽観的追加（Sprint Hub機能②）と同じ201 spliceを、削除・更新でも試す余地があります。まずはここまでを読み込んでください。
   <p>実務検証: <a href="<%= forms_path %>">サーバー検証フォーム（422）</a> ・ <a href="<%= catalog_path %>">共有 URL の検索</a> ・ <a href="<%= apply_path %>">検証つきウィザード</a> ・ <a href="<%= outbox_path %>">失敗する送信</a> ・ <a href="<%= thread_path %>">入れ子スレッド</a> ・ <a href="<%= tree_path %>">深いツリー</a> — 標準フォームと client mode の共存。</p>
 </footer>

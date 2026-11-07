@@ -13,6 +13,7 @@
 
 <div class="dashboard-layout">
   <section class="dashboard-card dashboard-summary">
+    <span class="feature-tag">機能⑱ Async サマリー</span>
     <Async delay="150" hold="400">
       <% summary = dashboard_summary %>
       <div class="metric-row">
@@ -37,6 +38,7 @@
 
   <div class="dashboard-main">
     <section class="dashboard-card dashboard-focus">
+      <span class="feature-tag">機能⑳ Fragment の優先度フォーカス</span>
       <h2>優先度フォーカス</h2>
       <div class="seg" role="group" aria-label="優先度フォーカス">
         <button class="seg-btn" data-herb-set="focus=all" aria-pressed="<%= focus == "all" %>">すべて</button>
@@ -54,6 +56,7 @@
     </section>
 
     <section class="dashboard-card dashboard-activity">
+      <span class="feature-tag">機能⑲ Lazy の defer</span>
       <h2>最近のアクティビティ</h2>
       <Lazy delay="150" hold="400">
         <% activity = recent_activity.limit(3).to_a %>
@@ -108,6 +111,7 @@
 
   <aside class="dashboard-side">
     <section class="dashboard-card dashboard-heartbeat">
+      <span class="feature-tag">機能㉑ poll ハートビート</span>
       <h2>ハートビート</h2>
       <Async poll="3000" delay="150" hold="400">
         <% beat = heartbeat %>
