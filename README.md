@@ -58,7 +58,7 @@ Ruby 4.0.9 / Rails 8.1.4 / SQLite で動く。Node / yarn は不要。
 
 ```console
 $ bin/setup --skip-server  # bundle install + db:prepare
-$ bin/rails db:setup       # seed 込みで作り直す場合
+$ bin/rails db:setup       # 初回の seed 込み DB
 $ bin/rails server         # http://localhost:3000
 $ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再投入
 ```
