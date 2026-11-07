@@ -17,7 +17,7 @@ ReActionView 0.6.0 + herb 0.11.1 の検証アプリで、**楽観的追加（`da
 
 `failed` の**表示**は ERB で書けます。`pending` / `failed` の per-row state と `hidden` の presence を置けば、outbox が 500 のときに自動で失敗ピルと操作ボタンが出ます。
 
-一方、**再試行・破棄の操作**は `HerbRuntime.outbox.retry/discard` の JS API しかなく、`data-herb-*` 属性からは呼べません。`app/javascript/outbox_retry.js` の約12行で `data-outbox-retry` / `data-outbox-discard` を拾って呼ぶ必要があります。これはこのリポジトリで runtime 以外の最初のアプリ JS です。
+一方、**再試行・破棄の操作**は `HerbRuntime.outbox.retry/discard` の JS API しかなく、`data-herb-*` 属性からは呼べません。`app/javascript/outbox_retry.js` の小さなアダプタで `data-outbox-retry` / `data-outbox-discard` を拾って呼ぶ必要があります。これはこのリポジトリで runtime 以外の最初のアプリ JS です。
 
 ## 失敗の経路
 
@@ -91,4 +91,4 @@ document.addEventListener("click", (event) => {
 - 多段のサーバー検証は `/apply` のステップ別 422。
 - 検索・共有 URL は `/catalog` の標準 GET。
 
-outbox の失敗は「表示は ERB、操作は API」という分担になります。この12行を許容できるなら、楽観的追加の失敗も実務で扱えます。
+outbox の失敗は「表示は ERB、操作は API」という分担になります。この小さなアダプタを許容できるなら、楽観的追加の失敗も実務で扱えます。

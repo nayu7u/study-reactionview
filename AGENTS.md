@@ -332,7 +332,7 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 ## Outbox 画面で実測した事実（0.6.0 / herb 0.11.1）
 
 - **500 は failed**: outbox は `!response.ok` で `failed` を立てる。楽観行は pending → failed になり、`hidden` の presence で失敗ピルと操作が出る。`head :internal_server_error` で確認。
-- **retry/discard は JS API**: `HerbRuntime.outbox.retry/discard` しかなく、属性からは呼べない。`app/javascript/outbox_retry.js` の12行が `data-outbox-retry` / `data-outbox-discard` を拾う。runtime 以外の最初のアプリ JS。
+- **retry/discard は JS API**: `HerbRuntime.outbox.retry/discard` しかなく、属性からは呼べない。`app/javascript/outbox_retry.js` の小さなアダプタが `data-outbox-retry` / `data-outbox-discard` を拾う。runtime 以外の最初のアプリ JS。
 - **one-shot の失敗**: `session[:outbox_failed_once]`。最初の slots POST は 500、同じ FormData の再試行は 201。no-JS の失敗は flash alert。
 - **楽観行の title は `data-herb-name` が要る**: 無いと outbox の `text: true` がタイトルを埋められず、空の行になる。ビューで `data-herb-name="title"` を付ける。
 - **`data-herb-into` の属性**: `data: { "herb-into" => "submissions" }` と直接指定する。`data: { herb: { into: ... } }` では属性が出なかった（テストで確認）。

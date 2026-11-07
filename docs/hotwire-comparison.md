@@ -33,7 +33,7 @@ Stimulus を書くこと自体が「Turbo 外の生 JS 層」。client mode で�
 
 実装: `/lab`（Client Lab）、`/ui`（UI Kit）、`/settings`（Settings）、`/dashboard`（Dashboard）
 
-### JS の実体（runtime の import + outbox の12行アダプタ）
+### JS の実体（runtime の import + outbox の小さなアダプタ）
 
 ```js
 // app/javascript/application.js
@@ -41,7 +41,7 @@ import "reactionview"
 import "outbox_retry"
 ```
 
-`/outbox` の再試行/破棄だけは outbox の JS API を呼ぶ12行のアダプタが必要でした。それ以外のUIは ERB だけで動きます。
+`/outbox` の再試行/破棄だけは outbox の JS API を呼ぶ小さなアダプタが必要でした。それ以外のUIは ERB だけで動きます。
 
 `node_modules` もビルドも不要。`turbo` / `stimulus` の pin は Rails 生成の標準配置だが
 **このアプリは import していない**。UI に必要なのは gem が自動 pin する reactionview クライアント 1 本。
@@ -397,7 +397,7 @@ patch "/apply", to: "applications#update"
 
 **Hotwire なら**: Turbo Stream の失敗を Stimulus で扱い、再送を自前で組む。
 
-**ReActionView の実測**: outbox は 500 で楽観行に `failed` を立てる。`failed` の表示は ERB、再試行/破棄は `HerbRuntime.outbox.retry/discard` を呼ぶ12行のアダプタ。`/outbox` は失敗・再試行・破棄を slots 3 で確認。no-JS は flash alert。
+**ReActionView の実測**: outbox は 500 で楽観行に `failed` を立てる。`failed` の表示は ERB、再試行/破棄は `HerbRuntime.outbox.retry/discard` を呼ぶ小さなアダプタ。`/outbox` は失敗・再試行・破棄を slots 3 で確認。no-JS は flash alert。
 
 ```js
 window.HerbRuntime?.outbox?.retry(button);
