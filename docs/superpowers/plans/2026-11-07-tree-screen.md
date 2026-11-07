@@ -31,7 +31,7 @@
 1. **Level-3 independence**: opening or closing the `trees` folder must not change `tasks`, `views`, or `models`. Pinned by the browser probe at levels 1/2/3.
 2. **Children stay a collection**: the slots response must carry `items`/`order`, not branch statics. Pinned by the slots test and by the absence of a guard around the `<ul>`.
 3. **`$refresh` state survival**: the refresh must update `loaded_at`; whether the closed folders stay closed is a measured fact, recorded in `docs/tree.md`.
-4. **Empty folder shell**: a folder with no children must not show a phantom list. Pinned by the empty-folder test and `.tree-children:empty { display: none; }`.
+4. **Empty folder shell**: a folder with no children must not show a phantom list. Pinned by the empty-folder test and `.tree-children:not(:has(> li)) { display: none; }`.
 5. **No-JS / test-env attributes**: the initial tree must be fully readable without JS; `aria-expanded` is checked only in the browser. Pinned by the no-hidden test and the no-JS probe.
 
 ---
@@ -506,7 +506,7 @@ In `app/assets/stylesheets/app.css`, add a `/* ---------- tree ---------- */` bl
 }
 
 .tree-root { padding-left: 0; margin-top: 0.8rem; }
-.tree-children:empty { display: none; }
+.tree-children:not(:has(> li)) { display: none; }
 
 .tree-node { margin: 0.15rem 0; }
 

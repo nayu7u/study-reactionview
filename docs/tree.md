@@ -80,8 +80,8 @@ app/views/trees/
 ```
 
 - 子のコレクション（`_level2` / `_level3`）は `<ul>` の中にあり、`if node.kind == "folder"` の外に置いています。`kind` の分岐は行の見た目だけを切り替えます。
-- レベル3のファイルは `_level3` の中で `herb:key` 付きで描きます。レベル4のフォルダは対象外です（4階層で止める設計）。
-- 空のフォルダは空の `<ul class="tree-children">` を出し、CSS の `.tree-children:empty { display: none; }` で見せません。
+- レベル4のファイルは `_level3` の中で `herb:key` 付きで描きます。レベル4のフォルダは対象外です（4階層で止める設計）。
+- 空のフォルダは空の `<ul class="tree-children">` を出し、CSS の `.tree-children:not(:has(> li)) { display: none; }` で見せません。ERB の空白テキストがあるため `:empty` は使えません。
 - `aria-expanded="<%= open_root %>"` は "true"/"false" の文字列補間です。client mode ではクライアントが評価します。
 - `hidden="<%= !open_root %>"` は presence バインディングです。
 
@@ -100,13 +100,13 @@ app/views/trees/
 | リロード | 0（document） | 全開に戻る |
 | no-JS | 0 | 20ノードが全開で読める。開閉は動かない |
 
-プローブの要約は `initialSlots: 0`、`level1Slots: 0`、`level2Slots: 0`、`level3Slots: 0`、`independent: true`、`refreshSlots: 1`、`refreshKeptState: true`、`reloadOpensAll: true`、`noJsReadsAll: true`、`declarations: ["open_l3", "open_l2", "open_root"]`、`presence: ["open_l3", "open_l2", "open_root"]`、`pageErrors: []` です。
+プローブの要約は `initialSlots: 0`、`level1Slots: 0`、`level2Slots: 0`、`level3Slots: 0`、`independent: true`、`emptyListHidden: true`、`refreshSlots: 1`、`refreshKeptState: true`、`reloadOpensAll: true`、`noJsReadsAll: true`、`declarations: ["open_l3", "open_l2", "open_root"]`、`presence: ["open_l3", "open_l2", "open_root"]`、`pageErrors: []` です。
 
 `$refresh` の slots 応答では、`loaded_at` の READ slot とツリーの `items` / `order` が返ります。`child.kind` の分岐は行の見た目だけで、コレクションを包んでいないため、余分な branch refetch は発生しませんでした（1リクエスト）。
 
 ## テスト環境の注意
 
-`aria-expanded="<%= open_root %>"` はコレクション内の動的属性なので、テスト環境では slot 化されて属性が落ちます（Wizard の `aria-current` と同じ）。統合テストでは `aria-expanded` を assert せず、ブラウザプローブで確認しています。
+`aria-expanded="<%= open_root %>"` はコレクション内の動的属性で、`data-herb-slot="…:attribute:aria-expanded"` のマーカーが付きます。初期値はテスト環境でも `aria-expanded="true"` として出るため、統合テストで初期値を assert しています。開閉後の値の追随はブラウザプローブで確認します。
 
 また、`if node.kind == "folder"` の分岐は、テスト環境で「then」側のボタンを `<template data-herb-region>` に park します。`assert_select` は template の中も数えるため、トグル数は `.tree-root` にスコープして数えています。ブラウザの `querySelectorAll` は template の中を見ないので、プローブの数と一致します。
 

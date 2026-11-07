@@ -132,7 +132,7 @@ get "/tree", to: "trees#index", as: :tree
 ```
 
 - `open` は **`herb:key` と同じループの中で宣言する**。Accordion の per-item state と同じ形で、partial の occurrence index に依存しない。親のループで宣言した state を `open:` として子 partial に渡す。
-- 子のコレクションを `if children.any?` で包まない。分岐で包むと slots 応答が items/order ではなく branch statics になり、キー付き差分が壊れる（AGENTS.md の実測）。空のフォルダは空の `<ul>` を出し、CSS の `.tree-children:empty { display: none; }` で見せない。
+- 子のコレクションを `if children.any?` で包まない。分岐で包むと slots 応答が items/order ではなく branch statics になり、キー付き差分が壊れる（AGENTS.md の実測）。空のフォルダは空の `<ul>` を出し、CSS の `.tree-children:not(:has(> li)) { display: none; }` で見せない。ERB の空白テキストがあるため `:empty` は使えない。
 
 `app/views/trees/_file.html.erb`:
 

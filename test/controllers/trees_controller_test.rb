@@ -17,6 +17,17 @@ class TreesControllerTest < ActionDispatch::IntegrationTest
     manifests.values.flat_map { |manifest| (manifest.dig("states", "presence") || {}).values }
   end
 
+  def item_ids(value, ids = [])
+    case value
+    when Hash
+      ids.concat(value["items"].keys) if value["items"].is_a?(Hash)
+      value.each_value { |child| item_ids(child, ids) }
+    when Array
+      value.each { |child| item_ids(child, ids) }
+    end
+    ids
+  end
+
   test "tree renders every node with nested levels and no hidden lists" do
     get tree_path
 
@@ -27,6 +38,8 @@ class TreesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".tree-file", count: TreeNode.where(kind: "file").count
     assert_select "ul.tree-children ul.tree-children ul.tree-children"
     assert_select ".tree-root button[data-herb-toggle^='open']",
+      count: TreeNode.where(kind: "folder").count
+    assert_select ".tree-root button[data-herb-toggle^='open'][aria-expanded='true']",
       count: TreeNode.where(kind: "folder").count
     assert_select "button[data-herb-action='$refresh']"
     assert_select "[data-herb-name='loaded_at']"
@@ -51,8 +64,19 @@ class TreesControllerTest < ActionDispatch::IntegrationTest
     assert_select "li.tree-folder" do |folders|
       empty = folders.find { |folder| folder.text.include?("empty") }
       assert empty, "the empty folder is rendered"
+      assert_select empty, "ul.tree-children", count: 1
       assert_select empty, "ul.tree-children li", count: 0
     end
+  end
+
+  test "every tree node arrives as a nested item key" do
+    get tree_path(format: :slots),
+      headers: { "Accept" => "application/vnd.herb.slots+json" }
+
+    assert_response :success
+    payload = JSON.parse(response.body)
+    assert_equal TreeNode.pluck(:id).map(&:to_s).sort, item_ids(payload["slots"]).uniq.sort,
+      "every node is an item key at its own depth, not branch statics"
   end
 
   test "the slots response carries the tree and the refresh marker" do

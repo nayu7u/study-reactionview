@@ -1504,7 +1504,9 @@ textarea.field-over { border-color: #b91c1c; }
 }
 
 .tree-root { padding-left: 0; margin-top: 0.8rem; }
-.tree-children:empty { display: none; }
+/* ERB leaves whitespace text nodes inside the <ul>, so :empty never matches
+ * an empty folder's list. :has(> li) asks the question we actually mean. */
+.tree-children:not(:has(> li)) { display: none; }
 
 .tree-node { margin: 0.15rem 0; }
 

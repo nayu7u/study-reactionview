@@ -361,7 +361,7 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **採用形はレベル別テンプレート**。`index.html.erb`（root）/ `_level2.html.erb` / `_level3.html.erb` / `_file.html.erb` に分け、`herb:key` と `herb:state (open_root / open_l2 / open_l3)` を各ループで宣言する。state を使うボタンと `hidden` も同じテンプレートに置き、partial には渡さない。子の `<ul>` は `if node.kind == "folder"` の外に置く（コレクションを分岐で包まない）。4階層で止まる。
 - **0往復**: レベル1/2/3の開閉・再開はすべて 0 slots。状態は独立（`trees` を閉じても `tasks`、`views` を閉じても `models` は開いたまま）。
 - **`$refresh`**: slots 1回。`loaded_at` が更新され、閉じていた `trees` は閉じたまま（`refreshKeptState: true`）。`child.kind` の分岐は行だけなので branch refetch は増えない。
-- **テスト環境の `aria-expanded`**: コレクション内の動的属性なので slot 化されて落ちる。統合テストでは assert せず、ブラウザプローブで確認する。`assert_select` は parked template の中のボタンも数えるため、トグル数は `.tree-root` にスコープする。
+- **テスト環境の `aria-expanded`**: コレクション内の動的属性で、`data-herb-slot="…:attribute:aria-expanded"` のマーカーが付く。初期値はテスト環境でも出るので統合テストで assert し、開閉後の追随はブラウザプローブで確認する。`assert_select` は parked template の中のボタンも数えるため、トグル数は `.tree-root` にスコープする。
 - **no-JS**: 初期 HTML は全開で読める。開閉は動かない。
 - **データ**: `TreeNode` の自己参照 + `@children_by_parent`。seed は20ノード / 8フォルダ / 12ファイル、fixture は10ノード / 4階層。
 - **メディア**: `tree-light/dark.png` と `25-tree.gif`（レベル1/2/3の開閉 → 最新を取得、6フレーム、clip 784x928、`Noto Sans CJK JP`）。既存メディアは変えない。
