@@ -18,16 +18,29 @@
   <ul class="tree-root">
     <% @roots.each do |root| %>
       <%# herb:key root.id %>
-      <% if root.kind == "folder" %>
-        <%= render "folder", node: root, children_by_parent: @children_by_parent %>
-      <% else %>
-        <%= render "file", node: root %>
-      <% end %>
+      <%# herb:state (open_root: true) %>
+      <li class="tree-node tree-<%= root.kind %>">
+        <% if root.kind == "folder" %>
+          <button class="tree-toggle" data-herb-toggle="open_root" aria-expanded="<%= open_root %>">
+            <span class="tree-chevron" aria-hidden="true"></span>
+            <span class="tree-icon" aria-hidden="true">📁</span>
+            <span class="tree-name"><%= root.name %></span>
+          </button>
+        <% else %>
+          <%= render "file", node: root %>
+        <% end %>
+
+        <ul class="tree-children" hidden="<%= !open_root %>">
+          <%= render "level2",
+            nodes: @children_by_parent[root.id] || [],
+            children_by_parent: @children_by_parent %>
+        </ul>
+      </li>
     <% end %>
   </ul>
 
   <p class="task-note">
     子のコレクションを分岐で包まないので、slots 応答は items/order のまま。
-    <code>open</code> はフォルダ partial の中で宣言しています。
+    <code>open_root</code> / <code>open_l2</code> / <code>open_l3</code> を各レベルのループで宣言しています。
   </p>
 </section>

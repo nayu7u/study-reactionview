@@ -9,8 +9,12 @@ class TreesControllerTest < ActionDispatch::IntegrationTest
     JSON.parse(json)
   end
 
-  def folder_manifest
-    manifests.find { |key, _| key.split(":").first&.end_with?("_folder.html.erb") }&.last
+  def all_declarations
+    manifests.values.flat_map { |manifest| manifest.dig("states", "declarations") || [] }
+  end
+
+  def all_presence
+    manifests.values.flat_map { |manifest| (manifest.dig("states", "presence") || {}).values }
   end
 
   test "tree renders every node with nested levels and no hidden lists" do
@@ -22,26 +26,22 @@ class TreesControllerTest < ActionDispatch::IntegrationTest
     assert_select ".tree-folder", count: TreeNode.where(kind: "folder").count
     assert_select ".tree-file", count: TreeNode.where(kind: "file").count
     assert_select "ul.tree-children ul.tree-children ul.tree-children"
-    assert_select "button[data-herb-toggle='open']",
+    assert_select ".tree-root button[data-herb-toggle^='open']",
       count: TreeNode.where(kind: "folder").count
     assert_select "button[data-herb-action='$refresh']"
     assert_select "[data-herb-name='loaded_at']"
     assert_select "ul.tree-children[hidden]", count: 0
   end
 
-  test "the folder partial declares the per-item open state and hidden presence" do
+  test "the level templates declare the per-item open state and hidden presence" do
     get tree_path
 
     assert_response :success
-    manifest = folder_manifest
-    assert manifest, "the folder partial has its own manifest entry"
-
-    declarations = manifest.dig("states", "declarations")
-    assert declarations.any? { |d| d["name"] == "open" }, "open is a per-item state"
-
-    presence = manifest.dig("states", "presence")
-    assert presence.values.any? { |p| p.is_a?(Array) && p[0] == "open" },
-      "the children list binds hidden as a presence read on open"
+    %w[open_root open_l2 open_l3].each do |name|
+      assert all_declarations.any? { |d| d["name"] == name }, "#{name} is a per-item state"
+      assert all_presence.any? { |p| p.is_a?(Array) && p[0] == name },
+        "#{name} binds the children list as a presence read"
+    end
   end
 
   test "an empty folder renders an empty list shell" do

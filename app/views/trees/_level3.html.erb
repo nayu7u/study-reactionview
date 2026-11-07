@@ -1,0 +1,24 @@
+<% nodes.each do |node| %>
+  <%# herb:key node.id %>
+  <%# herb:state (open_l3: true) %>
+  <li class="tree-node tree-<%= node.kind %>">
+    <% if node.kind == "folder" %>
+      <button class="tree-toggle" data-herb-toggle="open_l3" aria-expanded="<%= open_l3 %>">
+        <span class="tree-chevron" aria-hidden="true"></span>
+        <span class="tree-icon" aria-hidden="true">📁</span>
+        <span class="tree-name"><%= node.name %></span>
+      </button>
+    <% else %>
+      <%= render "file", node: node %>
+    <% end %>
+
+    <ul class="tree-children" hidden="<%= !open_l3 %>">
+      <% (children_by_parent[node.id] || []).each do |child| %>
+        <%# herb:key child.id %>
+        <li class="tree-node tree-<%= child.kind %>">
+          <%= render "file", node: child %>
+        </li>
+      <% end %>
+    </ul>
+  </li>
+<% end %>
