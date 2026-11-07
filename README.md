@@ -108,7 +108,9 @@ $ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再�
   0.6.0 のクライアントが 201 で適用するのは collection だけだ。GIF の最後で 🔄 同期を押し、
   hero が 10→11 に変わって「楽観 → 確認」が完了する（実測の制約は AGENTS.md にある）。
 - 検索中に追加すると、201 の splice は query を無視して新しい行を差し込む。同期すると検索結果に戻る。
-- JS を切っても成立する。hidden token 付きのふつうの `<form method="post">` として POST し、flash 付き redirect が返る。
+- コントローラーは no-JS の `POST /tasks` も受ける。hidden token 付きのふつうの `<form method="post">` として送れば、
+  flash 付き redirect が返る。ただし Hub のドロワーは JS で開くため、ブラウザで JS を切ると作成フォームには到達しない。
+  no-JS のフォーム操作は `/forms` などで確認する。
 
 ### 機能③ ドロワーとフォームのバインディング（window句を含む）
 
@@ -429,7 +431,7 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 - **テスト: `bin/rails test`**。controller 14本、model 7本、generator 1本を実行する。
   controller tests は HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot /
   slots 応答の形状（items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 /
-  no-JS フォールバック / fold が manifest に現れることを検証する。model tests は下書き・提案・投稿・
+  no-JS の POST フォールバック / fold が manifest に現れることを検証する。model tests は下書き・提案・投稿・
   ツリーなどのドメイン、generator test は `reactionview_ui` のコピー生成を見る。テストは What を、
   コードは How を、コミットログは Why を書く約束。
 - **フルゲート: `bin/ci`**。`bin/setup --skip-server`、Rubocop、bundler-audit、importmap audit、Brakeman、

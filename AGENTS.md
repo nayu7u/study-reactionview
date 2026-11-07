@@ -461,6 +461,9 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   （controller 14 / model 7 / generator 1）を明記した。
 - README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /
   `stimulus-rails` は Gemfile と importmap に残るが、`application.js` から import していない。
+- **Hub の no-JS は controller の POST フォールバックだけ**。初期 HTML にドロワーのフォームは無く、
+  `data-herb-toggle` も JS 前提なので、ブラウザで JS を切ると作成フォームには到達しない。
+  no-JS のフォーム操作は `/forms` などの標準フォームで確認する。
 - 録画スクリプトはリポジトリ外（`/tmp/opencode/capture`）。`hub-capture.js` / `pin-capture.js` /
   `settings-capture.js` / `dashboard-capture.js` / `patterns-09-capture.js` / `lab-06-capture.js` /
   `ui-kit-capture.js` が今回の再撮影に対応する。
