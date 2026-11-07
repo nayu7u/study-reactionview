@@ -23,6 +23,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 同じページの client mode 絞り込み（0往復）の共存を測る（docs/forms.md）。
 ナビ外に実務検証 `/catalog`（共有 URL の検索）: 標準 GET の検索・ページ送りと、client mode の
 概要開閉（0往復）の共存を測る（docs/url-state.md）。
+ナビ外に実測 `/tree`（深いツリー）: レベル別テンプレートと per-node の open state で、深さ2以上の
+開閉が 0 往復になるか、`$refresh` で状態が残るかを測る（docs/tree.md）。
 
 ## 作業規約（必ず守る）
 
@@ -348,6 +350,21 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **返信数はサーバー読み**: `post.replies.size`（`includes`）。nested の count fold は未検証。
 - **`data-herb-name="replies"` は重複**: 今回の `$refresh` は nested の位置で解決されたが、outbox の名前解決には使えない。
 - **メディア**: `thread-light/dark.png` と `24-thread.gif`（返信 → 最新を取得 → 入れ子の差分）。既存メディアは変えない。
+- **ナビ外**: Patterns footer、README、docs からリンク。
+
+## Tree 画面で実測した事実（0.6.0 / herb 0.11.1）
+
+- **再帰 partial では per-node state が成立しない**。3つの制約が重なる:
+  - partial に置いた `herb:state` は、その partial の全インスタンスで共有される。`_folder` の先頭に `open` を宣言して再帰させると、`views` をクリックしても `app` が閉じた。
+  - per-item state を partial のローカルとして渡せない。`render "folder", open: open` は `computes with the state open, which lives on an item. The server cannot be asked for an item's answer yet` で `ActionView::SyntaxErrorInTemplate`。
+  - 同名 state はテンプレートをまたいで衝突する。`open` を root / level2 / level3 で宣言すると、どのトグルも root の state を動かした。
+- **採用形はレベル別テンプレート**。`index.html.erb`（root）/ `_level2.html.erb` / `_level3.html.erb` / `_file.html.erb` に分け、`herb:key` と `herb:state (open_root / open_l2 / open_l3)` を各ループで宣言する。state を使うボタンと `hidden` も同じテンプレートに置き、partial には渡さない。子の `<ul>` は `if node.kind == "folder"` の外に置く（コレクションを分岐で包まない）。4階層で止まる。
+- **0往復**: レベル1/2/3の開閉・再開はすべて 0 slots。状態は独立（`trees` を閉じても `tasks`、`views` を閉じても `models` は開いたまま）。
+- **`$refresh`**: slots 1回。`loaded_at` が更新され、閉じていた `trees` は閉じたまま（`refreshKeptState: true`）。`child.kind` の分岐は行だけなので branch refetch は増えない。
+- **テスト環境の `aria-expanded`**: コレクション内の動的属性なので slot 化されて落ちる。統合テストでは assert せず、ブラウザプローブで確認する。`assert_select` は parked template の中のボタンも数えるため、トグル数は `.tree-root` にスコープする。
+- **no-JS**: 初期 HTML は全開で読める。開閉は動かない。
+- **データ**: `TreeNode` の自己参照 + `@children_by_parent`。seed は20ノード / 8フォルダ / 12ファイル、fixture は10ノード / 4階層。
+- **メディア**: `tree-light/dark.png` と `25-tree.gif`（レベル1/2/3の開閉 → 最新を取得、6フレーム、clip 784x928、`Noto Sans CJK JP`）。既存メディアは変えない。
 - **ナビ外**: Patterns footer、README、docs からリンク。
 
 ## ブラウザ実測（headless Chromium・録画環境）で確定した事実

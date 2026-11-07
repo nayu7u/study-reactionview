@@ -222,7 +222,7 @@
   <nav class="toc" aria-label="目次">
     <span>目次:</span>
     <a href="#claim">① 主張の分解</a>
-    <a href="#screens">② 証明マップ（7画面）</a>
+    <a href="#screens">② 証明マップ（7画面＋Tree）</a>
     <a href="#pairs">③ 実コード対比</a>
     <a href="#map">④ 概念読替表</a>
     <a href="#wire">⑤ 往復はいつ飛ぶか</a>
@@ -284,7 +284,7 @@
 
 <!-- ============================================================ -->
 <section id="screens">
-  <h2><span class="num">②</span>証明マップ — 7画面が消している Hotwire の部品</h2>
+  <h2><span class="num">②</span>証明マップ — 7画面＋ナビ外の Tree が消している Hotwire の部品</h2>
   <p class="lede">
     どの画面のどの機能が、「Hotwire では何を書かされていたか」を置き換えたかの一覧。
     全部動くので <code>bin/rails server</code> で確認できます。
@@ -344,15 +344,19 @@
         <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>全操作 0 往復</strong>（実測）</td></tr>
       <tr><td>数量ステッパー（stepper）</td><td>行ごとの qty 管理と全体合計を Stimulus に</td>
         <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋カウントfold の <code>in_cart</code></td></tr>
+
+      <tr><td><b>Tree</b><br><code>/tree</code><br><span>ナビ外</span></td><td>client</td>
+        <td>深さ4のツリー、ノードごとの開閉</td><td>再帰 partial ＋ Stimulus の open-set 管理</td>
+        <td>レベル別テンプレート＋<code>herb:state</code>（<code>open_root</code>/<code>open_l2</code>/<code>open_l3</code>）＋<code>hidden</code> presence（<b>0往復</b>）</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）、<code>/thread</code>（入れ子キー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜10、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>、<code>docs/thread.md</code>）。</p>
+  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）、<code>/thread</code>（入れ子キー）、<code>/tree</code>（深いツリー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜11、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>、<code>docs/thread.md</code>、<code>docs/tree.md</code>）。</p>
 </section>
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 10の局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 11の局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -685,6 +689,34 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/thread.md">docs/thread.md</a>。
     </p>
   </div>
+
+  <!-- ================= pair 11 ================= -->
+  <h3 style="margin-top:34px;">対比 11 — 深い入れ子の per-node 状態</h3>
+  <div class="card" style="margin-top:10px;">
+    <p style="margin:0 0 8px;">
+      <b>Hotwire なら</b>: 再帰 partial と、開いているノードの ID 集合を Stimulus のコントローラで管理する。
+      ノードごとの開閉、深さの違うツリー、状態の保存を自分で揃える。
+    </p>
+    <p style="margin:0 0 8px;">
+      <b>ReActionView の実測</b>: 4階層のツリーを client mode で描き、レベル1/2/3のループで
+      <code>herb:state (open_root / open_l2 / open_l3)</code> を宣言する。ボタンは
+      <code>data-herb-toggle</code>、子リストは <code>hidden</code> の presence。レベル1/2/3の開閉は
+      <b>0 slots</b>、状態は独立した。<code>$refresh</code> は 1回で <code>loaded_at</code> と
+      キー付き差分を返し、閉じていたフォルダの状態も残った。
+    </p>
+    <pre><code>&lt;% @roots.each do |root| %&gt;
+  &lt;%# herb:key root.id %&gt;
+  &lt;%# herb:state (open_root: true) %&gt;
+  &lt;button data-herb-toggle="open_root" aria-expanded="&lt;%= open_root %&gt;"&gt;…&lt;/button&gt;
+  &lt;ul class="tree-children" hidden="&lt;%= !open_root %&gt;"&gt;…&lt;/ul&gt;
+&lt;% end %&gt;</code></pre>
+    <p style="margin:8px 0 0;">
+      <b>Why not recursive partial</b>: <code>herb:state</code> を partial に置くと全インスタンスで共有され、
+      per-item state を partial に渡すと <code>ErrorInTemplate</code>。同名 state はテンプレートをまたいで
+      衝突する。だからレベル別テンプレートと一意な state 名にし、4階層で止めた。
+      詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/tree.md">docs/tree.md</a>。
+    </p>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -844,6 +876,12 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       client mode にする（<code>/catalog</code> の実測）。0.6.0 ではサーバー描画コレクション内の presence が
       最後の1件にしか当たらないため、一覧内の表示切替は CSS <code>:has</code> に寄せる。
     </li>
+    <li>
+      <b>深いツリーの per-item state は partial に置けない</b> — partial の <code>herb:state</code> は
+      全インスタンスで共有され、per-item state を partial に渡すと <code>ErrorInTemplate</code>、
+      同名 state はテンプレートをまたいで衝突する。<code>/tree</code> はレベル別テンプレートと
+      <code>open_root</code> / <code>open_l2</code> / <code>open_l3</code> で回避し、4階層に固定した（実測）。
+    </li>
   </ul>
   <p class="asc">
     <b>この境界の読み方</b>: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されているのが
@@ -856,7 +894,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
   <p class="lede">
-    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code>、入れ子スレッドは <code>/thread</code> に実装済みです。標準フォームの 422 と、
+    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code>、入れ子スレッドは <code>/thread</code>、深いツリーは <code>/tree</code> に実装済みです。標準フォームの 422 と、
     同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。
@@ -870,7 +908,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
     <code>docs/ui-kit.md</code> 参照。このページは静的HTML（ビルド・外部依存なし）。
     GitHub 上で読むなら同一内容の Markdown 版:
     <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/hotwire-comparison.md">docs/hotwire-comparison.md</a>。
-    生成日: 2026-11-06。
+    生成日: 2026-11-07。
   </p>
 </footer>
 

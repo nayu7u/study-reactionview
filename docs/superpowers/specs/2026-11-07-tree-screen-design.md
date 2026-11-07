@@ -5,6 +5,8 @@
 - 対象: `/tree`（ナビ外）
 - 前提: ReActionView 0.6.0 / herb 0.11.1 / Rails 8.1.4
 
+> **実装時の裁定（2026-11-07）**: 再帰 partial の `open` は成立しなかった。partial の `herb:state` は全インスタンスで共有され、per-item state を partial に渡すと `ActionView::SyntaxErrorInTemplate`、同名 state はテンプレートをまたいで衝突する。設計の案5（レベル別テンプレート + `open_root` / `open_l2` / `open_l3`）を採用した。実測は `docs/tree.md` と `AGENTS.md`。
+
 ## 目的
 
 3階層以上のファイルツリーを描き、**深さ2以上の入れ子で、ノードごとの開閉 state がどこまで独立に動くか**を測る。Thread は深さ1の入れ子、UI Kit の Accordion は1階層の per-item state までしか測っていない。Tree は、再帰 partial の中の `herb:state` と `hidden` presence が深い入れ子でも成立するか、`$refresh` の前後で開閉状態が保たれるかを見る。

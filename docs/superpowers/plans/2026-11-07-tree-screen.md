@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-11-07-tree-screen-design.md`
 
+> **Implementation ruling (2026-11-07):** the recursive partial in Task 2 was rejected at the probe. Partial-level `open` is shared across instances, passing a per-item state to a partial raises `ActionView::SyntaxErrorInTemplate`, and same-name states collide across templates. The shipped code is the design's 案5: explicit `index` / `_level2` / `_level3` / `_file` templates with `open_root` / `open_l2` / `open_l3`. See `docs/tree.md` and the ledger rulings.
+
 ## Global Constraints
 
 - `/tree` is nav-less. Link it from the Patterns footer, README, and docs; do not add an eighth nav link.

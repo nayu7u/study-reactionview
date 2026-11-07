@@ -366,11 +366,19 @@ headless Chromium で全コンポーネントを操作した結果、全操作�
 
 ![返信を追加し、最新を取得しても外側の投稿は再構築されない](docs/media/24-thread.gif)
 
+## 実務検証: 深いツリー（`/tree`、ナビ外）
+
+4階層のファイルツリー。フォルダの開閉は client mode の per-node state で 0 往復、`最新を取得` の slots 1回で `loaded_at` とツリーのキー付き差分が返る。深さ2以上では、partial の state 共有・state の partial 渡し・同名 state の衝突という3つの制約に当たり、レベル別テンプレートと `open_root` / `open_l2` / `open_l3` で回避した。詳細は [docs/tree.md](docs/tree.md)。
+
+<div><img src="docs/media/tree-light.png" alt="Tree (light)" width="49%"/> <img src="docs/media/tree-dark.png" alt="Tree (dark)" width="49%"/></div>
+
+![レベル1/2/3の開閉は0往復、最新を取得しても開閉状態が残る](docs/media/25-tree.gif)
+
 ## 検証の進め方
 
 - **統合テスト: `bin/rails test`**。`tasks_controller_test` / `patterns_controller_test` / `pricing_controller_test` /
   `settings_controller_test` / `dashboard_controller_test` / `showcase_controller_test` / `ui_controller_test` /
-  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` / `submissions_controller_test` / `posts_controller_test` / `replies_controller_test` が検証する振る舞いは、
+  `proposals_controller_test` / `catalog_controller_test` / `applications_controller_test` / `submissions_controller_test` / `posts_controller_test` / `replies_controller_test` / `trees_controller_test` が検証する振る舞いは、
   HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot / slots 応答の形状
   （items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 / no-JS フォールバック / fold が manifest に現れることだ。テストは What を、
   コードは How を、コミットログは Why を書く約束。

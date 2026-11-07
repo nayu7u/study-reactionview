@@ -49,7 +49,7 @@ import "outbox_retry"
 
 ---
 
-## ② 証明マップ — 7画面が消している Hotwire の部品
+## ② 証明マップ — 7画面＋ナビ外の Tree が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 
@@ -73,12 +73,13 @@ import "outbox_retry"
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
+| **Tree** (`/tree`) | client | 深さ4のツリー、ノードごとの開閉 | 再帰 partial + Stimulus の open-set 管理 | レベル別テンプレート + `herb:state`（`open_root`/`open_l2`/`open_l3`）+ `hidden` presence（0往復） |
 
-ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）、`/thread`（入れ子キー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜10、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)、[`docs/thread.md`](./thread.md)）。
+ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）、`/thread`（入れ子キー）、`/tree`（深いツリー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜11、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)、[`docs/thread.md`](./thread.md)、[`docs/tree.md`](./tree.md)）。
 
 ---
 
-## ③ 実コード対比 — 10の局面
+## ③ 実コード対比 — 11の局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -417,6 +418,25 @@ window.HerbRuntime?.outbox?.discard(button);
 
 ---
 
+### 対比 11 — 深い入れ子の per-node 状態
+
+**Hotwire なら**: 再帰 partial と、開いているノードの ID 集合を Stimulus のコントローラで管理する。ノードごとの開閉、深さの違うツリー、状態の保存を自分で揃える。
+
+**ReActionView の実測**: 4階層のツリーを client mode で描き、レベル1/2/3のループで `herb:state (open_root / open_l2 / open_l3)` を宣言する。ボタンは `data-herb-toggle`、子リストは `hidden` の presence。レベル1/2/3の開閉は 0 slots、状態は独立した。`$refresh` は 1回で `loaded_at` とキー付き差分を返し、閉じていたフォルダの状態も残った。
+
+```erb
+<% @roots.each do |root| %>
+  <%# herb:key root.id %>
+  <%# herb:state (open_root: true) %>
+  <button data-herb-toggle="open_root" aria-expanded="<%= open_root %>">…</button>
+  <ul class="tree-children" hidden="<%= !open_root %>">…</ul>
+<% end %>
+```
+
+> **Why not recursive partial**: `herb:state` を partial に置くと全インスタンスで共有され、per-item state を partial に渡すと `ErrorInTemplate`。同名 state はテンプレートをまたいで衝突する。だからレベル別テンプレートと一意な state 名にし、4階層で止めた。詳細は [`docs/tree.md`](./tree.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -520,6 +540,10 @@ window.HerbRuntime?.outbox?.discard(button);
 - **slots 応答は URL を変えない** — 検索・カテゴリ・ページ・共有は標準 GET、ページ内の一時状態だけ
   client mode にする（`/catalog` の実測）。0.6.0 ではサーバー描画コレクション内の presence が
   最後の1件にしか当たらないため、一覧内の表示切替は CSS `:has` に寄せる。
+- **深いツリーの per-item state は partial に置けない** — partial の `herb:state` は全インスタンスで
+  共有され、per-item state を partial に渡すと `ErrorInTemplate`、同名 state はテンプレートをまたいで
+  衝突する。`/tree` はレベル別テンプレートと `open_root` / `open_l2` / `open_l3` で回避し、4階層に
+  固定した（実測）。
 
 > **この境界の読み方**: 「Stimulus を捨てると何ができなくなるか」が暗黙でなく明文化されて
 > いるのが検証リポジトリとしての価値。`bin/rails test` は HTMLレンダ / herb_state による
@@ -530,11 +554,11 @@ window.HerbRuntime?.outbox?.discard(button);
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox`、入れ子スレッドは `/thread` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox`、入れ子スレッドは `/thread`、深いツリーは `/tree` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、このリポジトリには `turbo-rails` を入れません。
 
 ---
 
 実測の経緯と制約の詳細は `AGENTS.md`（ReActionView メモ / 実測済みワイヤ形式）と
-`docs/ui-kit.md` 参照。更新日: 2026-11-06。
+`docs/ui-kit.md` 参照。更新日: 2026-11-07。
