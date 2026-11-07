@@ -1,0 +1,33 @@
+<%# herb:slots client %>
+
+<section class="hero">
+  <div class="hero-badge">Client mode — 深さ2+の per-node state</div>
+  <h1>Tree</h1>
+  <p class="hero-sub">フォルダの開閉は 0 往復。深さ2以上の入れ子で、ノードごとの state が独立するかを見ます。</p>
+</section>
+
+<section class="tree-page">
+  <div class="tree-toolbar">
+    <p>
+      <%= @node_count %> nodes / <%= @folder_count %> folders ・
+      最終取得 <span data-herb-name="loaded_at"><%= @loaded_at.strftime("%H:%M:%S") %></span>
+    </p>
+    <button class="btn btn-ghost" data-herb-action="$refresh">最新を取得</button>
+  </div>
+
+  <ul class="tree-root">
+    <% @roots.each do |root| %>
+      <%# herb:key root.id %>
+      <% if root.kind == "folder" %>
+        <%= render "folder", node: root, children_by_parent: @children_by_parent %>
+      <% else %>
+        <%= render "file", node: root %>
+      <% end %>
+    <% end %>
+  </ul>
+
+  <p class="task-note">
+    子のコレクションを分岐で包まないので、slots 応答は items/order のまま。
+    <code>open</code> はフォルダ partial の中で宣言しています。
+  </p>
+</section>
