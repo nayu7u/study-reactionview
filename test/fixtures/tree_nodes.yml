@@ -1,0 +1,59 @@
+app:
+  name: app
+  kind: folder
+  parent_id:
+  position: 1
+
+app_views:
+  name: views
+  kind: folder
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:app) %>
+  position: 1
+
+app_models:
+  name: models
+  kind: folder
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:app) %>
+  position: 2
+
+views_trees:
+  name: trees
+  kind: folder
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:app_views) %>
+  position: 1
+
+views_tasks:
+  name: tasks
+  kind: folder
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:app_views) %>
+  position: 2
+
+trees_index:
+  name: index.html.erb
+  kind: file
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:views_trees) %>
+  position: 1
+
+tasks_index:
+  name: index.html.erb
+  kind: file
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:views_tasks) %>
+  position: 1
+
+models_task:
+  name: task.rb
+  kind: file
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:app_models) %>
+  position: 1
+
+config:
+  name: config
+  kind: folder
+  parent_id:
+  position: 2
+
+config_routes:
+  name: routes.rb
+  kind: file
+  parent_id: <%= ActiveRecord::FixtureSet.identify(:config) %>
+  position: 1
