@@ -435,7 +435,7 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 ## 外部の ReActionView 実装
 
-公式デモ以外に、ReActionView を実際に使っている公開実装を調べた。リアクティブテンプレートまで使うものはまだ少なく、HTML-aware ERB エンジンとしての採用が多い。調査結果と、そこから拾った使い方のパターンは [docs/other-implementations.md](docs/other-implementations.md) にまとめた。
+公式デモ以外に、ReActionView を実際に使っている公開実装を調べた。リアクティブテンプレートまで使うものはまだ少なく、HTML-aware ERB エンジンとしての採用が多い。調査結果と、そこから拾った使い方のパターン（GIF 付き）は [docs/other-implementations.md](docs/other-implementations.md) にまとめた。
 
 | 実装 | モード | 見せていること |
 |---|---|---|

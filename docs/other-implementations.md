@@ -25,9 +25,13 @@
 | [innocentdiaz/claims](https://github.com/innocentdiaz/claims) | client | 小規模な claims アプリ。`.html.herb` だけの漸進導入 | 2026-10-16 |
 | [HuzaifaSaifuddin/reactionview-demo](https://github.com/HuzaifaSaifuddin/reactionview-demo) | server | 公式 Quick Start の messages デモ | 2026-10-25 |
 
-### h-kono-it/rails-herb — server mode の教科書
+### h-kono-it/rails-herb — server mode の実例
 
 ReActionView 0.6.0 / Herb 0.11.0 / Rails 8.1.4 / Ruby 3.4.11。`config.slots = true` とし、画面は `<%# herb:slots server %>` で動かす。state は `step` / `junction` / `panel` / `slowdown` / `seed` / `playing` だけで、すべてスカラーだ。
+
+![格子 2×2 の交通シミュレーション。1ステップ、再生、交差点パネル、減速スライダーが slots 応答で更新される](media/28-h-kono-server-mode.gif)
+
+この撮影では、1ステップ×3、再生、交差点の選択、状況タブ、減速スライダーで **17回の slots 要求** が飛んだ。state は小さいが、サーバー側のシミュレーションとキャッシュが効いている。撮影は、README が前提にする Ruby 3.4.11 ではなく、この環境の Ruby 4.0.9 で起動して行った。
 
 コントローラーは state をクエリキーとして読む（[networks_controller.rb](https://github.com/h-kono-it/rails-herb/blob/main/app/controllers/networks_controller.rb)）。
 
@@ -91,6 +95,10 @@ ReActionView 0.6.0 / Rails 8.2 main / Ruby 4.0.9。`config.slots = true` とし�
                  assists: 0, panache: 0, reckless: false, teamwork: false,
                  spell: false, twist: false) %>
 ```
+
+![Grimwilder の Action roll。ダイスと thorn を増やし、Defense に切り替えて2回振る。結果の分岐はクライアントで切り替わり、slots 要求は0](media/27-grimwilder-roll.gif)
+
+この撮影では、ダイス6個・thorn 2個に増やし、Defense に切り替えて2回振った。ダイスの出目と結果の分岐はすべてクライアントで完結し、**slots 要求は0**だった。GIF は公開中の [grimwilder.com/roll](https://grimwilder.com/roll) で撮った。
 
 テンプレートが state を持ち、Stimulus は「読む・計算する・書き戻す」だけを担当する（[roller_controller.js](https://github.com/phChun/grimwilder/blob/main/app/javascript/controllers/roller_controller.js)）。
 
@@ -158,6 +166,8 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
 
 これは 0.6.0 の制約に対するワークアラウンドなので、engine/plugin の partial を使うときに必要になる、と覚えておくのがよい。
 
+Runwell は公開デモがないため、この節はコードのみ。同じ `hidden` の形は、下の「良い使い方」の Chat GIF で確認できる。
+
 ### innocentdiaz/claims — `.html.herb` だけの漸進導入
 
 `config.slots = :client`、`intercept_erb` は commented のまま。**`.html.herb` の4ファイルだけ**を reactive にしている（[config/initializers/reactionview.rb](https://github.com/innocentdiaz/claims/blob/main/config/initializers/reactionview.rb)）。
@@ -194,7 +204,7 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
 
 ### 公式デモ — パターンのカタログ
 
-公式 `marcoroth/reactionview-demo` は、良い使い方の見本市になっている。
+公式 `marcoroth/reactionview-demo` は、良い使い方のカタログになっている。ここで挙げたパターンのうち、Chat / Components / Activity / Cascade の GIF は、下の「良い使い方」に置いた。
 
 - **Chat**: 行ごとの state（`pending` / `failed` / `editing` / `starred` / `confirming` / `selected` / `body_draft`）、カウント fold、`data-herb-name`、`data-herb-into`
 - **Music**: アルバムカードで複数 state を一括セット、`<Fragment>` + `<Fallback>` で詳細を遅延、`data-herb-transition`
@@ -207,6 +217,8 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
 - **Deferred**: `<Async>` / `<Lazy>` + `<Fallback>`
 
 ## 良い使い方（横断）
+
+GIF は、公開されている Grimwilder と公式デモ、ローカルで起動した h-kono から撮った。Runwell と Claims は公開デモがないためコードのみで、同じ形を公式デモの GIF で補っている。
 
 1. **state はブラウザ所有の UI、データはサーバー**
    - h-kono は step/seed/slowdown だけを state にし、シミュレーションはキャッシュする。
@@ -223,14 +235,27 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
    - 公式 Music の詳細や Components のタブは分岐。ただし full-page テンプレート側に置く。
    - 両方の UI を DOM に置くコストと、往復のコストを天秤にかける。
 
+![公式 Chat。Starred の空状態、All に戻す、Select mode → Select all → 削除確認。行の selected と件数はクライアントで更新され、slots 要求は0](media/29-demo-chat-selection.gif)
+
+この撮影では、Starred の空状態から All に戻し、Select mode で行を選択、Select all で件数を出し、削除確認を開いてキャンセルした。行ごとの `selected` と `selected_count` はクライアントで更新され、**slots 要求は0**だった。
+
 4. **`data-herb-set` で複数 state を同時に変える**
    - `junction=3 panel=junction`
    - `menu=false toast='Renamed it for you'`
    - `change->country='' change->state=''`
    - 中間状態を見せない、リクエストを分けない。
 
+![公式 Components。Billing タブ、アコーディオン、スイッチ、Options → Copy → トースト。Billing の Message.count だけはサーバー読みなので、タブを開いたときに1回だけ slots 要求が飛ぶ](media/30-demo-components.gif)
+
+この撮影では、Billing タブ、アコーディオン、スイッチ、Options → Copy → トーストの順に操作した。`menu=false toast='Copied to clipboard'` は1つの `data-herb-set` で同時に書き、トーストの × は `data-herb-reset="toast"` で消している。Billing タブの `Message.count` だけはサーバー読みなので、タブを開いたときに1回だけ slots 要求が飛んだ。**client mode でもサーバー読みは往復する**例だ。
+
+![公式 Cascade。Europe → Switzerland → Basel-Stadt。依存する選択肢はサーバーが描画し、子 state は change->country='' change->state='' でリセットされる](media/32-demo-cascade.gif)
+
+この撮影では、Europe → Switzerland → Basel-Stadt と選び、最後に「You could live in Basel, Riehen or Bettingen」が出た。依存する選択肢はサーバーが描画し、子 state は `change->country='' change->state=''` でリセットされる。各選択で slots 1回（合計3回）だった。
+
 5. **`data-herb-reset` をキャンセル/クリアに使う**
    - Runwell の Cancel / Esc、公式 Chat の下書きクリア、h-kono の step リセット。
+   - Components GIF のトースト × が `data-herb-reset` の例。
 
 6. **server mode では「サーバー読み」を意図的に作る**
    - `<%= number_with_delimiter(step) %>` + `herb:disable herb-state-valid-reads`
@@ -240,10 +265,15 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
    - Activity の Refresh、Status の期間切替、h-kono の設定保存後。
    - 1ジェスチャー1回に抑える。複数のサーバー読みを別々の分岐に置くと往復が増える。
 
+![公式 Activity。Deploys → Alerts → All → Refresh。server mode なので各操作が slots 1回（合計4回）](media/31-demo-activity-server.gif)
+
+この撮影では、Deploys → Alerts → All → Refresh の4操作で slots 要求が4回、ちょうど1操作1回だった。フィードの内容と「Rendered by the server at ...」の時刻は、サーバーが返した値で更新されている。
+
 8. **コレクションは `herb:key`、カウントはループ後に fold**
    - `herb:key` はループ直下。`if` の中に入れない。
    - カウントは3タグの `<% if done %><% count += 1 %><% end %>` をキー付き item 内に置き、読みはリストの後。
    - 公式 Chat と h-kono の両方で徹底されている。
+   - 上の Chat GIF の選択モードが、行ごとの `selected` と `selected_count` の fold を示している。
 
 9. **`data-herb-name` は楽観行・差し替え行に**
    - 公式 Chat の `data-herb-name="body"`、本リポジトリの Outbox の `title`。
@@ -254,11 +284,13 @@ engine.paths["app/views"].existent.each { prepend_view_path ReActionView::Slots:
     - Runwell のフォーカス。
     - h-kono のオートプレイ・オートセーブ。
     - テンプレートが state を持ち、JS は読み書きだけする分担がきれい。
+    - 上の Grimwilder GIF が、`useState` でテンプレートの state を読み書きする例。
 
 11. **state は partial / component のローカルに閉じる**
     - Runwell は partial ごとに `herb:state`。名前衝突を避け、再利用しやすい。
     - Poetry もコンポーネント単位で slots をテストしている。
     - 逆に、同じ state 名をテンプレートをまたいで使うと衝突する（本リポジトリの Tree の実測どおり）。
+    - Components GIF のアコーディオンは、行ごとの `open` state が独立している例。
 
 12. **漸進導入と安全策**
     - `.html.herb` だけ reactive にする（Claims）。
