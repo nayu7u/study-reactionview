@@ -433,6 +433,21 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 ![レベル1/2/3の開閉は0往復、最新を取得しても開閉状態が残る](docs/media/25-tree.gif)
 
+## 外部の ReActionView 実装
+
+公式デモ以外に、ReActionView を実際に使っている公開実装を調べた。リアクティブテンプレートまで使うものはまだ少なく、HTML-aware ERB エンジンとしての採用が多い。調査結果と、そこから拾った使い方のパターンは [docs/other-implementations.md](docs/other-implementations.md) にまとめた。
+
+| 実装 | モード | 見せていること |
+|---|---|---|
+| [公式デモ](https://demo.reactionview.dev) | server / client | 12ページ。Chat / Music / Components など、パターンのカタログ |
+| [h-kono-it/rails-herb](https://github.com/h-kono-it/rails-herb) | server | 交通シミュレーション。state をクエリキーにし、重い計算はキャッシュ |
+| [phChun/grimwilder](https://github.com/phChun/grimwilder) | client | ダイスツール。Stimulus の `useState` と state machine |
+| [Martin-Business-Consultants/runwellv2](https://github.com/Martin-Business-Consultants/runwellv2) | client | partial 単位の state。`hidden` で即時開閉 |
+| [innocentdiaz/claims](https://github.com/innocentdiaz/claims) | client | `.html.herb` だけの漸進導入。分類ラベルはサーバー読み |
+| [HuzaifaSaifuddin/reactionview-demo](https://github.com/HuzaifaSaifuddin/reactionview-demo) | server | Quick Start の最小デモ |
+
+エンジンとしての採用（irida-next、bike_index、rubyevents、kaigionrails など）と、良い使い方の詳細は [docs/other-implementations.md](docs/other-implementations.md) に譲る。
+
 ## 検証の進め方
 
 - **テスト: `bin/rails test`**。controller 14本、model 7本、generator 1本を実行する。
@@ -465,6 +480,7 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 | [docs/thread.md](docs/thread.md) | 入れ子キー付きコレクションの差分 |
 | [docs/tree.md](docs/tree.md) | 深さ4のツリーと per-node state の制約 |
 | [docs/ui-kit.md](docs/ui-kit.md) | reactionview-ui の9コンポーネントと0往復の実測 |
+| [docs/other-implementations.md](docs/other-implementations.md) | 公式デモ以外の公開実装と、そこから拾った使い方のパターン |
 | [docs/debug-mcp-runbook.md](docs/debug-mcp-runbook.md) | debug-mcp の adopt-on-demand 手順 |
 
 ## テンプレートの実測メモ

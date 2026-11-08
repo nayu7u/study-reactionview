@@ -501,6 +501,26 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   `settings-capture.js` / `dashboard-capture.js` / `patterns-09-capture.js` / `lab-06-capture.js` /
   `ui-kit-capture.js` が今回の再撮影に対応する。
 
+## 外部実装の調査メモ（2026-11-08）
+
+公式デモ以外の ReActionView 公開実装を調査した。詳細は docs/other-implementations.md。
+
+- リアクティブ実装は5件: h-kono-it/rails-herb（server）、phChun/grimwilder（client）、
+  Martin-Business-Consultants/runwellv2（client / partial）、innocentdiaz/claims（client / `.html.herb`）、
+  HuzaifaSaifuddin/reactionview-demo（server / Quick Start）。
+- 本番・公開アプリの多くは engine のみ: irida-next、bike_index、rubyevents、kaigionrails、
+  rubyapi、feedyour.email、velo、mallard、t27ducksite、ruby-news、draft-chamber、geor.me、
+  community_foundation、skillrx。DFE と picoletter は開発のみ。csa-admin / demarche / wombatworkouts は
+  dependency はあるが `intercept_erb` は無効。
+- 良い形: server mode は state をクエリキーにし、重い計算はキャッシュ（h-kono）。client mode の partial は
+  `hidden` で即時開閉（Runwell）。JS の振る舞いは `useState`、テンプレートが state を持つ（Grimwilder）。
+  複数 state は `data-herb-set` で同時に変える。`herb:key` はループ直下、カウントはループ後に fold。
+- 注意: claims の分類ラベルはサーバー読みなので keystroke ごとのコストに注意。h-kono の autoplay は
+  250ms ごとに state を進める。Runwell の engine resolver patch と h-kono の
+  `number_with_delimiter` + linter disable は 0.6.x の制約に対するワークアラウンド。
+- RubyGems の reverse dependency は tensaku のみ。Poetry は engine / server / client の3モードで
+  コンポーネントをテストし、ViewComponent は CI の Rails マトリクスで互換性を検証している。
+
 ## 調査ツール
 
 - debug-mcp（Kaigi on Rails 2026・riraさんの講演）は **adopt-on-demand**: 実行時状態に依存するバグで
