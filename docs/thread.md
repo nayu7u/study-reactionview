@@ -1,6 +1,8 @@
 # 入れ子スレッド（`/thread`） — キー付きコレクションの深さ
 
-ReActionView 0.6.0 + herb 0.11.1 の検証アプリで、**投稿と返信を入れ子のキー付きコレクション**として描き、slots の `$refresh` で nested collection がどこまで保たれるかを測った記録です。画面は `/thread`（ナビ外）。返信は標準フォーム、`$refresh` は server mode の slots 要求です。
+ReActionView 0.6.1 + herb 0.11.2 の検証アプリで、**投稿と返信を入れ子のキー付きコレクション**として描き、slots の `$refresh` で nested collection がどこまで保たれるかを測った記録です。画面は `/thread`（ナビ外）。返信は標準フォーム、`$refresh` は server mode の slots 要求です。
+
+本文の実測は 0.6.0 / herb 0.11.1 で記録し、0.6.1 / herb 0.11.2 でも同じプローブで再確認しています。
 
 ![返信を追加し、最新を取得しても外側の投稿は再構築されない](media/24-thread.gif)
 

@@ -1,8 +1,11 @@
 # Study ReActionView
 
-**ReActionView 0.6.0 + Herb 0.11.1 の検証ショーケース**。Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
+**ReActionView 0.6.1 + Herb 0.11.2 の検証ショーケース**。Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
 すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、7つのナビ画面と
 6つの実務検証で実演する。
+
+以下の「0.6.0 の実測」は記録時のバージョン。0.6.1 / Herb 0.11.2 でも主要なプローブを再実行し、
+0往復・1往復・201 splice・Lazy / Fragment のギャップが同じことを確認している。
 
 - React / Stimulus / Node / yarn / ビルドパイプラインは、アプリのコードからは一切使っていない。
   `app/javascript/application.js` は `import "reactionview"` と、`/outbox` の再試行/破棄を拾う小さなアダプタだけ。
@@ -17,7 +20,7 @@
 | 画面 | 宣言 | 見せていること |
 |---|---|---|
 | Sprint Hub `/` | `<%# herb:slots server %>` | サーバーが答える読み取り、key 付き行の差分更新、ピン/星の同時連動、楽観的追加 |
-| Dashboard `/dashboard` | `<%# herb:slots client %>` | Async / Lazy / Fragment / poll の遅延読み。0.6.0 で動く範囲とギャップ |
+| Dashboard `/dashboard` | `<%# herb:slots client %>` | Async / Lazy / Fragment / poll の遅延読み。動く範囲とギャップ |
 | Patterns `/patterns` | `<%# herb:slots server %>` | 実務から拾った3パターン: フィルタチップ、もっと見る、詳細連動 |
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Settings `/settings` | `<%# herb:slots client %>` | タブ・依存フィールド・未保存状態・デモ保存（全操作 0 往復） |
@@ -48,13 +51,17 @@ Settings の ⑰ と Dashboard の ⑱〜㉑ は各画面のタグに対応す�
 | 更新 | 同じアクションが slots 応答で値だけを返す | クライアントが格納済みの分岐と state を評価する |
 | サーバー読み | DB 検索・計算・一覧など何でも読める | 初回のサーバー読みが基本。ループ内のサーバー読みは branch refetch になる |
 | 向く用途 | 検索・並び替え・詳細・料金計算 | タブ・フォーム・ウィザード・アコーディオン |
-| 0.6.0 の境界 | state 条件の分岐が反転したときだけ自動で往復する。反転しない操作は `$refresh` を合成する | パーシャル内の分岐は materialize されないため、presence（`hidden`）と CSS で切り替える |
+| 現在の境界 | state 条件の分岐が反転したときだけ自動で往復する。反転しない操作は `$refresh` を合成する | パーシャル内の分岐は materialize されないため、presence（`hidden`）と CSS で切り替える |
 
 GIF は操作の見た目を示す。0往復/1往復の回数は headless Chromium のプローブで測った値で、GIF 単体では分からない。
 
 ## セットアップ
 
 Ruby 4.0.9 / Rails 8.1.4 / SQLite で動く。Node / yarn は不要。
+
+Herb 0.11.2 は Prism 2.1 系でビルドされているため、`prism` は ReActionView と同じ fork ref に固定している。
+`rubocop-ast` は Prism 1.x を要求するので、RuboCop は `gemfiles/rubocop.gemfile` の別 bundle で動く。
+`bin/setup` はアプリと lint の両方を入れる。
 
 ```console
 $ bin/setup --skip-server  # bundle install + db:prepare
@@ -105,7 +112,7 @@ $ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再�
 - 送信に成功するとドロワーは閉じ、打ち込んだ title もリセットされる
   (`data-herb-set="submit->drawer_open=false"` と `data-herb-reset="submit->title"` の二本立て)。
 - hero の合計（`Task.count`）は GET 応答では更新されるが、POST splice ではされない。
-  0.6.0 のクライアントが 201 で適用するのは collection だけだ。GIF の最後で 🔄 同期を押し、
+  0.6.1 のクライアントが 201 で適用するのは collection だけだ。GIF の最後で 🔄 同期を押し、
   hero が 10→11 に変わって「楽観 → 確認」が完了する（実測の制約は AGENTS.md にある）。
 - 検索中に追加すると、201 の splice は query を無視して新しい行を差し込む。同期すると検索結果に戻る。
 - コントローラーは no-JS の `POST /tasks` も受ける。hidden token 付きのふつうの `<form method="post">` として送れば、
@@ -134,7 +141,7 @@ $ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再�
 
 ## Dashboard（client モード、`/dashboard`）
 
-ページの外枠を先に返し、重い集計だけを後から届ける。`<Async>` / `<Lazy>` / `<Fragment>` / `poll` の4つを1画面に並べ、0.6.0 で動く範囲と動かない範囲を分けて記録する。遅延デモは `?slow=1` で切り替える。
+ページの外枠を先に返し、重い集計だけを後から届ける。`<Async>` / `<Lazy>` / `<Fragment>` / `poll` の4つを1画面に並べ、動く範囲と動かない範囲を分けて記録する。遅延デモは `?slow=1` で切り替える。
 
 <div><img src="docs/media/dashboard-light.png" alt="Dashboard (light)" width="49%"/> <img src="docs/media/dashboard-dark.png" alt="Dashboard (dark)" width="49%"/></div>
 
@@ -144,20 +151,20 @@ $ bin/ci                   # Rubocop / 監査 / Brakeman / テスト / seed 再�
 
 - 初回HTMLは Fallback だけ。マウント直後に2本のブロック要求（サマリー / ハートビート）が飛ぶ。`?slow=1` では各900ms、ページ本体は約30msで返る（実測）。
 - 2本目はサーバーが直列なら待たされ、907ms / 1812ms になった（実測）。クライアントは同時に発行している。
-- ブロックの内容は **inline** で書く。0.6.0 のブロック応答は partial の statics を運ばず、`render` した partial は描画されない（実測）。
+- ブロックの内容は **inline** で書く。ブロック応答は partial の statics を運ばず、`render` した partial は描画されない（実測）。
 - サマリーは全タスク、優先度高、直近24時間。Task に完了列はないため、完了率は出さない。
 
 ### 機能⑲ Lazy の defer と配置ギャップ
 
 - `<Lazy>` は初期表示の位置ではブロック要求が1回飛び、内容が届く。`?slow=1` ではサーバーが直列なら2703ms、`slow=0` では6ms（実測）。
 - Fallback は「読み込み中…」と最新3件。ブロックの内容が届くと本文に置き換わる。
-- カードを下段（初期 viewport の外）に置くと、0.6.0 ではスクロールしても slots 要求が0で Fallback のまま（実測）。カードは初期表示の位置に置き、この配置依存の制約をリクエストカードに明記した。
+- カードを下段（初期 viewport の外）に置くと、スクロールしても slots 要求が0で Fallback のまま（0.6.0 / 0.6.1 の実測）。カードは初期表示の位置に置き、この配置依存の制約をリクエストカードに明記した。カードの見た目ではなく Lazy の sentinel が viewport に入るかで決まる。
 - コレクションをブロック内に置くと `items` が空になるため、3件は明示的な行で描画している。
 
 ### 機能⑳ Fragment の優先度フォーカス
 
 - 優先度（すべて / 高 / 中 / 低）は `focus` state。`focus: focus` でサーバー読みを登録し、`on="focus"` と `server.reads` が manifest に載る。
-- 変更は slots 1回（910ms）で集計が 10→3 に更新される。**Fallback は0.6.0のブラウザでは観測されなかった**（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として記録する。
+- 変更は slots 1回（910ms）で集計が 10→3 に更新される。**Fallback は 0.6.0 / 0.6.1 のブラウザでは観測されなかった**（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として記録する。
 - ボタンは `<Fragment>` の外に置く。中に置くと Fallback がボタンまで覆う。
 
 ### 機能㉑ poll ハートビート
@@ -237,7 +244,7 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 - 内訳の金額は `data-herb-name` の READ slot。ボリューム割引・年払い割引・優先サポートの行は
   分岐の中に置かず、state の表示属性（年払い・サポートは `data-active`、ボリュームは `hidden` の
   presence）で出し分ける。分岐の中のサーバー読みは切替後に branch refetch を1回呼ぶため
-  （0.6.0 実測）、金額は分岐の外に置くのが定石だ。
+  （0.6.0 / 0.6.1 実測）、金額は分岐の外に置くのが定石だ。
 - headless Chromium で、プラン・席数・年払い・サポートの各操作が **1 リクエスト**で
   内訳と合計を更新することを確認済み。ページはリロードされない。
 - JavaScript を切ると初期表示のみで、再計算はできない（no-JS の再計算は対象外）。
@@ -260,7 +267,7 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 
 - 3つのタブは **hidden の presence パネル**だ。`hidden="<%= tab != "profile" %>"` で表示だけを切り替え、
   DOM からは外さない。トップレベルの parked 分岐にすると、分岐内の boolean バインディングと入れ子の分岐が
-  初期値で materialize され、`digest: true` の switch が off、頻度フィールドが非表示になった（0.6.0 の実測）。
+  初期値で materialize され、`digest: true` の switch が off、頻度フィールドが非表示になった（0.6.0 / 0.6.1 の実測）。
   パネルを残せば、入力値も switch の見た目もそのまま保たれる。
 - 依存フィールドは3組ある。まとめ通知→頻度、公開プロフィール→ハンドル名、年払い→請求書の宛名。
   どれも `hidden` の presence で出し分ける。
@@ -351,7 +358,7 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 
 - `open` は行ごとの boolean state。ヘッダーは `data-herb-toggle="open"`。
 - **答えのテキストを分岐の中に置かない**: 行ごとの分岐は materialize できても、分岐の中に置いた
-  サーバー読みの値は空で届く（0.6.0 の実測。ワイヤは item ごとの `{branch, slots}` を返しているのに、
+  サーバー読みの値は空で届く（0.6.0 / 0.6.1 の実測。ワイヤは item ごとの `{branch, slots}` を返しているのに、
   クライアントが materialize 済みの item の分岐に値を当てはめられない）。代わりに本文は平常の item part として
   初回から DOM に載せ、`hidden="<%= !open %>"` の presence バインディングで表示を切り替える。マーカーの＋/－は
   静的テキストなので分岐の切替で差し替わる。

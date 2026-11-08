@@ -83,7 +83,9 @@ class ProposalsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "form[action='#{forms_path}']"
-    assert_select ".proposal-card", count: 0
+    # Why the live group: the parked template keeps the unrendered collection's
+    # card skeleton, and assert_select counts inside <template>.
+    assert_select ".proposal-group .proposal-card", count: 0
     assert_select ".proposal-group", count: 3
     assert_select ".proposal-group .task-note", count: 3
   end

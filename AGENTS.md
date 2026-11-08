@@ -4,8 +4,9 @@
 
 このリポジトリは ReActionView の検証アプリ。Kaigi on Rails 2026（Marco Roth: "Herb in Rails 8.2"）の
 主張 — **ERB のみで Phoenix LiveView 的な細粒度リアクティビティ** — を、実用的なアプリ風の
-機能別ショーケースで実演・検証している。ReActionView 0.6.0 + herb 0.11.1
-（0.11.0 から 0.11.1 への更新は bin/ci 全ゲートで再検証済み。ワイヤ形式の実測メモは変らず通用）。
+機能別ショーケースで実演・検証している。ReActionView 0.6.1 + herb 0.11.2
+（0.6.0 → 0.6.1 / 0.11.1 → 0.11.2 の更新は bin/ci 全ゲートと主要プローブで再検証済み。
+以下の「0.6.0 の実測」は記録時のバージョンで、主要な挙動は 0.6.1 でも再確認している）。
 
 2画面構成から3画面へ: `Sprint Hub`（`/`, server mode: 検索/ソート/ピン/星/ドロワー/楽観的追加）、
 `Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務から拾ったパターン集）、
@@ -51,6 +52,35 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - `herb_state(name, default)` がコントローラ・ビュー両方で使える（`config.slots` 有効時のみ）
 - ループ行は `<%# herb:key message.id %>`。無いと行再構築＋コンパイル時ワーニング
 
+## 0.6.1 / Herb 0.11.2 への更新で実測した事実（2026-11-08）
+
+- **0.6.1 は herb >= 0.11.2 を要求する**。Herb 0.11.2 は libprism 2.1.0+4691667 でビルドされており、
+  Prism 1.9.0 の `Prism.load` では slots コンパイル時に `Invalid serialization` になる。
+  `Gemfile` は ReActionView 本体と同じ `marcoroth/prism` の ref
+  `4691667e2215831ae855add71d9925c0b871a709` に固定した（リリース済み Prism 2.1.0 には
+  ruby/prism#4334 が入っていない）。
+- **RuboCop はアプリの bundle に置けない**: `rubocop-ast` が prism `~> 1.7` を要求するため、
+  Prism 2.1 と同居できない。RuboCop は `gemfiles/rubocop.gemfile` の別 bundle に移し、
+  `bin/rubocop` は `BUNDLE_GEMFILE` を切り替えてから `bundler/setup` する。
+  `bin/setup` はアプリと lint の両方の bundle を入れる。
+- **Bundler 4 の `BUNDLE_LOCKFILE` に注意**: `config/boot` を読むと `BUNDLE_LOCKFILE` がアプリの
+  `Gemfile.lock` に固定される。`bin/ci` の子プロセスで lint bundle を操作するときはこれを外さないと、
+  lint 側の解決結果がアプリの lock を上書きする（実際に prism 1.9 / rubocop 入りの lock に戻った）。
+  `bin/setup` の lint 環境と `bin/rubocop` はこれを外している。
+- **Herb 0.11.2 は未描画コレクション分岐の item skeleton を `<template data-herb-region>` に残す**。
+  `assert_select` は template の中も数えるため、0 件を確かめるテストは live な親にスコープする
+  （`.catalog-list .catalog-row`、`.proposal-group .proposal-card`）。catalog の `q=%` / `q=_` と
+  proposals の空 DB テストがこれで直った。
+- **0.6.1 の slots resolver は「`:slots` が先頭の lookup」だけに答える**（#196）。通常の HTML lookup が
+  slots 形式で解決される問題は消えた。アプリの slots 要求（先頭 `:slots`）は従来どおり。
+- **Dashboard の Lazy は 1000x900 だと sentinel が画面外**: `.dashboard-activity` のカード自体は
+  826px から見えるが、Lazy の sentinel は 926px にあり、ブロック要求は飛ばない。1000x1000 では
+  1 回で内容が届く。0.6.0 の比較サーバーでも同じだったため、0.6.1 の退行ではない。
+  配置依存の既知ギャップとして、カードの見た目ではなく sentinel の位置で確かめる。
+- **再検証**: `bin/ci` 全ゲート、統合テスト 135 runs / 980 assertions、主要プローブ
+  （ui 0 / settings 0 / pricing 各1 / tree 0・refresh 1 / thread 1 / catalog 0 / forms 0 /
+  outbox / apply / pin 0 / sync / no-JS）。Dashboard は viewport 1000x1000 で probe 通過。
+
 ## 動作確認コマンド
 
 - サーバー: `bin/rails server`（dev でスロット用開発サーバーが内蔵起動し、アドレスを表示。
@@ -59,8 +89,11 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - 設定出力: `bin/rails runner 'c = ReActionView.config; puts [c.intercept_erb, c.slots, c.default_slot_mode, c.dev_server_enabled?].inspect'`
 - seed: `bin/rails db:setup`（schema 缶詰後は `bin/rails db:seed`）
 - 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
+- RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる）
 
-## 実測済みのスロット・ワイヤ形式（0.6.0）
+## 実測済みのスロット・ワイヤ形式（0.6.0 / 0.6.1）
+
+0.6.1 / herb 0.11.2 でも形式は変わらない（統合テストとプローブで確認）。
 
 - 応答ヘッダ: `content-type: application/vnd.herb.slots+json; charset=utf-8`、`Cache-Control: no-store`
 - 本体: `{"template": "...", "version": "...", "occurrence": 0, "slots": {<番号>: {...}}}`
@@ -258,8 +291,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **`<Lazy>` は初期表示の位置では block 1 で内容が届き、下段では 0**: 初期 viewport 内なら block 1
   （slow 2703ms / fast 6ms）で Fallback の「読み込み中…」と最新3件が本文に置き換わる。カードを
   初期 viewport の外に置くと、スクロールしても slots 要求は0で Fallback のまま（0.6.0 の配置依存ギャップ）。
-  カードは初期表示の位置に置く。Lazy の中のコレクションはブロック応答で `items` が空になるため、
-  明示的な行で描画する。
+  カードのヘッダーではなく、Lazy の sentinel（最初の子要素）が初期 viewport に入るように置く。
+  Lazy の中のコレクションはブロック応答で `items` が空になるため、明示的な行で描画する。
 - **`<Fragment>` の Fallback は観測されなかった**: `focus: focus`、`on="focus"`、`server.reads` は
   manifest に載り、focus 変更は slots 1回（910ms）で集計を 10→3 に更新する。ただし Fallback は
   表示されない（実測）。状態読みと集計更新は動くが、Fallback の見た目は制約として扱う。
@@ -488,3 +521,8 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   料金式を二重管理せず、サーバーの READ slot に置く（Pricing の実装）
 - モーダルフォームを `board_path` にPOSTさせない → board はGETルートのみ。CRUDの入口は
   `tasks_path`（正攻法の分離）。`data-herb-into` は差し込み先コレクションの名前指定に過ぎない
+- RuboCop をアプリの Gemfile に戻さない → `rubocop-ast` が prism `~> 1.7` を要求し、
+  Herb 0.11.2 が使う Prism 2.1 と同居できない。`gemfiles/rubocop.gemfile` に分けたままにする
+- Prism の git pin を外さない → リリース済み Prism 2.1.0 には ruby/prism#4334 が入っておらず、
+  Herb 0.11.2 のパースと一致しない。修正版のリリースまで
+  `4691667e2215831ae855add71d9925c0b871a709` に固定する

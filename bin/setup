@@ -15,6 +15,11 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  puts "\n== Installing lint dependencies =="
+  lint_gemfile = File.expand_path("gemfiles/rubocop.gemfile", APP_ROOT)
+  lint_env = { "BUNDLE_GEMFILE" => lint_gemfile, "BUNDLE_LOCKFILE" => nil }
+  system(lint_env, "bundle", "check") || system!(lint_env, "bundle", "install")
+
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
   #   FileUtils.cp "config/database.yml.sample", "config/database.yml"

@@ -1,0 +1,6 @@
+# RuboCop runs in a separate bundle so the application can use Prism 2.1 for
+# Herb 0.11.2. rubocop-ast still requires prism ~> 1.7, which cannot share a
+# bundle with it. bin/rubocop points Bundler at this file.
+source "https://rubygems.org"
+
+gem "rubocop-rails-omakase", require: false

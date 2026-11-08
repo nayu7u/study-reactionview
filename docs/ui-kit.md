@@ -4,6 +4,8 @@
 9コンポーネントを `lib/reactionview_ui/` にソース・オブ・トゥルースとして置き、ジェネレータで
 アプリにコピーする — shadcn と同じ**ソース配布モデル**を ERB + 素の CSS + ビルドステップゼロで再現した。
 
+本文の実測は 0.6.0 / herb 0.11.1 で記録し、0.6.1 / herb 0.11.2 でも同じプローブで再確認しています。
+
 デモ: `/ui`(client mode)。テスト: `test/controllers/ui_controller_test.rb`。
 操作を1本にまとめたGIF: [media/26-ui-kit.gif](media/26-ui-kit.gif)。
 

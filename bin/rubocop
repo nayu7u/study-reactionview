@@ -1,5 +1,20 @@
 #!/usr/bin/env ruby
 require "rubygems"
+require "rbconfig"
+
+# rubocop-ast pins Prism 1.x, while the app bundle needs Prism 2.x for Herb.
+# Keep lint dependencies out of the application bundle.
+lint_gemfile = File.expand_path("../gemfiles/rubocop.gemfile", __dir__)
+
+# bin/ci boots the app first, which exports BUNDLE_GEMFILE and preloads
+# bundler/setup through RUBYOPT. Re-exec without that preload so this process
+# starts in the lint bundle instead of the already-activated app bundle.
+if ENV["BUNDLE_GEMFILE"] != lint_gemfile
+  exec({ "BUNDLE_GEMFILE" => lint_gemfile, "BUNDLE_LOCKFILE" => nil, "RUBYOPT" => nil, "RUBYLIB" => nil },
+    RbConfig.ruby, __FILE__, *ARGV)
+end
+
+ENV.delete("BUNDLE_LOCKFILE")
 require "bundler/setup"
 
 # Explicit RuboCop config increases performance slightly while avoiding config confusion.

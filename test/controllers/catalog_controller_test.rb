@@ -33,12 +33,14 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
   test "q escapes LIKE wildcards" do
     get catalog_path(q: "%")
     assert_response :success
-    assert_select ".catalog-row", count: 0
+    # Why not ".catalog-row": the parked template keeps the unrendered
+    # collection branch's item skeleton, and assert_select counts inside it.
+    assert_select ".catalog-list .catalog-row", count: 0
     assert_select ".catalog-empty"
 
     get catalog_path(q: "_")
     assert_response :success
-    assert_select ".catalog-row", count: 0
+    assert_select ".catalog-list .catalog-row", count: 0
   end
 
   test "category rails has two pages and page 2 has one talk" do
@@ -120,7 +122,9 @@ class CatalogControllerTest < ActionDispatch::IntegrationTest
     get catalog_path(q: "nonexistent")
 
     assert_response :success
-    assert_select ".catalog-row", count: 0
+    # Why the live container: the parked branch's item skeleton is counted by
+    # assert_select even though the browser never renders it.
+    assert_select ".catalog-list .catalog-row", count: 0
     assert_select ".catalog-empty"
     assert_select ".pagination a", count: 0
   end

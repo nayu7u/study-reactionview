@@ -1,8 +1,10 @@
 # Hotwire を使わずともよい、を体感する — ReActionView 対比ノート
 
-ReActionView 0.6.0 + herb 0.11.1 の検証リポジトリ（Kaigi on Rails 2026 の主題検証）。
+ReActionView 0.6.1 + herb 0.11.2 の検証リポジトリ（Kaigi on Rails 2026 の主題検証）。
 本リポジトリの主張「**ERB のみで Phoenix LiveView 的な細粒度リアクティビティ**」を、
 Hotwire（Turbo + Stimulus）が担っていた役割ごとに分解して、実コードで対比します。
+
+本文の実測は 0.6.0 / herb 0.11.1 で記録し、0.6.1 / herb 0.11.2 でも同じプローブで再確認しています。
 
 > スタイル付き HTML 版は [`docs/hotwire-comparison.html`](./hotwire-comparison.html)。
 > GitHub は `.html` を `text/plain` で配信するためレンダリングされない —
