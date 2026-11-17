@@ -90,6 +90,10 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - 設定出力: `bin/rails runner 'c = ReActionView.config; puts [c.intercept_erb, c.slots, c.default_slot_mode, c.dev_server_enabled?].inspect'`
 - seed: `bin/rails db:setup`（schema 缶詰後は `bin/rails db:seed`）
 - 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
+- ブラウザ検証: `bin/verify-reactionview doctor` / `bin/verify-reactionview run --all`
+  （`.opencode/skills/verify-reactionview/`。使い捨て test DB + headless Chrome で
+  Sprint Hub の検索・行状態・楽観的追加・同期と Settings のタブ切替を操作し、slots 数と
+  スクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
 - RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる）
 
 ## 実測済みのスロット・ワイヤ形式（0.6.0 / 0.6.1）
@@ -442,6 +446,17 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   Profile 456px / Notifications 234px で、要素スクリーンショットの GIF に前フレームの残像と
   保存バーの二重写りが出た。初期レイアウトの bounding box を固定 clip にして撮り、
   全フレームの寸法一致を assert する（`settings-capture.js`）
+- **検索のクリアは行を戻さない（0.6.1 実測）**: `data-herb-reset="query"` で入力と
+  「全件表示」ノートは戻るが、一覧は絞り込み結果のままで slots 0。`🔄 同期` かリロードで
+  全件に戻す。クリアだけで戻ると主張しない
+- **検索中の楽観行は drawer close の GET で消える（0.6.1 実測）**: 追加の 201 splice で
+  2行になっても、ドロワーを閉じる分岐反転の GET が同じ query で引き直し、1行に戻る。
+  楽観行の証拠は 50ms ポーリングの row snapshot で取る。hero もこの GET で 10→11 になり得るため、
+  201 直後の hero だけを楽観性の証拠にしない
+- **再現手順は `bin/verify-reactionview`**: 使い捨て test DB + headless Chrome で
+  Sprint Hub の検索・行状態・楽観的追加・同期と Settings のタブ切替を操作し、
+  slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。
+  機能別レシピは `.opencode/skills/verify-reactionview/features/`
 
 ## reactionview-ui キットで実測した事実（0.6.0 / herb 0.11.1）
 
