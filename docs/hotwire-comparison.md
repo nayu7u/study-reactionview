@@ -75,7 +75,7 @@ import "outbox_retry"
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
-| **Tree** (`/tree`) | client | 深さ4のツリー、ノードごとの開閉 | 再帰 partial + Stimulus の open-set 管理 | レベル別テンプレート + `herb:state`（`open_root`/`open_l2`/`open_l3`）+ `hidden` presence（0往復） |
+| **Tree** (`/tree`、ナビ外) | client | 深さ4のツリー、ノードごとの開閉 | 再帰 partial + Stimulus の open-set 管理 | レベル別テンプレート + `herb:state`（`open_root`/`open_l2`/`open_l3`）+ `hidden` presence（0往復） |
 
 ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）、`/thread`（入れ子キー）、`/tree`（深いツリー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜11、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)、[`docs/thread.md`](./thread.md)、[`docs/tree.md`](./tree.md)）。
 
@@ -558,7 +558,7 @@ window.HerbRuntime?.outbox?.discard(button);
 
 現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox`、入れ子スレッドは `/thread`、深いツリーは `/tree` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
-主張を守るため、このリポジトリには `turbo-rails` を入れません。
+主張を守るため、`turbo-rails` は Gemfile と importmap に残すだけで import しません。
 
 ---
 

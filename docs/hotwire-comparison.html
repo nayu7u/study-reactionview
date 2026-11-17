@@ -899,7 +899,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
     同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。
-    main の「Hotwire なし」の主張を守るため、このリポジトリには <code>turbo-rails</code> を入れません。
+    main の「Hotwire なし」の主張を守るため、<code>turbo-rails</code> は Gemfile と importmap に残すだけで import しません。
   </p>
 </section>
 
