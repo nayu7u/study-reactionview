@@ -894,7 +894,7 @@ After the UI Kit section and before `## 検証の進め方`, add:
 ```markdown
 ## 実務検証: サーバー検証フォーム（`/forms`、ナビ外）
 
-標準の `form_with` と 422 の全画面再描画を、client mode のカテゴリ絞り込みと同じページに置いた検証。フォームは `data-herb-into` を使わず、成功はリダイレクト、失敗は 422 の HTML でエラーと入力値を保持する。絞り込みは 0 往復で、入力途中のフォーム値を壊さない。詳細と実測は [docs/forms.md](docs/forms.md)。
+標準の `form_with` と 422 の全画面再描画を、client mode のカテゴリ絞り込みと同じページに置いた検証。フォームは `data-herb-into` を使わず、成功はリダイレクト、失敗は 422 の HTML でエラーと入力値を保持する。絞り込みは 0 往復で、入力途中のフォーム値を壊さない。詳細と実測は [docs/forms.md](../../forms.md)。
 ```
 
 - [ ] **Step 4: Update `docs/hotwire-comparison.md`**

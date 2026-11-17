@@ -975,11 +975,11 @@ After the `/forms` section, before `## 検証の進め方`, add:
 ```markdown
 ## 実務検証: 共有 URL の検索（`/catalog`、ナビ外）
 
-検索・カテゴリ・ページを URL に載せ、ブックマーク・共有・戻る・進む・リロードが成立する検索画面。検索とページ送りは標準の GET フォームとリンク、概要の開閉だけを client mode の `compact` state（0往復）にした。URL は Rails、ページ内は ReactionView という分担の実測。詳細は [docs/url-state.md](docs/url-state.md)。
+検索・カテゴリ・ページを URL に載せ、ブックマーク・共有・戻る・進む・リロードが成立する検索画面。検索とページ送りは標準の GET フォームとリンク、概要の開閉だけを client mode の `compact` state（0往復）にした。URL は Rails、ページ内は ReactionView という分担の実測。詳細は [docs/url-state.md](../../url-state.md)。
 
 <div><img src="docs/media/catalog-light.png" alt="Talk Catalog (light)" width="49%"/> <img src="docs/media/catalog-dark.png" alt="Talk Catalog (dark)" width="49%"/></div>
 
-![カテゴリとページが URL に載り、概要の開閉だけが 0 往復で動く](docs/media/20-catalog.gif)
+![カテゴリとページが URL に載り、概要の開閉だけが 0 往復で動く](../../media/20-catalog.gif)
 ```
 
 Add `catalog_controller_test` to the test list in `## 検証の進め方`.

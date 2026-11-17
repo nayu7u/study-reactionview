@@ -482,6 +482,7 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 | [docs/ui-kit.md](docs/ui-kit.md) | reactionview-ui の9コンポーネントと0往復の実測 |
 | [docs/other-implementations.md](docs/other-implementations.md) | 公式デモ以外の公開実装と、そこから拾った使い方のパターン |
 | [docs/debug-mcp-runbook.md](docs/debug-mcp-runbook.md) | debug-mcp の adopt-on-demand 手順 |
+| [docs/superpowers/README.md](docs/superpowers/README.md) | 実装前の設計・計画の履歴（日付順の索引） |
 
 ## テンプレートの実測メモ
 

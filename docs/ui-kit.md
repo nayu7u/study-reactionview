@@ -15,7 +15,7 @@ headless Chromium で全コンポーネントを操作した結果、**全操作
 
 | コンポーネント | 実測した操作 | 往復 |
 |---|---|---|
-| Switch ×2 | 片方だけクリック → `checked` が [true, false](instance分離) | 0 |
+| Switch ×2 | 片方だけクリック → `checked` が `[true, false]`（インスタンス分離） | 0 |
 | Stepper | +1 ×3 → 行ごとの数量と fold 合計が即時更新、0の行の − は disabled | 0 |
 | Field | 入力 → 文字数・over判定・送信ゲートが即時追随 | 0 |
 | Accordion | 開閉 → 本文と ＋/－ マーカーが切替 | 0 |
