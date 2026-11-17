@@ -450,11 +450,12 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 ## 検証の進め方
 
-- **テスト: `bin/rails test`**。controller 14本、model 7本、generator 1本を実行する。
+- **テスト: `bin/rails test`**。controller 14本、model 7本、generator 1本、docs のリンク検査1本を実行する。
   controller tests は HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot /
   slots 応答の形状（items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 /
   no-JS の POST フォールバック / fold が manifest に現れることを検証する。model tests は下書き・提案・投稿・
-  ツリーなどのドメイン、generator test は `reactionview_ui` のコピー生成を見る。テストは What を、
+  ツリーなどのドメイン、generator test は `reactionview_ui` のコピー生成、lib test は
+  README・AGENTS・docs の相対リンクの解決を見る。テストは What を、
   コードは How を、コミットログは Why を書く約束。
 - **フルゲート: `bin/ci`**。`bin/setup --skip-server`、Rubocop、bundler-audit、importmap audit、Brakeman、
   `bin/rails test`、seed の再投入を順に実行する。
