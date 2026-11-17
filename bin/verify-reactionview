@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require_relative "../config/boot"
+load File.expand_path("../.opencode/skills/verify-reactionview/scripts/verify-reactionview.rb", __dir__)
