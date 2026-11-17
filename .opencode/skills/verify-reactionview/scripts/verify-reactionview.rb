@@ -281,7 +281,7 @@ class Verifier
     [
       "search sent #{search_delta} slots request(s)",
       "opening the drawer sent #{drawer_delta} slots request(s)",
-      "add sent #{add_delta} slots request(s) through the tasks endpoint",
+      "add triggered #{add_delta} slots request(s), including the tasks POST",
       "the optimistic row appeared before sync; hero moved from #{hero_before_add.inspect} to #{hero_after_add.inspect}",
       "sync restored the filtered list and the hero reached 11"
     ]
