@@ -77,7 +77,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   826px から見えるが、Lazy の sentinel は 926px にあり、ブロック要求は飛ばない。1000x1000 では
   1 回で内容が届く。0.6.0 の比較サーバーでも同じだったため、0.6.1 の退行ではない。
   配置依存の既知ギャップとして、カードの見た目ではなく sentinel の位置で確かめる。
-- **再検証**: `bin/ci` 全ゲート、統合テスト 135 runs / 980 assertions、主要プローブ
+- **再検証**: `bin/ci` 全ゲート、統合テスト 135 runs / 980 assertions（当時。リンク検査の追加後は
+  136 runs / 982 assertions）、主要プローブ
   （ui 0 / settings 0 / pricing 各1 / tree 0・refresh 1 / thread 1 / catalog 0 / forms 0 /
   outbox / apply / pin 0 / sync / no-JS）。Dashboard は viewport 1000x1000 で probe 通過。
 
