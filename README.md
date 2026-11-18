@@ -25,7 +25,7 @@
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Settings `/settings` | `<%# herb:slots client %>` | タブ・依存フィールド・未保存状態・デモ保存（全操作 0 往復） |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
-| UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
+| UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、通常操作は0往復。60字超え警告は1往復） |
 
 機能番号は画面内の検証項目番号で、README の並びは画面順だ。Hub の ⑯ は ② のリスト内、
 Settings の ⑰、Dashboard の ⑱〜㉑、Triage の ㉒ は各画面のタグに対応する。
@@ -52,7 +52,7 @@ Settings の ⑰、Dashboard の ⑱〜㉑、Triage の ㉒ は各画面のタ�
 | 更新 | 同じアクションが slots 応答で値だけを返す | クライアントが格納済みの分岐と state を評価する |
 | サーバー読み | DB 検索・計算・一覧など何でも読める | 初回のサーバー読みが基本。ループ内のサーバー読みは branch refetch になる |
 | 向く用途 | 検索・並び替え・詳細・料金計算 | タブ・フォーム・ウィザード・アコーディオン |
-| 現在の境界 | state 条件の分岐が反転したときだけ自動で往復する。反転しない操作は `$refresh` を合成する | パーシャル内の分岐は materialize されないため、presence（`hidden`）と CSS で切り替える |
+| 現在の境界 | state 条件の分岐が反転したときだけ自動で往復する。反転しない操作は `$refresh` を合成する | パーシャル内の分岐は materialize されないため（0.6.0 / 0.6.1）、presence（`hidden`）と CSS で切り替える |
 
 GIF は操作の見た目を示す。0往復/1往復の回数は headless Chromium のプローブで測った値で、GIF 単体では分からない。
 
@@ -359,8 +359,9 @@ SaaS の料金プランを選ぶと見積もりが変わる計算画面。プラ
 
 - `open` は行ごとの boolean state。ヘッダーは `data-herb-toggle="open"`。
 - **答えのテキストを分岐の中に置かない**: 行ごとの分岐は materialize できても、分岐の中に置いた
-  サーバー読みの値は空で届く（0.6.0 / 0.6.1 の実測。ワイヤは item ごとの `{branch, slots}` を返しているのに、
-  クライアントが materialize 済みの item の分岐に値を当てはめられない）。代わりに本文は平常の item part として
+  サーバー読みの値は空で届く（0.6.0 / 0.6.1 の実測）。ブラウザの自動 refetch は per-item state を
+  ヘッダに載せないため応答は `{"branch": null}` になる（手で `"open": true` を載せると
+  `{branch: 0, slots: {...}}` は返る）。代わりに本文は平常の item part として
   初回から DOM に載せ、`hidden="<%= !open %>"` の presence バインディングで表示を切り替える。マーカーの＋/－は
   静的テキストなので分岐の切替で差し替わる。
 - `hidden` は `checked/selected/disabled` に加わる presence の仲間（falsy 読みとして manifest に現れる）。
@@ -373,9 +374,10 @@ Button / Badge / Card / Switch / Stepper / Field / Accordion / Tabs / Dialog。�
 `lib/reactionview_ui/` に置き、ジェネレータ（`reactionview_ui:install` / `reactionview_ui:component`）で
 `app/views/components/ui/` にコピーして使う。断片は `herb:state` 宣言を内蔵する。ページ側の wiring は不要。
 UI Kit のトークンと CSS は `reactionview_ui.css` にまとまり、`app.css` とは別に読み込む。
-headless Chromium で操作できるコンポーネントをすべて動かした結果、スロット往復は 0 だった。
+headless Chromium で通常操作（60字以内の入力・開閉・切替）を動かした結果、スロット往復は 0 だった。
+Field の 60字超え警告だけはパーシャル内分岐のため表示されず、1往復する（0.6.1 再測）。
 
-![9コンポーネントのデモ。操作はすべて0往復](docs/media/26-ui-kit.gif)
+![9コンポーネントのデモ。通常操作は0往復（60字超え警告は1往復）](docs/media/26-ui-kit.gif)
 
 Button / Badge / Card は state を持たず、manifest で `"states": null` になる。Switch は同一断片の2 instance が
 occurrence index で独立し、Stepper は行ごとの qty とカウントfold、Field は派生 `ready` / `over`、

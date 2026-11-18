@@ -257,7 +257,8 @@
       <p style="font-size:13.8px;">
         DB を引かない更新（文字数・妥当性・開閉・カウンタ・ステップ）。Hotwire だと Stimulus コントローラを書くこと自体が
         「Turbo 外の生 JS 層」になった。client mode ではテンプレートが状態と分岐をコンパイル解析し、
-        クライアントへの命令書（manifest）を自動生成 — 操作は<strong>全てブラウザ内で完結（0 往復）</strong>。
+        クライアントへの命令書（manifest）を自動生成 — 通常の状態更新は<strong>ブラウザ内で完結（0 往復）</strong>。
+        パーシャル内の分岐だけは materialize されない（0.6.1 でも）。
       </p>
       <p class="mini">実装: <code>/lab</code>（Client Lab）、<code>/ui</code>（UI Kit）、<code>/settings</code>（Settings）、<code>/dashboard</code>（Dashboard）</p>
     </div>
@@ -342,7 +343,7 @@
 
       <tr><td rowspan="2"><b>UI Kit</b><br><code>/ui</code></td><td rowspan="2">client</td>
         <td>switch・accordion 等 9コンポーネント</td><td>shadcn/ui 相当 = Stimulus の Data API、往復も発生しうる更新の配管</td>
-        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>全操作 0 往復</strong>（実測）</td></tr>
+        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>通常操作は 0 往復</strong>。Field の60字超え警告はパーシャル分岐で1往復（0.6.1 再測）</td></tr>
       <tr><td>数量ステッパー（stepper）</td><td>行ごとの qty 管理と全体合計を Stimulus に</td>
         <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋カウントfold の <code>in_cart</code></td></tr>
 
@@ -511,7 +512,7 @@
       <div class="panel-foot">
         <b>派生状態の宣言</b>（<code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> は
         コンボ派生、<code>over</code> は length 変換＋順序比較として manifest に入る）だけで、
-        文字数・出し分け・disabled 全部が <strong>0 往復で反応する</strong>。書くのは「読み」だけ。なお textarea は <code>value=</code> 対応なので送信後のリセットも表示まで追従する。
+        文字数・送信ゲートは <strong>0 往復で反応する</strong>。`over` の警告はパーシャル分岐のため表示されない（0.6.1 再測）。書くのは「読み」だけ。なお textarea は <code>value=</code> 対応なので送信後のリセットも表示まで追従する。
       </div>
     </div>
   </div>
@@ -792,14 +793,14 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
     <div class="card">
       <p style="margin-bottom:6px;"><b>client mode（<code>/lab</code>, <code>/ui</code>, <code>/settings</code>, <code>/dashboard</code>）</b></p>
       <p style="font-size:13.8px;">
-        lab / ui / settings は<strong>全操作 0 往復</strong>。未描画ブランチは初期レスポンスの
+        lab / ui / settings は<strong>通常操作 0 往復</strong>。未描画ブランチは初期レスポンスの
         <code>&lt;template data-herb-region&gt;</code> に格納済みで、
         <code>&lt;template data-herb-manifests&gt;</code>（states/reads/conditionals/presence/computed の命令書）に従って
         ブラウザ内で分岐の materialize・presence・fold が進む。Settings のタブは分岐でなく hidden の presence パネル。
         Dashboard は client mode だが、Async / Lazy / Fragment / poll の遅延ブロックはサーバーに取りに行く。
       </p>
       <p class="mini">
-        UI Kit の9コンポーネント全操作は slot 往復 0（docs/ui-kit.md）。Settings も 0。
+        UI Kit の9コンポーネントは通常操作 0 往復。Field の60字超え警告だけはパーシャル分岐のため表示されず、1往復する（0.6.1 再測、docs/ui-kit.md）。Settings も 0。
         Dashboard の <code>?slow=1</code> は document 約30ms、Async 2本 907ms / 1812ms、Lazy 2703ms（初期表示）/ 下段0、
         focus 910ms、poll 907ms。Lazy の下段配置と Fragment の Fallback には 0.6.0 のギャップがある。
         意図的に同期を取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。
