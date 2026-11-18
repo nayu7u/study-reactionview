@@ -376,8 +376,10 @@ Button / Badge / Card / Switch / Stepper / Field / Accordion / Tabs / Dialog。�
 UI Kit のトークンと CSS は `reactionview_ui.css` にまとまり、`app.css` とは別に読み込む。
 headless Chromium で入力・開閉・切替を動かした結果、スロット往復は 0 だった。
 Field の 60字超え警告も presence バインディングで表示され、0往復する（0.6.1 再測）。
+GIF は通常操作のみ。60字超え警告の証拠は `bin/verify-reactionview run --feature ui-field-warning` の
+`ui-field-warning-over.png` に残す。
 
-![9コンポーネントのデモ。操作はすべて0往復（60字超え警告も presence）](docs/media/26-ui-kit.gif)
+![9コンポーネントのデモ。通常操作は0往復（60字超え警告は ui-field-warning で確認）](docs/media/26-ui-kit.gif)
 
 Button / Badge / Card は state を持たず、manifest で `"states": null` になる。Switch は同一断片の2 instance が
 occurrence index で独立し、Stepper は行ごとの qty とカウントfold、Field は派生 `ready` / `over`、

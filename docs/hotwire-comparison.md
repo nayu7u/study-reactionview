@@ -484,7 +484,7 @@ window.HerbRuntime?.outbox?.discard(button);
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
   - **Hub のピン/星** は per-row `pinned` と `pinned_count` のカウントfold。星は presence、
     行の見た目は CSS `:has`。0 slots リクエストで行とリスト直後のサマリーが同時に変わる。
-- **client mode（`/lab`, `/ui`, `/settings`）**: 通常操作は **0 往復**。未描画ブランチは初期レスポンスの
+- **client mode（`/lab`, `/ui`, `/settings`）**: 全操作は **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
   （states / reads / conditionals / presence / computed の命令書）に従って
   ブラウザ内で分岐の materialize・presence・fold が進む。

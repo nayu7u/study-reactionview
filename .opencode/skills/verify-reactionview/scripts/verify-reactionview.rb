@@ -431,6 +431,7 @@ class Verifier
 
     first.click
     @wait.until { !body.displayed? }
+    assert(find(css: ".acc-marker").text == "＋", "the marker should return to the closed state")
     sleep 0.3
     assert(slots_count == baseline, "closing the FAQ should stay client-side")
     [

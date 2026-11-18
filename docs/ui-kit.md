@@ -136,12 +136,13 @@ Esc / 外側クリックは `data-herb-set="keydown.esc@window->shown=false ..."
 
 - 分岐の state はヘッダに載り、サーバーは `{"branch": 0, "slots": {"8": "<note>"}}` を返した。
 - それでもクライアントは分岐先を DOM に materialize しなかった(`.partial-branch-probe` は不在)。
-- slots は 1 回。dev でもパーシャルに `<template data-herb-region>` は出ず、parked statics がない。
+- 分岐の切替は slots 1 回。61字入力でもう1回（合計2、`partial_slots_delta` は1）。
+  dev でもパーシャルに `<template data-herb-region>` は出ず、parked statics がない。
 - probe 時点の `_field` は `over` 分岐で、61/60 でも警告が表示されなかった(derived state は
   ヘッダに載らず、応答は `{"branch": null}`)。修正後は `hidden` の presence で表示され、0往復。
 
 証拠は `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`(probe)と
-`tmp/verify-reactionview/20261118T180144Z-50544/`(修正後の `ui-field-warning`)。per-item 分岐の
+`tmp/verify-reactionview/20261118T182312Z-63357/`(修正後の `ui-field-warning`)。per-item 分岐の
 再測は AGENTS.md の「クライアント分岐の materialize」を参照。キットは分岐でなく presence で切り替える。
 
 ## 0.6.0 / 0.6.1 で実測した制約(このキットの設計規約)

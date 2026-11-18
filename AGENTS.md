@@ -101,7 +101,8 @@ headless Chrome で開閉・入力を駆動した。**どちらも 0.6.0 のギ�
 - **パーシャル内の分岐（`/ui` の `_field` に direct state の分岐を足した probe）**: ヘッダに
   `"probe_open": true` が載り、サーバーは `{"branch": 0, "slots": {"8": "<note>"}}` を返す。
   それでもクライアントは分岐先を materialize せず、`.partial-branch-probe` は DOM に現れない。
-  slots は 1 回。dev でもパーシャルには `<template data-herb-region>` が出ず、parked statics がない。
+  分岐の切替は slots 1 回。61字入力でもう1回（合計2、`partial_slots_delta` は1）。
+  dev でもパーシャルには `<template data-herb-region>` が出ず、parked statics がない。
   probe 時点の `_field` は `over` 分岐を使っており、61/60 でも警告が表示されなかった。
 - **証拠**: `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`（dev）と
   `20261118T172320Z-23633-branch-probe/`（test）。`result.json`、`lab-accordion.png`、
@@ -120,15 +121,16 @@ headless Chrome で開閉・入力を駆動した。**どちらも 0.6.0 のギ�
 それ以外のキー・形・値は完全一致した。
 
 - 対象: `/`, `/patterns`, `/settings`, `/triage`, `/pricing`, `/tree`, `/thread`, `/dashboard`,
-  `/catalog`, `/forms`, `/apply`。`/ui` と `/lab` は変更対象、`/outbox` は POST が DB を変えるため除外。
+  `/catalog`, `/forms`。`/ui` と `/lab` は変更対象、`/outbox` は POST が DB を変えるため除外。
+  `/apply` は初期 slots を記録していないため比較に含めない。
 - 操作: Hub の検索・並び替え・ドロワー開閉・同期、Patterns の追加読み込み・チップ・行選択・解除、
   Settings の3タブ、Triage の2行選択、Pricing の4操作、Tree/Thread の最新取得、Dashboard の
-  初期ブロックと focus、Catalog の compact、Forms の3チップ、Apply の初期表示。
+  初期ブロックと focus、Catalog の compact、Forms の3チップ。
 - 証拠: `tmp/verify-reactionview/20261118T174115Z-35093-slots-snapshot/` の `before.json` /
   `after.json` / `comparison.json` / `README.md` / `slots_snapshot.rb` / `slots_compare.rb`。
 - 結果: `identical_after_time_mask: true`、差分0。対象外画面のコードは変更していない。
 - **最終ゲート（2026-11-18）**: `bin/ci` は 142 runs / 1021 assertions、`bin/verify-reactionview run --all`
-  は 8 feature すべて VERIFIED。証拠は `tmp/verify-reactionview/20261118T180144Z-50544/` の
+  は 8 feature すべて VERIFIED。証拠は `tmp/verify-reactionview/20261118T182312Z-63357/` の
   `result.json` とスクリーンショット。
 
 ## 動作確認コマンド
@@ -563,7 +565,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   切れる。2ページ目→全件読み込み済みの2フレームにした。
 - **17-settings.gif は8フレーム**。Billing の Business 選択 → Profile の名前変更 → 保存 → リセットまで撮る。
 - **18-dashboard.gif は⑱〜㉑のタグ入り**。Async / Lazy / Fragment / poll の4タグが画面に出る。
-- **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、全操作 0 slots（Field の60字超え警告も presence で0、0.6.1 再測）。
+- **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、通常操作は 0 slots。60字超え警告は GIF に含めず、`ui-field-warning` の run で確認する（0.6.1 再測）。
 - README の前提は Ruby 4.0.9 / Rails 8.1.4 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
   （controller 14 / model 7 / generator 1、当時）を明記した。
 - README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /

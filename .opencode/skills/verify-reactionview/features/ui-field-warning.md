@@ -11,7 +11,7 @@ The UI Kit field shows its 60-character warning through a `hidden` presence bind
 ## How to get to it (user POV)
 
 - Open `/ui`.
-- Find the Field demo under the self-introduction textarea.
+- Find the Field card labeled 自己紹介 (the textarea whose hint reads N/60字).
 - Type 61 characters.
 - Read the warning after the character count, then delete one character.
 
