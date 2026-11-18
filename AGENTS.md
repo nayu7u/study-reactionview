@@ -555,8 +555,9 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   見た目の状態は presence バインディング（`checked`）+ CSS `:has(input:checked)` で即時追随させる
 - 金額計算をクライアントに写さない → fold は整数リテラルの加算のみで、掛け算・税率・割引を表現できない。
   料金式を二重管理せず、サーバーの READ slot に置く（Pricing の実装）
-- モーダルフォームを `board_path` にPOSTさせない → board はGETルートのみ。CRUDの入口は
-  `tasks_path`（正攻法の分離）。`data-herb-into` は差し込み先コレクションの名前指定に過ぎない
+- モーダルフォームをページURLにPOSTさせない → 送信先は `tasks_path`（正攻法の分離）。
+  `data-herb-into` は差し込み先コレクションの名前指定に過ぎない。旧 `/board` GET 別名は
+  `tasks_path` と重複していたので削除した
 - RuboCop をアプリの Gemfile に戻さない → `rubocop-ast` が prism `~> 1.7` を要求し、
   Herb 0.11.2 が使う Prism 2.1 と同居できない。`gemfiles/rubocop.gemfile` に分けたままにする
 - Prism の git pin を外さない → リリース済み Prism 2.1.0 には ruby/prism#4334 が入っておらず、
