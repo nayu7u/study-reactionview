@@ -1,6 +1,6 @@
 ---
 name: verify-reactionview
-description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync and Settings tab switching, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
+description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync, Settings tab switching, and Triage bulk selection, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
 ---
 
 # Verify ReActionView
@@ -9,7 +9,7 @@ Drive the real app the way a user does and keep the evidence. The harness starts
 
 ## Launch
 
-Run all four journeys:
+Run all five journeys:
 
 ```console
 $ bin/verify-reactionview run --all
@@ -41,6 +41,7 @@ It prints the Ruby, Selenium, Chrome, and `bin/rails` status, opens a data URL, 
 $ bin/verify-reactionview run --feature sprint-hub-search
 $ bin/verify-reactionview run --feature sprint-hub-row-state
 $ bin/verify-reactionview run --feature settings-tabs
+$ bin/verify-reactionview run --feature triage-bulk
 $ bin/verify-reactionview run --feature sprint-hub-add
 ```
 
@@ -55,6 +56,7 @@ Each run writes to `tmp/verify-reactionview/<run-id>/`:
 - `<feature>.html` is the final DOM.
 - `sprint-hub-add-optimistic.json` and `.png` capture the transient optimistic row before the drawer-close refetch removes it.
 - `settings-tabs-notifications.png`, `settings-tabs-billing.png`, and `settings-tabs-profile.png` show each panel.
+- `triage-bulk-selected.png` shows the two selected rows and the count fold. `triage-bulk.png` shows the flash and updated priority badges.
 - `server.log` and `database.log` keep the boot and seed output.
 
 `tmp/` is gitignored. Keep the run directory when evidence backs a report or a commit. Delete old run directories when they no longer matter.
@@ -70,6 +72,7 @@ The runner owns its Chrome session, Rails process, and database. It kills only t
 - The 201 splice does not update the hero. A later GET can, so record `hero_before_add` and `hero_after_add` instead of assuming the post stays optimistic.
 - The search clear button resets the state and the note to `全件表示`, but it does not refetch the filtered rows in this build. Use `同期` or reload to return to all rows.
 - Settings tab switches are client-only. The harness asserts exactly zero slots requests.
+- Triage selection is client-only, and the bulk update is a standard PATCH form. Selection and update both send zero slots requests. There is no select-all; per-item state cannot be written from a global button.
 - The test environment disables CSRF and uses `RAILS_ENV=test`; do not use this harness to prove authorization behavior.
 
 The maintained feature map is [`features/README.md`](features/README.md). After changing a screen, route, selector, or seed, run `/pstack/maintain-verification-skill` so the map stays honest.

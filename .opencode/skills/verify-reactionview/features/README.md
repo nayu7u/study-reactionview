@@ -10,6 +10,7 @@ This directory is the maintained source for verifying the user-facing behavior o
 - Chrome for Testing is available through Selenium Manager, with the Chrome runtime libraries installed.
 - The harness uses `RAILS_ENV=test` and a disposable SQLite database under `tmp/verify-reactionview/<run-id>/`.
 - The seed creates 10 tasks, 3 proposals, 12 talks, 3 submissions, 3 posts, and a 4-level tree.
+- Triage starts with the same 10 tasks; its bulk update mutates priority and is reset by the disposable database.
 - The server listens on `127.0.0.1:3310` or the next free port.
 - Never drive an instance that this run did not start.
 
@@ -47,4 +48,5 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Sprint Hub search](sprint-hub-search.md) covers the server-filtered query and the measured clear behavior.
 - [Sprint Hub row state](sprint-hub-row-state.md) covers done and pin toggles with zero slots requests.
 - [Settings tabs](settings-tabs.md) covers the three client-mode panels and zero slots requests.
+- [Triage bulk selection](triage-bulk.md) covers per-row selection, the count fold, and the standard bulk PATCH.
 - [Sprint Hub optimistic add](sprint-hub-add.md) covers the drawer, the 201 splice, the drawer-close refetch, and sync.

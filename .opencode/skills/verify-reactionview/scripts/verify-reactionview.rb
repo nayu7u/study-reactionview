@@ -30,7 +30,7 @@ COUNTER_JS = <<~'JS'
   })();
 JS
 
-FEATURES = %w[sprint-hub-search sprint-hub-row-state settings-tabs sprint-hub-add].freeze
+FEATURES = %w[sprint-hub-search sprint-hub-row-state settings-tabs triage-bulk sprint-hub-add].freeze
 
 class VerificationFailure < StandardError; end
 
@@ -226,6 +226,28 @@ class Verifier
     ["Notifications, Billing, and Profile each opened one panel", "tab switches sent 0 slots requests"]
   end
 
+  def triage_bulk
+    visit("/triage")
+    wait_triage_rows(10)
+    baseline = slots_count
+
+    rows = @driver.find_elements(css: ".triage-row")
+    rows[0].find_element(css: ".triage-check").click
+    rows[1].find_element(css: ".triage-check").click
+    @wait.until { find(css: ".triage-count").text == "2" }
+    assert(slots_count == baseline, "selecting rows should stay client-side")
+    screenshot("triage-bulk-selected")
+
+    Selenium::WebDriver::Support::Select.new(find(css: "select#triage_priority")).select_by(:value, "1")
+    find(xpath: "//button[contains(., '選択したタスクを更新')]").click
+    @wait.until { find(css: ".flash").text.include?("2件の優先度を更新しました") }
+    wait_triage_rows(10)
+    priorities = @driver.find_elements(css: ".triage-row .prio").first(2).map(&:text)
+    assert(priorities == [ "低", "低" ], "the selected rows should show the new priority")
+    assert(slots_count.zero?, "the bulk update should use a document request, not slots")
+    [ "two rows selected with 0 slots requests", "the standard form updated both priorities", "the flash reported 2 updated rows" ]
+  end
+
   def sprint_hub_add
     visit("/")
     wait_rows(10)
@@ -295,6 +317,10 @@ class Verifier
 
   def wait_rows(count)
     @wait.until { @driver.find_elements(css: ".task-list .task-item").size == count }
+  end
+
+  def wait_triage_rows(count)
+    @wait.until { @driver.find_elements(css: ".triage-row").size == count }
   end
 
   def row_texts
