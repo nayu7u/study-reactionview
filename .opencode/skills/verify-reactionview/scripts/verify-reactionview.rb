@@ -242,8 +242,11 @@ class Verifier
     find(xpath: "//button[contains(., '選択したタスクを更新')]").click
     @wait.until { find(css: ".flash").text.include?("2件の優先度を更新しました") }
     wait_triage_rows(10)
-    priorities = @driver.find_elements(css: ".triage-row .prio").first(2).map(&:text)
-    assert(priorities == [ "低", "低" ], "the selected rows should show the new priority")
+    priorities = @wait.until do
+      texts = @driver.find_elements(css: ".triage-row .prio").first(2).map(&:text)
+      texts if texts.size == 2 && texts.none?(&:empty?)
+    end
+    assert(priorities == [ "低", "低" ], "the selected rows should show the new priority, got #{priorities.inspect}")
     assert(slots_count.zero?, "the bulk update should use a document request, not slots")
     [ "two rows selected with 0 slots requests", "the standard form updated both priorities", "the flash reported 2 updated rows" ]
   end
