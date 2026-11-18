@@ -13,14 +13,14 @@
 
 ## 検証結果(ブラウザ実測)
 
-headless Chromium で通常操作（60字以内の入力・開閉・切替）をした結果、**スロット往復 0**。
-60字超えの over 警告だけはパーシャル分岐のため表示されず、1往復する（0.6.1 再測）:
+headless Chromium で入力・開閉・切替をした結果、**スロット往復 0**。
+60字超えの over 警告も `hidden` の presence で表示され、0往復する（0.6.1 再測）:
 
 | コンポーネント | 実測した操作 | 往復 |
 |---|---|---|
 | Switch ×2 | 片方だけクリック → `checked` が `[true, false]`（インスタンス分離） | 0 |
 | Stepper | +1 ×3 → 行ごとの数量と fold 合計が即時更新、0の行の − は disabled | 0 |
-| Field | 入力 → 文字数・over判定・送信ゲートが即時追随。**60字超えの警告はパーシャル分岐のため表示されず、1往復**（0.6.1 再測） | 0（通常）/ 1（60字超え） |
+| Field | 入力 → 文字数・over判定・送信ゲート・60字超え警告が即時追随（0.6.1 再測） | 0 |
 | Accordion | 開閉 → 本文と ＋/－ マーカーが切替 | 0 |
 | Tabs | パネル切替 → 選択強調(aria-pressed)とパネル表示 | 0 |
 | Dialog | 開く / Esc / 外側クリック / 閉じる | 0 |
@@ -86,8 +86,8 @@ occurrence index(`<!--herb-region:...:0-->` / `:1`)ごとに state が独立す�
 
 派生状態(`ready: draft != ""` / `over: draft.length > 60`)+ presence ゲート。
 textarea は `value=` でバインド(BINDABLE_ELEMENTS、reset が表示まで追従)。
-60字超えの警告は `if over` の分岐で、0.6.1 では表示されない(パーシャル内分岐)。
-直すなら `hidden="<%= !over %>"` の presence にする。
+60字超えの警告は `hidden="<%= !over %>"` の presence バインディング。
+`bin/verify-reactionview run --feature ui-field-warning` で 61字の表示と 0 往復を確認する。
 
 ```erb
 <%= render "components/ui/field", label: "自己紹介", placeholder: "60字以内で…" %>
@@ -137,11 +137,12 @@ Esc / 外側クリックは `data-herb-set="keydown.esc@window->shown=false ..."
 - 分岐の state はヘッダに載り、サーバーは `{"branch": 0, "slots": {"8": "<note>"}}` を返した。
 - それでもクライアントは分岐先を DOM に materialize しなかった(`.partial-branch-probe` は不在)。
 - slots は 1 回。dev でもパーシャルに `<template data-herb-region>` は出ず、parked statics がない。
-- 既存の `over` 警告も 61/60 で表示されない(derived state はヘッダに載らず、応答は `{"branch": null}`)。
+- probe 時点の `_field` は `over` 分岐で、61/60 でも警告が表示されなかった(derived state は
+  ヘッダに載らず、応答は `{"branch": null}`)。修正後は `hidden` の presence で表示され、0往復。
 
-証拠は `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`。per-item 分岐の再測は
-AGENTS.md の「クライアント分岐の materialize」を参照。Field の警告を直すなら、分岐ではなく
-`hidden="<%= !over %>"` の presence にする(本キットの設計規約どおり)。
+証拠は `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`(probe)と
+`tmp/verify-reactionview/20261118T180144Z-50544/`(修正後の `ui-field-warning`)。per-item 分岐の
+再測は AGENTS.md の「クライアント分岐の materialize」を参照。キットは分岐でなく presence で切り替える。
 
 ## 0.6.0 / 0.6.1 で実測した制約(このキットの設計規約)
 

@@ -61,7 +61,7 @@
     <span class="feature-tag">per-item の open state + hidden presence</span>
     <h2>Accordion</h2>
     <%= render "components/ui/accordion", items: @faqs %>
-    <p class="task-note">答えも＋/－マーカーも分岐の中に置かず全部presenceバインディングで切替 — パーシャル内の分岐は0.6.0ではmaterializeされない実測(parkedされず、refetch応答もbranch:null)のため。</p>
+    <p class="task-note">答えも＋/－マーカーも分岐の中に置かず全部presenceバインディングで切替 — パーシャル内の分岐は0.6.0 / 0.6.1ではmaterializeされない実測(parkedされず、サーバーがbranch 0と値を返してもDOMに置けない)のため。</p>
   </section>
 
   <section class="feature" data-feature="dialog">

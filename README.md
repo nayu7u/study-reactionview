@@ -25,7 +25,7 @@
 | Pricing `/pricing` | `<%# herb:slots server %>` | サーバーが計算する見積もり、steering、presence、READ slot |
 | Settings `/settings` | `<%# herb:slots client %>` | タブ・依存フィールド・未保存状態・デモ保存（全操作 0 往復） |
 | Client Lab `/lab` | `<%# herb:slots client %>` | 未描画分岐の格納（parking）、派生状態、サーバー往復ゼロのUI |
-| UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、通常操作は0往復。60字超え警告は1往復） |
+| UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作0往復。60字超え警告も presence で0） |
 
 機能番号は画面内の検証項目番号で、README の並びは画面順だ。Hub の ⑯ は ② のリスト内、
 Settings の ⑰、Dashboard の ⑱〜㉑、Triage の ㉒ は各画面のタグに対応する。
@@ -374,10 +374,10 @@ Button / Badge / Card / Switch / Stepper / Field / Accordion / Tabs / Dialog。�
 `lib/reactionview_ui/` に置き、ジェネレータ（`reactionview_ui:install` / `reactionview_ui:component`）で
 `app/views/components/ui/` にコピーして使う。断片は `herb:state` 宣言を内蔵する。ページ側の wiring は不要。
 UI Kit のトークンと CSS は `reactionview_ui.css` にまとまり、`app.css` とは別に読み込む。
-headless Chromium で通常操作（60字以内の入力・開閉・切替）を動かした結果、スロット往復は 0 だった。
-Field の 60字超え警告だけはパーシャル内分岐のため表示されず、1往復する（0.6.1 再測）。
+headless Chromium で入力・開閉・切替を動かした結果、スロット往復は 0 だった。
+Field の 60字超え警告も presence バインディングで表示され、0往復する（0.6.1 再測）。
 
-![9コンポーネントのデモ。通常操作は0往復（60字超え警告は1往復）](docs/media/26-ui-kit.gif)
+![9コンポーネントのデモ。操作はすべて0往復（60字超え警告も presence）](docs/media/26-ui-kit.gif)
 
 Button / Badge / Card は state を持たず、manifest で `"states": null` になる。Switch は同一断片の2 instance が
 occurrence index で独立し、Stepper は行ごとの qty とカウントfold、Field は派生 `ready` / `over`、

@@ -4,8 +4,10 @@
     means editing the literals here, which is exactly the shadcn trade (you
     own the code). Panels flip through presence bindings (hidden = tab ==
     other), NOT branch arms: arms inside a partial are never materialized in
-    0.6.0 (client mode doesn't park them, refetch answers branch:null), while
-    presence + keyed collections survive partial composition intact.
+    0.6.0 and 0.6.1 (client mode doesn't park them; a direct state can get
+    branch 0 with values from the server, but the client still has no DOM to
+    place it in), while presence + keyed collections survive partial
+    composition intact.
     locals: overview:, activity: (arrays of {id:, label:, detail:}) %>
 <%# herb:state (tab: "overview") %>
 <nav class="ui-tabs" aria-label="タブ切替">

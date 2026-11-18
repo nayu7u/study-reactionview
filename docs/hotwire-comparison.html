@@ -343,7 +343,7 @@
 
       <tr><td rowspan="2"><b>UI Kit</b><br><code>/ui</code></td><td rowspan="2">client</td>
         <td>switch・accordion 等 9コンポーネント</td><td>shadcn/ui 相当 = Stimulus の Data API、往復も発生しうる更新の配管</td>
-        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>通常操作は 0 往復</strong>。Field の60字超え警告はパーシャル分岐で1往復（0.6.1 再測）</td></tr>
+        <td>パーシャル単位の <code>herb:state</code>（region スコープ）＋presence バインディング。<strong>全操作 0 往復</strong>（0.6.1 再測。60字超え警告も presence）</td></tr>
       <tr><td>数量ステッパー（stepper）</td><td>行ごとの qty 管理と全体合計を Stimulus に</td>
         <td>行ごと <code>&lt;%# herb:state (qty: 0) %&gt;</code>＋カウントfold の <code>in_cart</code></td></tr>
 
@@ -512,7 +512,7 @@
       <div class="panel-foot">
         <b>派生状態の宣言</b>（<code>ready_bio: bio != "" &amp;&amp; bio.length &lt;= 60</code> は
         コンボ派生、<code>over</code> は length 変換＋順序比較として manifest に入る）だけで、
-        文字数・送信ゲートは <strong>0 往復で反応する</strong>。`over` の警告はパーシャル分岐のため表示されない（0.6.1 再測）。書くのは「読み」だけ。なお textarea は <code>value=</code> 対応なので送信後のリセットも表示まで追従する。
+        文字数・出し分け・disabled 全部が <strong>0 往復で反応する</strong>（60字超え警告も presence）。書くのは「読み」だけ。なお textarea は <code>value=</code> 対応なので送信後のリセットも表示まで追従する。
       </div>
     </div>
   </div>
@@ -793,14 +793,14 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
     <div class="card">
       <p style="margin-bottom:6px;"><b>client mode（<code>/lab</code>, <code>/ui</code>, <code>/settings</code>, <code>/dashboard</code>）</b></p>
       <p style="font-size:13.8px;">
-        lab / ui / settings は<strong>通常操作 0 往復</strong>。未描画ブランチは初期レスポンスの
+        lab / ui / settings は<strong>全操作 0 往復</strong>。未描画ブランチは初期レスポンスの
         <code>&lt;template data-herb-region&gt;</code> に格納済みで、
         <code>&lt;template data-herb-manifests&gt;</code>（states/reads/conditionals/presence/computed の命令書）に従って
         ブラウザ内で分岐の materialize・presence・fold が進む。Settings のタブは分岐でなく hidden の presence パネル。
         Dashboard は client mode だが、Async / Lazy / Fragment / poll の遅延ブロックはサーバーに取りに行く。
       </p>
       <p class="mini">
-        UI Kit の9コンポーネントは通常操作 0 往復。Field の60字超え警告だけはパーシャル分岐のため表示されず、1往復する（0.6.1 再測、docs/ui-kit.md）。Settings も 0。
+        UI Kit の9コンポーネントは全操作 0 往復。Field の60字超え警告も presence で表示される（0.6.1 再測、docs/ui-kit.md）。Settings も 0。
         Dashboard の <code>?slow=1</code> は document 約30ms、Async 2本 907ms / 1812ms、Lazy 2703ms（初期表示）/ 下段0、
         focus 910ms、poll 907ms。Lazy の下段配置と Fragment の Fallback には 0.6.0 のギャップがある。
         意図的に同期を取り直したい時だけ <code>data-herb-action="$refresh"</code> が脱出ハッチ。
@@ -834,16 +834,20 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       コントローラから ivar（<code>@selected_id</code>）を渡し、per-row の属性スロットとして往復させる（patterns の実装）。
     </li>
     <li>
-      <b>per-item 分岐に置いたサーバー読みの値は空で届く</b> — statics は materialize されるが値は乗らない（0.6.0 実測）。
-      対処は「答えを分岐の中に置かない」：<code>hidden="&lt;%= !open %&gt;"</code> の presence バインディング＋CSS<code>[hidden]</code>ガード
+      <b>per-item 分岐に置いたサーバー読みの値は空で届く</b> — statics は materialize されるが値は乗らない（0.6.0 / 0.6.1 実測）。
+      自動 refetch は per-item state をヘッダに載せず <code>branch:null</code> を返す。手で <code>open=true</code> を
+      載せればサーバーは <code>branch:0</code> と値を返す。0.6.1 の自動経路では値が届かないため、
+      適用可否は今回分離できていない。対処は「答えを分岐の中に置かない」：
+      <code>hidden="&lt;%= !open %&gt;"</code> の presence バインディング＋CSS<code>[hidden]</code>ガード
       （lab 機能⑭、ui コンポーネント全体）。
     </li>
     <li>
-      <b>パーシャル内の分岐先は parked されない</b> — client mode でも region テンプレート自体が出ない（ui-kit 実測）。
+      <b>パーシャル内の分岐先は parked されない</b> — client mode でも region テンプレート自体が出ない（0.6.0 / 0.6.1 実測）。
+      direct state をステアリングしてサーバーが <code>branch:0</code> と値を返しても、クライアントは DOM に置けない。
       パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
     </li>
     <li>
-      <b>トップレベルの parked 分岐でも、分岐内の boolean バインディングと入れ子の分岐は初期値で materialize される</b> — Settings のタブ分岐で、<code>digest: true</code> の switch が unchecked、入れ子の頻度分岐が false 側で出た（0.6.0 実測）。
+      <b>トップレベルの parked 分岐でも、分岐内の boolean バインディングと入れ子の分岐は初期値で materialize される</b> — Settings のタブ分岐で、<code>digest: true</code> の switch が unchecked、入れ子の頻度分岐が false 側で出た（0.6.0 / 0.6.1 実測）。
       タブと依存フィールドは分岐でなく <code>hidden</code> の presence パネルに置き、DOM に残したまま表示だけ切り替える。
     </li>
     <li>
