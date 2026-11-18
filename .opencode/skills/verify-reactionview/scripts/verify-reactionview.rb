@@ -30,7 +30,8 @@ COUNTER_JS = <<~'JS'
   })();
 JS
 
-FEATURES = %w[sprint-hub-search sprint-hub-row-state settings-tabs triage-bulk sprint-hub-add].freeze
+FEATURES = %w[sprint-hub-search sprint-hub-row-state settings-tabs triage-bulk sprint-hub-add
+              pricing-estimate].freeze
 
 class VerificationFailure < StandardError; end
 
@@ -249,6 +250,60 @@ class Verifier
     assert(priorities == [ "低", "低" ], "the selected rows should show the new priority, got #{priorities.inspect}")
     assert(slots_count.zero?, "the bulk update should use a document request, not slots")
     [ "two rows selected with 0 slots requests", "the standard form updated both priorities", "the flash reported 2 updated rows" ]
+  end
+
+  def pricing_estimate
+    visit("/pricing")
+    @wait.until { find(css: ".price-total").text.start_with?("¥") }
+    @driver.execute_script("window.__verifyDocumentMarker = 'kept'")
+    totals = [ find(css: ".price-total").text ]
+
+    pricing_step("button[data-herb-set='plan=business']", "the plan switch") do
+      @wait.until { find(css: ".plan-description").text.start_with?("Business") }
+    end
+    totals << find(css: ".price-total").text
+
+    pricing_step("button[data-herb-increment='seats']", "the seat increase") do
+      @wait.until { find(css: ".qty-value").text == "6" }
+      @wait.until { find(css: ".pricing-summary .toolbar-note").text.include?("現在 6 席") }
+    end
+    totals << find(css: ".price-total").text
+
+    pricing_step("button[data-herb-set='annual=true']", "the annual switch") do
+      @wait.until { find(css: ".price-line-annual")["data-active"] == "true" }
+      @wait.until { find(css: ".price-line-annual").displayed? }
+    end
+    totals << find(css: ".price-total").text
+
+    pricing_step("button[data-herb-set='support=true']", "the support switch") do
+      @wait.until { find(css: ".price-line-support")["data-active"] == "true" }
+      @wait.until { find(css: ".price-line-support dd").text.include?("10,000") }
+    end
+    totals << find(css: ".price-total").text
+
+    amounts = totals.map { |total| total.delete("^0-9").to_i }
+    assert(amounts.each_cons(2).all? { |before, after| after > before },
+           "every pricing operation should raise the total, got #{totals.inspect}")
+    assert(slots_count == 4, "pricing should send four slots requests in total, got #{slots_count}")
+    assert(@driver.execute_script("return window.__verifyDocumentMarker") == "kept",
+           "pricing updates should not reload the document")
+    assert(@driver.current_url.end_with?("/pricing"), "pricing updates should keep the URL")
+    [
+      "plan, seats, annual, and support each sent exactly one slots request",
+      "the total moved through #{totals.join(' -> ')}",
+      "the document stayed loaded and the URL stayed /pricing"
+    ]
+  end
+
+  def pricing_step(selector, label)
+    before = slots_count
+    find(css: selector).click
+    yield
+    @wait.until { slots_count > before }
+    sleep 0.6
+    delta = slots_count - before
+    assert(delta == 1, "#{label} should send exactly one slots request, got #{delta}")
+    delta
   end
 
   def sprint_hub_add

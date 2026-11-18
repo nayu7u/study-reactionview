@@ -469,7 +469,7 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 - **フルゲート: `bin/ci`**。`bin/setup --skip-server`、Rubocop、bundler-audit、importmap audit、Brakeman、
   `bin/rails test`、seed の再投入を順に実行する。
 - **ブラウザ検証: `bin/verify-reactionview run --all`**。使い捨ての test DB と headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を実際に操作し、slots リクエスト数と
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、Pricing のプラン・席数・年払い・サポートを実際に操作し、slots リクエスト数と
   スクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能ごとのレシピは
   [`.opencode/skills/verify-reactionview/features/`](.opencode/skills/verify-reactionview/features/README.md)。
 - 初期 HTML には `<template data-herb-manifests>` として、クライアントへの命令書が載る

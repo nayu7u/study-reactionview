@@ -94,7 +94,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
 - ブラウザ検証: `bin/verify-reactionview doctor` / `bin/verify-reactionview run --all`
   （`.opencode/skills/verify-reactionview/`。使い捨て test DB + headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を操作し、
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、
+  Pricing のプラン・席数・年払い・サポートを操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
 - RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる。
   GitHub Actions の lint job も `BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle install` を先に実行する）
@@ -249,6 +250,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   初期表示だけは通常の HTML として読める。
 - **1操作1リクエストをブラウザで確認**: plan / seats / annual / support の各操作で `?format=slots` が
   1回、document request は1回のまま、URL は `/pricing` のまま（headless Chromium）。
+  `bin/verify-reactionview run --feature pricing-estimate` が4操作それぞれの slots 増分と
+  document の再読み込みが無いことを毎回確かめる。
 
 ## Hub ピン/星で実測した事実（0.6.0 / herb 0.11.1）
 
@@ -457,7 +460,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   楽観行の証拠は 50ms ポーリングの row snapshot で取る。hero もこの GET で 10→11 になり得るため、
   201 直後の hero だけを楽観性の証拠にしない
 - **再現手順は `bin/verify-reactionview`**: 使い捨て test DB + headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期と Settings のタブ切替を操作し、
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、
+  Pricing のプラン・席数・年払い・サポートを操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。
   機能別レシピは `.opencode/skills/verify-reactionview/features/`
 

@@ -11,6 +11,7 @@ This directory is the maintained source for verifying the user-facing behavior o
 - The harness uses `RAILS_ENV=test` and a disposable SQLite database under `tmp/verify-reactionview/<run-id>/`.
 - The seed creates 10 tasks, 3 proposals, 12 talks, 3 submissions, 3 posts, and a 4-level tree.
 - Triage starts with the same 10 tasks; its bulk update mutates priority and is reset by the disposable database.
+- Pricing starts with team, 5 seats, monthly billing, no support, and a `¥13,200` total.
 - The server listens on `127.0.0.1:3310` or the next free port.
 - Never drive an instance that this run did not start.
 
@@ -50,3 +51,4 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Settings tabs](settings-tabs.md) covers the three client-mode panels and zero slots requests.
 - [Triage bulk selection](triage-bulk.md) covers per-row selection, the count fold, and the standard bulk PATCH.
 - [Sprint Hub optimistic add](sprint-hub-add.md) covers the drawer, the 201 splice, the drawer-close refetch, and sync.
+- [Pricing estimate](pricing-estimate.md) covers plan, seats, annual, and support, each with exactly one slots request.
