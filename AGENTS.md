@@ -26,6 +26,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 概要開閉（0往復）の共存を測る（docs/url-state.md）。
 ナビ外に実測 `/tree`（深いツリー）: レベル別テンプレートと per-node の open state で、深さ2以上の
 開閉が 0 往復になるか、`$refresh` で状態が残るかを測る（docs/tree.md）。
+ナビ外に実測 `/triage`（一括選択）: 行ごとの `selected` と `selected_count` fold で選択は 0 往復、
+一括更新は標準 `PATCH /triage` フォームで1ドキュメント（docs/triage.md）。
 
 ## 作業規約（必ず守る）
 
@@ -77,8 +79,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   826px から見えるが、Lazy の sentinel は 926px にあり、ブロック要求は飛ばない。1000x1000 では
   1 回で内容が届く。0.6.0 の比較サーバーでも同じだったため、0.6.1 の退行ではない。
   配置依存の既知ギャップとして、カードの見た目ではなく sentinel の位置で確かめる。
-- **再検証**: `bin/ci` 全ゲート、統合テスト 135 runs / 980 assertions（当時。リンク検査の追加後は
-  136 runs / 982 assertions）、主要プローブ
+- **再検証**: `bin/ci` 全ゲート、統合テスト 135 runs / 980 assertions（当時。リンク検査と Triage の追加後は
+  141 runs / 1017 assertions）、主要プローブ
   （ui 0 / settings 0 / pricing 各1 / tree 0・refresh 1 / thread 1 / catalog 0 / forms 0 /
   outbox / apply / pin 0 / sync / no-JS）。Dashboard は viewport 1000x1000 で probe 通過。
 
@@ -92,8 +94,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
 - ブラウザ検証: `bin/verify-reactionview doctor` / `bin/verify-reactionview run --all`
   （`.opencode/skills/verify-reactionview/`。使い捨て test DB + headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期と Settings のタブ切替を操作し、slots 数と
-  スクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を操作し、
+  slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
 - RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる）
 
 ## 実測済みのスロット・ワイヤ形式（0.6.0 / 0.6.1）
@@ -494,7 +496,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - **機能番号は画面タグを正とした**。① server reads / ② 細粒度更新＋楽観的追加（ピン/星は⑯）/ ③ ドロワーと
   フォームのバインディング（window句を含む）/ ④ Lab の分岐格納 / ⑤ カウンタ / ⑥ パレット（hover を含む）/
   ⑦ switch と派生 / ⑧ チップ / ⑨ もっと見る / ⑩ 詳細 / ⑪ ウィザード / ⑫ バリデーション / ⑬ 数量 / ⑭ アコーディオン /
-  ⑮ Pricing / ⑯ ピン・星（②のリスト内）/ ⑰ Settings / ⑱〜㉑ Dashboard。README の並びは画面順で、番号は画面タグに対応する。
+  ⑮ Pricing / ⑯ ピン・星（②のリスト内）/ ⑰ Settings / ⑱〜㉑ Dashboard / ㉒ Triage。README の並びは画面順で、番号は画面タグに対応する。
 - **01-server-reads.gif は行が見える**。`load-more` で2行に絞り、`.feature-grid` の固定 clip（784x800 CSS）で
   検索→新しい順→古い順→クリアを撮る。`02-row-state.gif` は②のタグに⑯を併記し、ピン/星も同じクリップで見せる。
 - **03-optimistic-add.gif は同期まで撮る**。追加後の hero は10のままで、🔄同期で11になる。検索中に追加した行は
@@ -507,7 +509,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - **18-dashboard.gif は⑱〜㉑のタグ入り**。Async / Lazy / Fragment / poll の4タグが画面に出る。
 - **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、全操作 0 slots。
 - README の前提は Ruby 4.0.9 / Rails 8.1.4 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
-  （controller 14 / model 7 / generator 1）を明記した。
+  （controller 14 / model 7 / generator 1、当時）を明記した。
 - README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /
   `stimulus-rails` は Gemfile と importmap に残るが、`application.js` から import していない。
 - **Hub の no-JS は controller の POST フォールバックだけ**。初期 HTML にドロワーのフォームは無く、
@@ -516,6 +518,21 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - 録画スクリプトはリポジトリ外（`/tmp/opencode/capture`）。`hub-capture.js` / `pin-capture.js` /
   `settings-capture.js` / `dashboard-capture.js` / `patterns-09-capture.js` / `lab-06-capture.js` /
   `ui-kit-capture.js` が今回の再撮影に対応する。
+
+## Triage 画面で実測した事実（0.6.1 / herb 0.11.2）
+
+- **選択は per-item state + count fold**: 行ごとの `selected` を presence（`checked`）にし、
+  `selected_count` をリストの後で読む。2行チェックしても slots は 0。
+- **一括更新は標準 `PATCH /triage` フォーム**: 選択 ID は native の `ids[]`。1ドキュメントで
+  `update_all(priority:, updated_at:)` し、redirect + flash で戻る。slots は 0。
+- **全選択はできない**: per-item state は行スコープで、ループ外のボタンから全インスタンスへ
+  書き込む手段がない。行ごとのチェックに留めた。
+- **no-JS でも更新は動く**: native checkbox と標準フォームなので送信できる。選択数の表示だけは
+  クライアント計算なので初期値 `0` のまま。
+- **Task.priority を直接更新する**: dev で試した後は `bin/rails db:seed` で seed の優先度に戻せる。
+  テストは fixture の3行だけを使う。
+- **メディア**: `triage-light.png` / `triage-dark.png`（1600x2400）と `33-triage.gif`
+  （2行選択 → 優先度「低」 → 更新 → flash、4フレーム、1000x1300）。
 
 ## 外部実装の調査メモ（2026-11-08）
 

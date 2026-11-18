@@ -223,7 +223,7 @@
   <nav class="toc" aria-label="目次">
     <span>目次:</span>
     <a href="#claim">① 主張の分解</a>
-    <a href="#screens">② 証明マップ（7画面＋6検証）</a>
+    <a href="#screens">② 証明マップ（7画面＋7検証）</a>
     <a href="#pairs">③ 実コード対比</a>
     <a href="#map">④ 概念読替表</a>
     <a href="#wire">⑤ 往復はいつ飛ぶか</a>
@@ -285,7 +285,7 @@
 
 <!-- ============================================================ -->
 <section id="screens">
-  <h2><span class="num">②</span>証明マップ — 7画面＋ナビ外の6検証が消している Hotwire の部品</h2>
+  <h2><span class="num">②</span>証明マップ — 7画面＋ナビ外の7検証が消している Hotwire の部品</h2>
   <p class="lede">
     どの画面のどの機能が、「Hotwire では何を書かされていたか」を置き換えたかの一覧。
     全部動くので <code>bin/rails server</code> で確認できます。
@@ -349,15 +349,19 @@
       <tr><td><b>Tree</b><br><code>/tree</code><br><span>ナビ外</span></td><td>client</td>
         <td>深さ4のツリー、ノードごとの開閉</td><td>再帰 partial ＋ Stimulus の open-set 管理</td>
         <td>レベル別テンプレート＋<code>herb:state</code>（<code>open_root</code>/<code>open_l2</code>/<code>open_l3</code>）＋<code>hidden</code> presence（<b>0往復</b>）</td></tr>
+
+      <tr><td><b>Triage</b><br><code>/triage</code><br><span>ナビ外</span></td><td>client</td>
+        <td>行の一括選択と一括更新</td><td>Stimulus の選択集合＋一括送信</td>
+        <td>行ごとの <code>selected</code>＋<code>selected_count</code> fold（<b>0往復</b>）＋標準 PATCH フォーム</td></tr>
     </tbody>
   </table>
   </div>
-  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）、<code>/thread</code>（入れ子キー）、<code>/tree</code>（深いツリー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜11、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>、<code>docs/thread.md</code>、<code>docs/tree.md</code>）。</p>
+  <p class="asc">ナビ外の実務検証として <code>/forms</code>（422）、<code>/catalog</code>（共有 URL）、<code>/apply</code>（多段フォーム）、<code>/outbox</code>（楽観的追加の失敗）、<code>/thread</code>（入れ子キー）、<code>/tree</code>（深いツリー）、<code>/triage</code>（一括選択）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜12、<code>docs/forms.md</code>、<code>docs/url-state.md</code>、<code>docs/wizard.md</code>、<code>docs/outbox-failure.md</code>、<code>docs/thread.md</code>、<code>docs/tree.md</code>、<code>docs/triage.md</code>）。</p>
 </section>
 
 <!-- ============================================================ -->
 <section id="pairs">
-  <h2><span class="num">③</span>実コード対比 — 11の局面</h2>
+  <h2><span class="num">③</span>実コード対比 — 12の局面</h2>
   <p class="lede">
     右は本リポジトリの<strong>実物</strong>（ファイル・行を切り出し）。左は Hotwire で同じ挙動のために
     典型的に書かされるコード（<strong>代表的形の仮置き、本リポジトリには無い</strong>）。
@@ -718,6 +722,27 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
       詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/tree.md">docs/tree.md</a>。
     </p>
   </div>
+
+  <!-- ================= pair 12 ================= -->
+  <h3 style="margin-top:34px;">対比 12 — 一括選択と一括更新</h3>
+  <div class="card" style="margin-top:10px;">
+    <p style="margin:0 0 8px;">
+      <b>Hotwire なら</b>: Stimulus でチェックされた行の集合を持ち、選択数をツールバーに反映し、
+      一括更新は form で送る。
+    </p>
+    <p style="margin:0 0 8px;">
+      <b>ReActionView の実測</b>: client mode の <code>/triage</code>。行ごとの <code>selected</code> state と
+      <code>selected_count</code> のカウントfoldで、選択は <b>0 slots</b>。更新は標準の
+      <code>PATCH /triage</code> フォームで、選択した <code>ids[]</code> だけを送り、成功後に flash と
+      優先度バッジが更新される。全選択は per-item state のスコープ制約でグローバルボタンからは
+      書けないため、行ごとのチェックに留めた。
+    </p>
+    <p style="margin:8px 0 0;">
+      <b>Why not a slots POST</b>: 選択は native checkbox、実行は標準フォームにすると no-JS でも動き、
+      bulk 専用の outbox を持たずに済む。クライアント側は件数と見た目だけを担う。
+      詳細は <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/triage.md">docs/triage.md</a>。
+    </p>
+  </div>
 </section>
 
 <!-- ============================================================ -->
@@ -895,7 +920,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
 <section id="next">
   <h2><span class="num">⑦</span>次に足すなら — 「Hotwire 不要」をさらに刺す候補UI</h2>
   <p class="lede">
-    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code>、入れ子スレッドは <code>/thread</code>、深いツリーは <code>/tree</code> に実装済みです。標準フォームの 422 と、
+    サーバー検証は <code>/forms</code>、共有 URL の検索は <code>/catalog</code>、多段フォームは <code>/apply</code>、楽観的追加の失敗は <code>/outbox</code>、入れ子スレッドは <code>/thread</code>、深いツリーは <code>/tree</code>、一括選択は <code>/triage</code> に実装済みです。標準フォームの 422 と、
     同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は <code>/settings</code>、
     遅延ダッシュボードは <code>/dashboard</code> に実装済みです。
     Turbo 比較（<code>/compare</code>）は別ブランチ/別アプリの企画として保留します。
@@ -909,7 +934,7 @@ window.HerbRuntime?.outbox?.discard(button);</code></pre>
     <code>docs/ui-kit.md</code> 参照。このページは静的HTML（ビルド・外部依存なし）。
     GitHub 上で読むなら同一内容の Markdown 版:
     <a href="https://github.com/nayu7u/study-reactionview/blob/main/docs/hotwire-comparison.md">docs/hotwire-comparison.md</a>。
-    生成日: 2026-11-17。
+    生成日: 2026-11-18。
   </p>
 </footer>
 

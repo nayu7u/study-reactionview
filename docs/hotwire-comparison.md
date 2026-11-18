@@ -51,7 +51,7 @@ import "outbox_retry"
 
 ---
 
-## ② 証明マップ — 7画面＋ナビ外の6検証が消している Hotwire の部品
+## ② 証明マップ — 7画面＋ナビ外の7検証が消している Hotwire の部品
 
 全部動くので `bin/rails server` で確認できます。
 
@@ -76,12 +76,13 @@ import "outbox_retry"
 | **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 | **Tree** (`/tree`、ナビ外) | client | 深さ4のツリー、ノードごとの開閉 | 再帰 partial + Stimulus の open-set 管理 | レベル別テンプレート + `herb:state`（`open_root`/`open_l2`/`open_l3`）+ `hidden` presence（0往復） |
+| **Triage** (`/triage`、ナビ外) | client | 行の一括選択と一括更新 | Stimulus の選択集合 + 一括送信 | 行ごとの `selected` + `selected_count` fold（0往復）＋標準 PATCH フォーム |
 
-ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）、`/thread`（入れ子キー）、`/tree`（深いツリー）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜11、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)、[`docs/thread.md`](./thread.md)、[`docs/tree.md`](./tree.md)）。
+ナビ外の実務検証として `/forms`（422）、`/catalog`（共有 URL）、`/apply`（多段フォーム）、`/outbox`（楽観的追加の失敗）、`/thread`（入れ子キー）、`/tree`（深いツリー）、`/triage`（一括選択）があり、標準フォーム・client mode・outbox・nested collection の共存を測っている（§③ 対比6〜12、[`docs/forms.md`](./forms.md)、[`docs/url-state.md`](./url-state.md)、[`docs/wizard.md`](./wizard.md)、[`docs/outbox-failure.md`](./outbox-failure.md)、[`docs/thread.md`](./thread.md)、[`docs/tree.md`](./tree.md)、[`docs/triage.md`](./triage.md)）。
 
 ---
 
-## ③ 実コード対比 — 11の局面
+## ③ 実コード対比 — 12の局面
 
 並びは「上: **Hotwire 側**（Hotwire で同じ挙動のために典型的に書かされるコード =
 **代表形の仮置き、本リポジトリには無い**）」「下: **ReActionView 側**（本リポジトリの**実物**）」。
@@ -439,6 +440,16 @@ window.HerbRuntime?.outbox?.discard(button);
 
 ---
 
+### 対比 12 — 一括選択と一括更新
+
+**Hotwire なら**: Stimulus でチェックされた行の集合を持ち、選択数をツールバーに反映し、一括更新は form で送る。
+
+**ReActionView の実測**: client mode の `/triage`。行ごとの `selected` state と `selected_count` のカウントfoldで、選択は 0 slots。更新は標準の `PATCH /triage` フォームで、選択した `ids[]` だけを送り、成功後に flash と優先度バッジが更新される。全選択は per-item state のスコープ制約でグローバルボタンからは書けないため、行ごとのチェックに留めた。
+
+> **Why not a slots POST**: 選択は native checkbox、実行は標準フォームにすると no-JS でも動き、bulk 専用の outbox を持たずに済む。クライアント側は件数と見た目だけを担う。詳細は [`docs/triage.md`](./triage.md)。
+
+---
+
 ## ④ 概念読替表
 
 | Hotwire の部品 | 役割 | ReActionView での代わり | 実装場所 |
@@ -556,7 +567,7 @@ window.HerbRuntime?.outbox?.discard(button);
 
 ## ⑦ 次に足すなら — 「Hotwire 不要」をさらに刺す候補UI
 
-現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox`、入れ子スレッドは `/thread`、深いツリーは `/tree` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
+現時点でこのリポジトリ内の追加候補はありません。サーバー検証は `/forms`、共有 URL の検索は `/catalog`、多段フォームは `/apply`、楽観的追加の失敗は `/outbox`、入れ子スレッドは `/thread`、深いツリーは `/tree`、一括選択は `/triage` に実装済みで、標準フォームの 422 と、同じページの client mode の共存を実測しました。ピン/星は Sprint Hub、設定画面は `/settings`、遅延ダッシュボードは `/dashboard` に実装済みです。
 Turbo 比較（`/compare`）は別ブランチ/別アプリの企画として保留します。main の「Hotwire なし」の
 主張を守るため、`turbo-rails` は Gemfile と importmap に残すだけで import しません。
 

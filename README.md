@@ -2,7 +2,7 @@
 
 **ReActionView 0.6.1 + Herb 0.11.2 の検証ショーケース**。Kaigi on Rails 2026（Marco Roth: "Herb in Rails"）の主張、
 すなわち **ERB のみで Phoenix LiveView 的な細粒度リアクティビティが成立する** ことを、7つのナビ画面と
-6つの実務検証で実演する。
+7つの実務検証で実演する。
 
 以下の「0.6.0 の実測」は記録時のバージョン。0.6.1 / Herb 0.11.2 でも主要なプローブを再実行し、
 0往復・1往復・201 splice・Lazy / Fragment のギャップが同じことを確認している。
@@ -28,9 +28,9 @@
 | UI Kit `/ui` | `<%# herb:slots client %>` | shadcn/ui モデルの検証キット reactionview-ui（9コンポーネント、全操作スロット往復 0） |
 
 機能番号は画面内の検証項目番号で、README の並びは画面順だ。Hub の ⑯ は ② のリスト内、
-Settings の ⑰ と Dashboard の ⑱〜㉑ は各画面のタグに対応する。
+Settings の ⑰、Dashboard の ⑱〜㉑、Triage の ㉒ は各画面のタグに対応する。
 
-## ナビ外の6つの実務検証
+## ナビ外の7つの実務検証
 
 | 画面 | 見せていること | ドキュメント |
 |---|---|---|
@@ -40,6 +40,7 @@ Settings の ⑰ と Dashboard の ⑱〜㉑ は各画面のタグに対応す�
 | `/outbox` | 楽観的追加の 500 失敗を `failed` 行・再試行・破棄で扱う | [docs/outbox-failure.md](docs/outbox-failure.md) |
 | `/thread` | 入れ子のキー付きコレクション。外側の投稿を再構築せず返信だけを差分適用 | [docs/thread.md](docs/thread.md) |
 | `/tree` | 4階層のファイルツリー。深さ2以上の開閉も per-node state で 0往復 | [docs/tree.md](docs/tree.md) |
+| `/triage` | 行の一括選択は 0往復、一括更新は標準 PATCH フォームで1回 | [docs/triage.md](docs/triage.md) |
 
 ナビには出さない。Patterns の footer、README、各 docs からリンクしている。
 
@@ -433,6 +434,14 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 ![レベル1/2/3の開閉は0往復、最新を取得しても開閉状態が残る](docs/media/25-tree.gif)
 
+## 実務検証: 一括選択と一括更新（`/triage`、ナビ外）
+
+行ごとのチェックは client mode の `selected` state と `selected_count` のカウントfoldで、選択は 0 往復。一括更新は標準の `PATCH /triage` フォームで、選択した `ids[]` だけを送り、成功後に flash と優先度バッジが更新される。全選択は per-item state のスコープ制約でグローバルボタンからは書けないため、行ごとのチェックに留めた。詳細は [docs/triage.md](docs/triage.md)。
+
+<div><img src="docs/media/triage-light.png" alt="Triage (light)" width="49%"/> <img src="docs/media/triage-dark.png" alt="Triage (dark)" width="49%"/></div>
+
+![2行を選んで一括更新、選択は0往復](docs/media/33-triage.gif)
+
 ## 外部の ReActionView 実装
 
 公式デモ以外に、ReActionView を実際に使っている公開実装を調べた。リアクティブテンプレートまで使うものはまだ少なく、HTML-aware ERB エンジンとしての採用が多い。調査結果と、そこから拾った使い方のパターン（GIF 付き）は [docs/other-implementations.md](docs/other-implementations.md) にまとめた。
@@ -450,17 +459,17 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 ## 検証の進め方
 
-- **テスト: `bin/rails test`**。controller 14本、model 6本、generator 1本、docs のリンク検査1本を実行する。
+- **テスト: `bin/rails test`**。controller 15本、model 6本、generator 1本、docs のリンク検査1本を実行する。
   controller tests は HTML レンダ / `herb_state` による並び替え・絞り込み / 料金計算と READ slot /
   slots 応答の形状（items+order / 分岐 / スカラー混在）/ 201 splice / 422 の HTML と入力値保持 /
-  no-JS の POST フォールバック / fold が manifest に現れることを検証する。model tests は下書き・提案・投稿・
+  no-JS の POST フォールバック / fold が manifest に現れること / Triage の一括更新を検証する。model tests は下書き・提案・投稿・
   ツリーなどのドメイン、generator test は `reactionview_ui` のコピー生成、lib test は
   README・AGENTS・docs の相対リンクの解決を見る。テストは What を、
   コードは How を、コミットログは Why を書く約束。
 - **フルゲート: `bin/ci`**。`bin/setup --skip-server`、Rubocop、bundler-audit、importmap audit、Brakeman、
   `bin/rails test`、seed の再投入を順に実行する。
 - **ブラウザ検証: `bin/verify-reactionview run --all`**。使い捨ての test DB と headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替を実際に操作し、slots リクエスト数と
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を実際に操作し、slots リクエスト数と
   スクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能ごとのレシピは
   [`.opencode/skills/verify-reactionview/features/`](.opencode/skills/verify-reactionview/features/README.md)。
 - 初期 HTML には `<template data-herb-manifests>` として、クライアントへの命令書が載る
@@ -477,13 +486,14 @@ Accordion は per-item の `open`、Tabs は literal 比較のパネル切替、
 
 | ドキュメント | 内容 |
 |---|---|
-| [docs/hotwire-comparison.md](docs/hotwire-comparison.md) | Hotwire の役割と ReActionView の置き換えを11の局面で対比する |
+| [docs/hotwire-comparison.md](docs/hotwire-comparison.md) | Hotwire の役割と ReActionView の置き換えを12の局面で対比する |
 | [docs/forms.md](docs/forms.md) | 標準フォームの 422 と client mode 絞り込みの共存 |
 | [docs/url-state.md](docs/url-state.md) | 共有 URL の検索。URL は Rails、ページ内は slots |
 | [docs/wizard.md](docs/wizard.md) | セッション下書き付きの3ステップフォーム |
 | [docs/outbox-failure.md](docs/outbox-failure.md) | 楽観的追加の失敗・再試行・破棄 |
 | [docs/thread.md](docs/thread.md) | 入れ子キー付きコレクションの差分 |
 | [docs/tree.md](docs/tree.md) | 深さ4のツリーと per-node state の制約 |
+| [docs/triage.md](docs/triage.md) | 一括選択と一括更新。選択は0往復、更新は標準フォーム |
 | [docs/ui-kit.md](docs/ui-kit.md) | reactionview-ui の9コンポーネントと0往復の実測 |
 | [docs/other-implementations.md](docs/other-implementations.md) | 公式デモ以外の公開実装と、そこから拾った使い方のパターン |
 | [docs/debug-mcp-runbook.md](docs/debug-mcp-runbook.md) | debug-mcp の adopt-on-demand 手順 |
