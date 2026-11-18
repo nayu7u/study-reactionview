@@ -1,6 +1,6 @@
 ---
 name: verify-reactionview
-description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync, Settings tab switching, Triage bulk selection, and Pricing's one-request estimate, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
+description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync and row state, Settings tab switching, Triage bulk selection, and Pricing's one-request estimate, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
 ---
 
 # Verify ReActionView

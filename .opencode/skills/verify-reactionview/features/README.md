@@ -2,6 +2,8 @@
 
 This directory is the maintained source for verifying the user-facing behavior of Study ReActionView. Read this index before driving the app, then use the matching feature file as the recipe.
 
+The map covers the six journeys that `bin/verify-reactionview` drives. The other screens (`/patterns`, `/lab`, `/ui`, `/dashboard`, `/forms`, `/catalog`, `/apply`, `/outbox`, `/thread`, `/tree`) are outside this harness; verify them with their docs and one-off probes, and do not report this run as covering them.
+
 ## Baseline preconditions
 
 - Run from the repository root.

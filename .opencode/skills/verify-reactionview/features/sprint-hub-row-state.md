@@ -26,13 +26,14 @@ Preconditions:
 
 - **Toggle done.** Run `bin/verify-reactionview run --feature sprint-hub-row-state`. The run clicks the first `.task-check` label and waits for `.task-stat` to start with `1/10`.
 - **Toggle pin.** The run clicks the first `.task-pin` label and waits for `.pin-stat` to contain `1`.
-- **Confirm zero slots.** `result.json` has `slots.count` equal to the baseline and an empty `slots.urls`.
+- **Confirm independence.** After the pin click, `.task-stat` still starts with `1/10` and `.pin-stat` is `1`.
+- **Confirm zero slots.** `result.json` has `slots.count` `0` and an empty `slots.urls`.
 - **Capture proof.** The run writes `sprint-hub-row-state.png` and `.html` under `tmp/verify-reactionview/<run-id>/`. The screenshot shows the checked row, the filled star, and both counts.
 
 ## Gotchas
 
-- Click the `.task-check` or `.task-pin` label, not the hidden checkbox input. Selenium cannot reliably click an invisible input.
-- The done styling uses `:has(input:checked)`. Assert the visible state and the count, not a class interpolation.
+- Click the `.task-check` or `.task-pin` label. The pin input is visually hidden; the done checkbox is a styled visible box, but the label is the stable target for both.
+- The done styling uses `.task-list li:has(.task-check input:checked)`, scoped to the done checkbox so the pin star cannot trigger it. Assert the visible state and the count, not a class interpolation.
 - Pin and done are independent. Toggling one must not move the other count.
 - Row state is client-owned and resets on reload. Do not expect the seed or the disposable database to retain it.
 - A nonzero slots count means the interaction fell back to the server. Treat it as `NOT VERIFIED`, not as a slower pass.

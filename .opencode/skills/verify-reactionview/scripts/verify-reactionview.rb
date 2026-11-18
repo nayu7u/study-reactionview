@@ -193,9 +193,12 @@ class Verifier
     sleep 0.4
 
     assert(slots_count - baseline >= 1, "search should send at least one slots request")
+    assert(slots_urls.any? { |url| url.include?("/?format=slots") },
+           "search should request the root slots endpoint")
     row = find(css: ".task-list .task-item").text
     assert(row.include?("Read the ReActionView quick start"), "search should show the matching row")
-    ["query 'quick start' narrowed the list to one row", "search sent #{slots_count - baseline} slots request(s)"]
+    ["query 'quick start' narrowed the list to one row",
+     "search sent #{slots_count - baseline} slots request(s) to the root slots endpoint"]
   end
 
   def sprint_hub_row_state
@@ -205,12 +208,16 @@ class Verifier
 
     find(css: ".task-list .task-item .task-check").click
     @wait.until { find(css: ".task-stat").text.start_with?("1/10") }
+    assert(find(css: ".pin-stat").text.start_with?("0"), "pin should start at zero")
     find(css: ".task-list .task-item .task-pin").click
     @wait.until { find(css: ".pin-stat").text.include?("1") }
+    assert(find(css: ".task-stat").text.start_with?("1/10"), "pin should not move the done count")
     sleep 0.3
 
     assert(slots_count == baseline, "done and pin should stay client-side")
-    ["done count moved to 1/10", "pin count moved to 1", "row state sent 0 slots requests"]
+    assert(slots_urls.empty?, "done and pin should record no slots URLs")
+    ["done count moved to 1/10", "pin count moved to 1 without moving the done count",
+     "row state sent 0 slots requests and recorded no slots URLs"]
   end
 
   def settings_tabs
@@ -224,7 +231,9 @@ class Verifier
       screenshot("settings-tabs-#{tab.downcase}")
     end
     assert(slots_count == baseline, "tab switches should stay client-side")
-    ["Notifications, Billing, and Profile each opened one panel", "tab switches sent 0 slots requests"]
+    assert(slots_urls.empty?, "tab switches should record no slots URLs")
+    ["Notifications, Billing, and Profile each opened one panel",
+     "tab switches sent 0 slots requests and recorded no slots URLs"]
   end
 
   def triage_bulk
@@ -248,8 +257,15 @@ class Verifier
       texts if texts.size == 2 && texts.none?(&:empty?)
     end
     assert(priorities == [ "低", "低" ], "the selected rows should show the new priority, got #{priorities.inspect}")
-    assert(slots_count.zero?, "the bulk update should use a document request, not slots")
-    [ "two rows selected with 0 slots requests", "the standard form updated both priorities", "the flash reported 2 updated rows" ]
+    third_priority = @driver.find_elements(css: ".triage-row")[2].find_element(css: ".prio").text
+    assert(third_priority == "中", "the third row should keep its priority, got #{third_priority.inspect}")
+    assert(find(css: ".triage-count").text == "0", "the reloaded page should start with no selection")
+    assert(slots_count.zero?, "the reloaded page should start with no slots requests")
+    assert(slots_urls.empty?, "the reloaded page should record no slots URLs")
+    [ "two rows selected with 0 slots requests",
+      "the standard form updated both priorities and left the third row alone",
+      "the reloaded page cleared the selection count",
+      "the flash reported 2 updated rows" ]
   end
 
   def pricing_estimate
@@ -285,11 +301,15 @@ class Verifier
     assert(amounts.each_cons(2).all? { |before, after| after > before },
            "every pricing operation should raise the total, got #{totals.inspect}")
     assert(slots_count == 4, "pricing should send four slots requests in total, got #{slots_count}")
+    pricing_urls = slots_urls
+    assert(pricing_urls.size == 4 && pricing_urls.all? { |url| url.include?("/pricing?format=slots") },
+           "pricing should record four /pricing slots URLs, got #{pricing_urls.inspect}")
     assert(@driver.execute_script("return window.__verifyDocumentMarker") == "kept",
            "pricing updates should not reload the document")
     assert(@driver.current_url.end_with?("/pricing"), "pricing updates should keep the URL")
     [
       "plan, seats, annual, and support each sent exactly one slots request",
+      "the four slots URLs point at /pricing",
       "the total moved through #{totals.join(' -> ')}",
       "the document stayed loaded and the URL stayed /pricing"
     ]
@@ -320,7 +340,7 @@ class Verifier
     find(xpath: "//button[contains(., '新規タスク')]").click
     @wait.until { @driver.find_elements(css: ".drawer").any? }
     drawer_delta = slots_count - drawer_baseline
-    assert(drawer_delta >= 1, "opening the drawer should send a slots request")
+    assert(drawer_delta == 1, "opening the drawer should send exactly one slots request")
 
     add_baseline = slots_count
     title = "verify probe #{@run_id}"
@@ -350,7 +370,8 @@ class Verifier
 
     add_delta = slots_count - add_baseline
     assert(add_delta >= 1, "add should send a slots request")
-    assert(slots_urls.any? { |url| url.include?("/tasks") }, "add should POST to the tasks slots endpoint")
+    assert(slots_urls.any? { |url| url.include?("/tasks?format=slots") },
+           "add should POST to the tasks slots endpoint")
     assert(optimistic_rows.any? { |row| row.include?(title) }, "add should insert the new row optimistically")
 
     sync_baseline = slots_count
