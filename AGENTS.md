@@ -96,7 +96,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   （`.opencode/skills/verify-reactionview/`。使い捨て test DB + headless Chrome で
   Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
-- RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる）
+- RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる。
+  GitHub Actions の lint job も `BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle install` を先に実行する）
 
 ## 実測済みのスロット・ワイヤ形式（0.6.0 / 0.6.1）
 
