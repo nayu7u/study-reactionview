@@ -31,7 +31,7 @@ COUNTER_JS = <<~'JS'
 JS
 
 FEATURES = %w[sprint-hub-search sprint-hub-row-state settings-tabs triage-bulk sprint-hub-add
-              pricing-estimate].freeze
+              pricing-estimate ui-field-warning lab-accordion-answer].freeze
 
 class VerificationFailure < StandardError; end
 
@@ -385,6 +385,58 @@ class Verifier
       "add triggered #{add_delta} slots request(s), including the tasks POST",
       "the optimistic row appeared before sync; hero moved from #{hero_before_add.inspect} to #{hero_after_add.inspect}",
       "sync restored the filtered list and the hero reached 11"
+    ]
+  end
+
+  def ui_field_warning
+    visit("/ui")
+    @wait.until { @driver.find_elements(css: "textarea.ui-field").any? }
+    baseline = slots_count
+
+    textarea = find(css: "textarea.ui-field")
+    textarea.send_keys("a" * 61)
+    warning = find(css: ".ui-field-hint .ui-field-over")
+    @wait.until { warning.displayed? }
+    assert(warning.text.include?("長すぎます"), "61 chars should show the over-limit warning")
+    sleep 0.3
+    assert(slots_count == baseline, "the over-limit warning should stay client-side")
+    screenshot("ui-field-warning-over")
+
+    textarea.send_keys(:backspace)
+    @wait.until { !warning.displayed? }
+    sleep 0.3
+    assert(slots_count == baseline, "returning to 60 chars should also stay client-side")
+    [
+      "61 chars revealed the over-limit warning",
+      "deleting one char hid it again",
+      "both changes sent 0 slots requests"
+    ]
+  end
+
+  def lab_accordion_answer
+    visit("/lab")
+    @wait.until { @driver.find_elements(css: ".acc-head").any? }
+    baseline = slots_count
+    first = find(css: ".acc-head")
+    first.click
+    body = find(css: ".acc-body")
+    @wait.until { body.displayed? }
+    assert(body.text.include?("要りません"), "the answer should be visible after opening the row")
+    assert(find(css: ".acc-marker").text == "－", "the marker should switch to the open state")
+    sleep 0.3
+    assert(slots_count == baseline, "opening the FAQ should stay client-side")
+    @driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", body)
+    sleep 0.3
+    screenshot("lab-accordion-open")
+
+    first.click
+    @wait.until { !body.displayed? }
+    sleep 0.3
+    assert(slots_count == baseline, "closing the FAQ should stay client-side")
+    [
+      "opening the FAQ showed the answer and the open marker",
+      "closing it hid the answer again",
+      "both changes sent 0 slots requests"
     ]
   end
 

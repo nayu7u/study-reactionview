@@ -1,6 +1,6 @@
 ---
 name: verify-reactionview
-description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync and row state, Settings tab switching, Triage bulk selection, and Pricing's one-request estimate, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
+description: Drive the Study ReActionView app in headless Chrome, prove Sprint Hub search/add/sync and row state, Settings tab switching, Triage bulk selection, Pricing's one-request estimate, the UI Field warning, and the Lab accordion answer, and capture slots request counts plus screenshots. Use for /verify-reactionview, "verify the ReActionView demo", or after changing the reactive ERB screens.
 ---
 
 # Verify ReActionView
@@ -9,7 +9,7 @@ Drive the real app the way a user does and keep the evidence. The harness starts
 
 ## Launch
 
-Run all six journeys:
+Run all eight journeys:
 
 ```console
 $ bin/verify-reactionview run --all
@@ -44,6 +44,8 @@ $ bin/verify-reactionview run --feature settings-tabs
 $ bin/verify-reactionview run --feature triage-bulk
 $ bin/verify-reactionview run --feature sprint-hub-add
 $ bin/verify-reactionview run --feature pricing-estimate
+$ bin/verify-reactionview run --feature ui-field-warning
+$ bin/verify-reactionview run --feature lab-accordion-answer
 ```
 
 Use `--port 3400` to move the server, and `--keep` to keep the disposable database for debugging. The run directory is printed first and is the only place evidence is written.
@@ -59,6 +61,8 @@ Each run writes to `tmp/verify-reactionview/<run-id>/`:
 - `settings-tabs-notifications.png`, `settings-tabs-billing.png`, and `settings-tabs-profile.png` show each panel.
 - `triage-bulk-selected.png` shows the two selected rows and the count fold. `triage-bulk.png` shows the flash and updated priority badges.
 - `pricing-estimate.png` shows the final Business, 6-seat, annual, support estimate.
+- `ui-field-warning-over.png` shows the 61-character warning; `ui-field-warning.png` shows the field after Backspace.
+- `lab-accordion-open.png` shows the open FAQ; `lab-accordion-answer.png` shows it after the second click.
 - `server.log` and `database.log` keep the boot and seed output.
 
 `tmp/` is gitignored. Keep the run directory when evidence backs a report or a commit. Delete old run directories when they no longer matter.
@@ -76,6 +80,8 @@ The runner owns its Chrome session, Rails process, and database. It kills only t
 - Settings tab switches are client-only. The harness asserts exactly zero slots requests.
 - Triage selection is client-only, and the bulk update is a standard PATCH form. Selection and update both send zero slots requests. There is no select-all; per-item state cannot be written from a global button.
 - Pricing choices cost exactly one slots request each while the amounts stay outside the state branches. A server read inside a branch adds a branch refetch. The run asserts each increase and proves the document did not reload with a window marker.
+- The UI Field warning is a `hidden` presence binding. Check `displayed?`; the span stays in the DOM. A slots request on either keystroke is a regression.
+- The Lab FAQ answer is already outside the per-item branch. The marker still uses a static branch. A slots request on open or close is a regression.
 - The test environment disables CSRF and uses `RAILS_ENV=test`; do not use this harness to prove authorization behavior.
 
 The maintained feature map is [`features/README.md`](features/README.md). After changing a screen, route, selector, or seed, run `/pstack/maintain-verification-skill` so the map stays honest.

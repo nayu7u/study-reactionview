@@ -2,7 +2,7 @@
 
 This directory is the maintained source for verifying the user-facing behavior of Study ReActionView. Read this index before driving the app, then use the matching feature file as the recipe.
 
-The map covers the six journeys that `bin/verify-reactionview` drives. The other screens (`/patterns`, `/lab`, `/ui`, `/dashboard`, `/forms`, `/catalog`, `/apply`, `/outbox`, `/thread`, `/tree`) are outside this harness; verify them with their docs and one-off probes, and do not report this run as covering them.
+The map covers the eight journeys that `bin/verify-reactionview` drives. The other screens (`/patterns`, `/dashboard`, `/forms`, `/catalog`, `/apply`, `/outbox`, `/thread`, `/tree`) are outside this harness; verify them with their docs and one-off probes, and do not report this run as covering them. `/ui` and `/lab` are covered only by the field-warning and accordion-answer journeys named below, not by their full feature sets.
 
 ## Baseline preconditions
 
@@ -54,3 +54,5 @@ Each feature file starts with an H1 title and one paragraph describing the user-
 - [Triage bulk selection](triage-bulk.md) covers per-row selection, the count fold, and the standard bulk PATCH.
 - [Sprint Hub optimistic add](sprint-hub-add.md) covers the drawer, the 201 splice, the drawer-close refetch, and sync.
 - [Pricing estimate](pricing-estimate.md) covers plan, seats, annual, and support, each with exactly one slots request.
+- [UI Field warning](ui-field-warning.md) covers the 61-character warning and its zero slots requests.
+- [Lab accordion answer](lab-accordion-answer.md) covers the FAQ open and close with zero slots requests.
