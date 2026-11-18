@@ -1,0 +1,49 @@
+<%# herb:slots client %>
+<%# herb:state (selected_count: 0) %>
+
+<section class="hero">
+  <div class="hero-badge">Client selection — standard bulk form</div>
+  <h1>Triage</h1>
+  <p class="hero-sub">行の選択は 0 往復。一括更新は標準フォームで1回だけサーバーへ送ります。</p>
+</section>
+
+<section class="feature" data-feature="triage">
+  <span class="feature-tag">機能㉒ 一括選択と一括更新（per-item state + count fold）</span>
+  <p class="triage-lede">
+    チェックは行ごとの <code>selected</code> state、選択数は <code>selected_count</code> のカウントfold。
+    更新ボタンは標準の <code>PATCH /triage</code> で、選択した ID だけを送る。
+  </p>
+
+  <%= form_with url: triage_path, method: :patch, class: "triage-form" do %>
+    <ul class="triage-list">
+      <% @tasks.each do |task| %>
+        <%# herb:key task.id %>
+        <%# herb:state (selected: false) %>
+        <% if selected %><% selected_count += 1 %><% end %>
+        <li class="triage-row">
+          <label class="triage-check">
+            <input type="checkbox" name="ids[]" value="<%= task.id %>" checked="<%= selected %>">
+            <span class="triage-title"><%= task.title %></span>
+          </label>
+          <span class="prio prio-<%= task.priority %>"><%= { 1 => "低", 2 => "中", 3 => "高" }.fetch(task.priority, "?") %></span>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="triage-toolbar">
+      <p class="triage-selection"><span class="triage-count"><%= selected_count %></span> 件を選択中</p>
+      <label class="field-label" for="triage_priority">優先度</label>
+      <select class="select" name="priority" id="triage_priority">
+        <option value="3">高</option>
+        <option value="2">中</option>
+        <option value="1">低</option>
+      </select>
+      <button type="submit" class="btn btn-primary">選択したタスクを更新</button>
+    </div>
+  <% end %>
+
+  <p class="triage-note">
+    選択はブラウザ内だけで完結し、slots リクエストは 0。更新は通常のフォーム送信なので、
+    成功後にページ全体が再描画される。no-JS でもチェックと更新は動くが、選択数の表示は更新されない。
+  </p>
+</section>
