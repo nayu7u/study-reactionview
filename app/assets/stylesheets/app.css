@@ -32,8 +32,7 @@
     --accent: #7a76f2;
     --accent-2: #9d8ffb;
     --accent-ink: #10101f;
-    /* Darker than the first pass so --accent text on it clears 4.5:1
-     * (hero badge, pressed chips, selected plan and settings tab). */
+    /* --accent text on this background clears 4.5:1 at #17162c. */
     --accent-soft: #17162c;
     --ok: #4ade80;
     --ok-soft: #12271c;
@@ -67,8 +66,7 @@ body {
 }
 
 /* A bare link inherits the UA blue, which is unreadable on the dark
- * surface (measured on /catalog's pagination). Brand accent passes AA in
- * both schemes; component rules override it where needed. */
+ * surface. The brand accent passes AA in both schemes. */
 a { color: var(--accent); }
 
 .visually-hidden {
@@ -205,8 +203,7 @@ kbd {
 }
 
 /* Tag text is 0.74rem bold, so WCAG AA asks 4.5:1 against the 12% tint
- * mixed over the card surface. The previous palette failed on 9 of 15
- * tags in light mode and 14 of 15 in dark (axe). */
+ * mixed over the card surface. */
 .feature[data-feature="server-reads"] .feature-tag { --tag: #1d4ed8; }
 .feature[data-feature="fine-grained"] .feature-tag { --tag: #047857; }
 .feature[data-feature="drawer"] .feature-tag { --tag: #92400e; }
@@ -226,8 +223,8 @@ kbd {
 /* The tint is mixed over the dark surface, so every hue needs its own
  * lighter value. One shared --tag cannot satisfy both schemes. */
 @media (prefers-color-scheme: dark) {
-  /* Tags with no per-feature --tag (Dashboard cards, UI Kit demos) fall
-   * back to --accent, which is too dark on the dark tint. */
+  /* Tags with no per-feature --tag fall back to --accent, which is too
+   * dark on the dark tint. */
   .feature-tag { --tag: #a78bfa; }
   .feature[data-feature="server-reads"] .feature-tag { --tag: #60a5fa; }
   .feature[data-feature="fine-grained"] .feature-tag { --tag: #34d399; }
@@ -1046,8 +1043,7 @@ textarea.field-over { border-color: #b91c1c; }
   display: grid;
   gap: 0.2rem;
   background: var(--surface-2);
-  /* A <button> takes the UA ButtonText color unless it is set; that is
-   * black, so the plan prices disappeared on the dark surface. */
+  /* Buttons do not inherit color; the UA ButtonText is black. */
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
