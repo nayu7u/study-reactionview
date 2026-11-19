@@ -1,6 +1,8 @@
 <%# herb:slots server %>
 <%# herb:state (drawer_open: false, query: "", order: "oldest", title: "", done_count: 0, pinned_count: 0) %>
 
+<% content_for(:title) { "Sprint Hub" } %>
+
 <section class="hero">
   <div class="hero-badge"><%= Task.count %> tasks on the sprint board</div>
   <h1>Sprint Hub</h1>
