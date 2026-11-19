@@ -25,7 +25,7 @@ headless Chromium で入力・開閉・切替をした結果、**スロット往
 | Tabs | パネル切替 → 選択強調(aria-pressed)とパネル表示 | 0 |
 | Dialog | 開く / Esc / 外側クリック / 閉じる | 0 |
 
-コンポーネントは Stimirulus も独自 JS も書かない。挙動は `herb:state` 宣言 + presence バインディング +
+コンポーネントは Stimulus も独自 JS も書かない。挙動は `herb:state` 宣言 + presence バインディング +
 `data-herb-*` 属性だけで、Herb のコンパイラが manifest に落とす。
 
 ## 導入(shadcn の init / add に対応)
@@ -44,6 +44,13 @@ $ bin/rails g reactionview_ui:component switch tabs
 ```erb
 <%= render "components/ui/switch", label: "通知をミュート" %>
 ```
+
+### トークンとホストの衝突
+
+キットは shadcn のロール名を保つが、ホストの `:root` と同名になる `--muted` / `--radius` / `--ring` は
+`--ui-` 接頭辞を付ける。`.ui-root` のスコープだけでは足りない。ホストの `p { color: var(--muted) }` は
+`.ui-root` の中でもキットの `--muted` を読むため、`/ui` の説明文がほぼ白になった（axe で 1.11:1）。
+`test/lib/reactionview_ui_asset_test.rb` がホストとの衝突と、集約 CSS の再生成漏れを検出する。
 
 ## コンポーネント
 
