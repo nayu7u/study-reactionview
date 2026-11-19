@@ -221,6 +221,17 @@
 
 .ui-field-actions { display: flex; gap: 0.5rem; }
 
+.ui-field-over {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.ui-field-over[hidden] { display: none; }
+
+@media (prefers-color-scheme: dark) {
+  .ui-field-over { color: #f87171; }
+}
+
 /* ---- stepper.css ---- */
 .ui-stepper {
   list-style: none;

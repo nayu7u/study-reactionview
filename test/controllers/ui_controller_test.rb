@@ -58,6 +58,17 @@ class UiKitFlowTest < ActionDispatch::IntegrationTest
     assert_select ".ui-acc-body[hidden='false']", count: 0
   end
 
+  test "the field over warning is a presence binding outside a branch" do
+    get ui_path
+    assert_response :success
+
+    # The warning text is in the initial DOM even though over is false. A
+    # partial branch would drop it from the response, because partial arms are
+    # not parked (measured on 0.6.0 and 0.6.1).
+    assert_select ".ui-field-hint .ui-field-over[hidden]", text: /長すぎます/
+    assert_select ".ui-field-over[hidden='false']", count: 0
+  end
+
   test "interaction regions are occurrence-indexed per partial" do
     get ui_path
     assert_response :success

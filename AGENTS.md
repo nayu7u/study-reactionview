@@ -12,7 +12,8 @@
 `Patterns`（`/patterns`, server mode: フィルタチップ/もっと見る/詳細連動 — 実務から拾ったパターン集）、
 `Client Lab`（`/lab`, client mode: 分岐のparked保管・派生状態・palette・ウィザード/バリデーション/数量/アコーディオン）。
 さらに4画面目 `UI Kit`（`/ui`）: shadcn/ui モデルの検証キット reactionview-ui —
-ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（docs/ui-kit.md）。
+ソース配布ジェネレータ + 9コンポーネント、全操作スロット往復0（Field の60字超え警告も
+presence で0、0.6.1 再測。docs/ui-kit.md）。
 5画面目 `Pricing`（`/pricing`）: server mode の SaaS 見積もり。プラン・席数・年払い・サポートの4 state、
 サーバー計算、金額は READ slot、表示は state の表示属性（`data-active` / `hidden` の presence）
 （docs/hotwire-comparison.md の対比5）。
@@ -84,6 +85,54 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   （ui 0 / settings 0 / pricing 各1 / tree 0・refresh 1 / thread 1 / catalog 0 / forms 0 /
   outbox / apply / pin 0 / sync / no-JS）。Dashboard は viewport 1000x1000 で probe 通過。
 
+## クライアント分岐の materialize を 0.6.1 で再検証（2026-11-18）
+
+0.6.0 の2つの記録（per-item 分岐の中のサーバー読み、パーシャル内の分岐）を、
+0.6.1 / herb 0.11.2 の dev と test で再測した。検証用の一時 worktree に分岐を足し、
+headless Chrome で開閉・入力を駆動した。**どちらも 0.6.0 のギャップのまま**。
+
+- **per-item 分岐（`/lab` の FAQ に `faq[:a]` を足した probe）**: `open` を切り替えると
+  parked statics は materialize され、`分岐内のサーバー読み:` の固定文と ＋/－ マーカーは出る。
+  中の `faq[:a]` は空のまま。slots は 1 回。ブラウザの refetch ヘッダは
+  `tab` / `preview` / `mute` / `step` / `palette_open` だけで、per-item の `open` を載せない。
+  そのため応答は `{"branch": null}`。`Herb-State` に手で `"open": true` を入れると
+  サーバーは `{"branch": 0, "slots": {"49": "<答え>"}}` を返す。ワイヤは作れるが、
+  クライアントが per-item state を steering に載せないので、自動 refetch では値が届かない。
+- **パーシャル内の分岐（`/ui` の `_field` に direct state の分岐を足した probe）**: ヘッダに
+  `"probe_open": true` が載り、サーバーは `{"branch": 0, "slots": {"8": "<note>"}}` を返す。
+  それでもクライアントは分岐先を materialize せず、`.partial-branch-probe` は DOM に現れない。
+  分岐の切替は slots 1 回。61字入力でもう1回（合計2、`partial_slots_delta` は1）。
+  dev でもパーシャルには `<template data-herb-region>` が出ず、parked statics がない。
+  probe 時点の `_field` は `over` 分岐を使っており、61/60 でも警告が表示されなかった。
+- **証拠**: `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`（dev）と
+  `20261118T172320Z-23633-branch-probe/`（test）。`result.json`、`lab-accordion.png`、
+  `ui-field.png`、`lab-slots.json`、`ui-slots.json`、`lab-open-true-manual.json`、`probe.patch`。
+- **結論**: 0.6.1 でも「per-item 分岐は statics だけ」「パーシャル分岐はサーバーが答えても
+  クライアントに置き場がない」。答えは分岐の外に置き、`hidden` の presence + CSS で切り替える
+  既存の回避策を維持する。UI Kit の `_field` は over 警告がこのギャップを踏んでいたので、
+  presence に移した（`ui-field-warning` で 0 slots を確認）。`/lab` の FAQ 回答は既に分岐の
+  外にあり、`lab-accordion-answer` で 0 slots を再確認した。
+
+## 分岐修正の前後で対象外画面の slots 応答を比較（2026-11-18）
+
+`/ui` の `_field` を presence に移す前後で、それ以外の画面の slots 応答を同じ disposable DB に対して
+記録し、JSON で比較した。CSRF トークン、相対時刻（「7分前」）、リクエスト時刻（Tree の
+`loaded_at`、Dashboard のハートビート時刻）、Dashboard のシミュレーション queue だけをマスクし、
+それ以外のキー・形・値は完全一致した。
+
+- 対象: `/`, `/patterns`, `/settings`, `/triage`, `/pricing`, `/tree`, `/thread`, `/dashboard`,
+  `/catalog`, `/forms`。`/ui` と `/lab` は変更対象、`/outbox` は POST が DB を変えるため除外。
+  `/apply` は初期 slots を記録していないため比較に含めない。
+- 操作: Hub の検索・並び替え・ドロワー開閉・同期、Patterns の追加読み込み・チップ・行選択・解除、
+  Settings の3タブ、Triage の2行選択、Pricing の4操作、Tree/Thread の最新取得、Dashboard の
+  初期ブロックと focus、Catalog の compact、Forms の3チップ。
+- 証拠: `tmp/verify-reactionview/20261118T174115Z-35093-slots-snapshot/` の `before.json` /
+  `after.json` / `comparison.json` / `README.md` / `slots_snapshot.rb` / `slots_compare.rb`。
+- 結果: `identical_after_time_mask: true`、差分0。対象外画面のコードは変更していない。
+- **最終ゲート（2026-11-18）**: `bin/ci` は 142 runs / 1021 assertions、`bin/verify-reactionview run --all`
+  は 8 feature すべて VERIFIED。証拠は `tmp/verify-reactionview/20261118T182312Z-63357/` の
+  `result.json` とスクリーンショット。
+
 ## 動作確認コマンド
 
 - サーバー: `bin/rails server`（dev でスロット用開発サーバーが内蔵起動し、アドレスを表示。
@@ -94,7 +143,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - 統合テスト: `bin/rails test`（reactive 振る舞い = HTML レンダ / herb_state による並び替え / slots 応答 / no-JS フォールバック）
 - ブラウザ検証: `bin/verify-reactionview doctor` / `bin/verify-reactionview run --all`
   （`.opencode/skills/verify-reactionview/`。使い捨て test DB + headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択を操作し、
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、
+  Pricing のプラン・席数・年払い・サポート、UI Field の60字超え警告、Lab FAQ の開閉を操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
 - RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる。
   GitHub Actions の lint job も `BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle install` を先に実行する）
@@ -207,8 +257,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
 - **アコーディオン（per-item 分岐 + サーバー読みの値）**: 行ごとの `open` 状態＋`data-herb-toggle`、
   本文の分岐先は parked（`<!--herb-branch:46:-->` スロット格納）。分岐の中の `faq[:a]` はサーバー読みなので
   `server.branches` に node_path が列挙され、クライアントの `requestBranchRefetch` 機構が
-  分岐 materialize 時に値を取りに行く設計（メンション側と同型）。**ブラウザでの materialize 実確認は
-  録画時（Playwright 撮影）に要確認** — manifest/parked/refetch までの実測は済
+  分岐 materialize 時に値を取りに行く設計（メンション側と同型）。**0.6.1 のブラウザ実測**
+  では statics は materialize されるが値は空のまま（上の「クライアント分岐の materialize」）。
 - **fold で金額合計は作れない**: fold の増分は整数リテラルのみ（`fold_increment` が
   `Prism::IntegerNode` を要求）。`total += price * qty` 系は設計段階で諦める
 
@@ -249,6 +299,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   初期表示だけは通常の HTML として読める。
 - **1操作1リクエストをブラウザで確認**: plan / seats / annual / support の各操作で `?format=slots` が
   1回、document request は1回のまま、URL は `/pricing` のまま（headless Chromium）。
+  `bin/verify-reactionview run --feature pricing-estimate` が4操作それぞれの slots 増分と
+  document の再読み込みが無いことを毎回確かめる。
 
 ## Hub ピン/星で実測した事実（0.6.0 / herb 0.11.1）
 
@@ -431,9 +483,11 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   同一要素に action と set が併置できる。action が先に評価されて `request(0)` を予約するが、
   実際のヘッダは timer 発火時に組み立てられるので、同 dispatch 中に書いた state が載る（1リクエストに合流）
 - **per-item 分岐の実測**: 静的テキスト（＋/－マーカー）は materialize されるが、
-  **分岐の中に置いたサーバー読みの値は空で届く**。ワイヤ自体は完全（応答は item ごとに
-  `{branch: 0, slots: {"47": "答え"}}` を返している）で、refetch も発火する — クライアントが
-  materialize 済みの item の分岐に値を当てはめられていないだけ。0.6.0 のギャップ
+  **分岐の中に置いたサーバー読みの値は空で届く**。ブラウザの自動 refetch は per-item state を
+  ヘッダに載せないため、応答は `{"branch": null}` になる（0.6.1 再測）。`Herb-State` に手で
+  `"open": true` を入れるとサーバーは `{branch: 0, slots: {"49": "答え"}}` を返すので、
+  サーバー側のワイヤは作れる。0.6.1 の自動経路で欠けているのは steering。materialize 済み
+  item への値の適用は 0.6.0 の記録のままで、今回の probe では値が届かないため分離できていない。
 - **対処パターン: 答えを分岐の中に置かず presence バインディングで表示を切り替える**。`hidden="<%= !open %>"`
   は falsy 読みの presence としてコンパイルされ（manifest: `["open", nil, "falsy"]`）、
   答えは平常の item part として初回から DOM に乗る。`checked/selected/disabled` に加えて
@@ -457,7 +511,8 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   楽観行の証拠は 50ms ポーリングの row snapshot で取る。hero もこの GET で 10→11 になり得るため、
   201 直後の hero だけを楽観性の証拠にしない
 - **再現手順は `bin/verify-reactionview`**: 使い捨て test DB + headless Chrome で
-  Sprint Hub の検索・行状態・楽観的追加・同期と Settings のタブ切替を操作し、
+  Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、
+  Pricing のプラン・席数・年払い・サポート、UI Field の60字超え警告、Lab FAQ の開閉を操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。
   機能別レシピは `.opencode/skills/verify-reactionview/features/`
 
@@ -477,10 +532,12 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   別インスタンス（ブラウザ実測 [true,false]）
 - **test環境の client mode は region をコメントマーカーで出す**: `<template data-herb-region>`
   は dev のみ（debug span と同じ env 差分）。test のアサートはコメントマーカーで引く
-- **パーシャル内の分岐は materialize されない（0.6.0 最大のギャップ）**: client mode でも分岐先は
-  parked されない（manifest の `fragments: {}`、region テンプレート自体が出ない）。set/toggle は
-  サーバー refetch にフォールバックするが、応答の分岐スロットは `{"branch": null}` で statics 空丸 —
-  per-item 分岐ギャップの拡大版で、トップレベル条件分岐でも同じ
+- **パーシャル内の分岐は materialize されない（0.6.0 最大のギャップ、0.6.1 でも同じ）**:
+  client mode でも分岐先は parked されない（manifest の `fragments: {}`、dev でも region テンプレートが
+  出ない）。set/toggle はサーバー refetch にフォールバックする。0.6.1 の再測では、direct state を
+  ステアリングするとサーバーが `{"branch": 0, "slots": {"8": "<値>"}}` を返しても、クライアントは
+  分岐先を DOM に materialize しなかった（1 往復）。`over` のような derived state を条件にすると、
+  さらにヘッダにその state が載らず `{"branch": null}` になる
   → **パーシャルでは分岐でなく presence（hidden）+ CSS で切替する**。そうすれば全操作 0 往復
 - **パーシャル内の render-with-block は slots 再レンダで TypeError**（"no implicit conversion of
   Hash into String"、GET 初回描画は成功するので発見が遅れる）→ 本文は `content:` ローカルで渡す
@@ -508,7 +565,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   切れる。2ページ目→全件読み込み済みの2フレームにした。
 - **17-settings.gif は8フレーム**。Billing の Business 選択 → Profile の名前変更 → 保存 → リセットまで撮る。
 - **18-dashboard.gif は⑱〜㉑のタグ入り**。Async / Lazy / Fragment / poll の4タグが画面に出る。
-- **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、全操作 0 slots。
+- **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、通常操作は 0 slots。60字超え警告は GIF に含めず、`ui-field-warning` の run で確認する（0.6.1 再測）。
 - README の前提は Ruby 4.0.9 / Rails 8.1.4 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
   （controller 14 / model 7 / generator 1、当時）を明記した。
 - README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /

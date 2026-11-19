@@ -4,10 +4,12 @@
     value= (BINDABLE_ELEMENTS two-way), not raw_text, so reset also clears the
     visible value. Copy-source contract: the limit literal 60 lives in the
     derived declaration — edit the hint text alongside it.
+    The warning is a hidden presence binding, not a branch: arms inside a
+    partial are never parked, so a branch would drop the warning entirely.
     locals: label:, placeholder: %>
 <%# herb:state (draft: "", ready: draft != "", over: draft.length > 60) %>
 <textarea class="ui-field" value="<%= draft %>" placeholder="<%= placeholder %>" aria-label="<%= label %>"></textarea>
-<p class="ui-field-hint" aria-live="polite"><%= draft.length %>/60字 <% if over %>・⚠ 長すぎます<% end %></p>
+<p class="ui-field-hint" aria-live="polite"><%= draft.length %>/60字 <span class="ui-field-over" hidden="<%= !over %>">・⚠ 長すぎます</span></p>
 <div class="ui-field-actions">
   <button class="ui-btn ui-btn-primary" disabled="<%= !ready %>">送信</button>
   <button class="ui-btn ui-btn-ghost" data-herb-reset="draft">クリア</button>

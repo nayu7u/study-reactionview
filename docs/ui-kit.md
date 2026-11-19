@@ -4,20 +4,23 @@
 9コンポーネントを `lib/reactionview_ui/` にソース・オブ・トゥルースとして置き、ジェネレータで
 アプリにコピーする — shadcn と同じ**ソース配布モデル**を ERB + 素の CSS + ビルドステップゼロで再現した。
 
-本文の実測は 0.6.0 / herb 0.11.1 で記録し、0.6.1 / herb 0.11.2 でも同じプローブで再確認しています。
+本文の実測は 0.6.0 / herb 0.11.1 で記録し、0.6.1 / herb 0.11.2 でも presence 系は同じプローブで
+再確認しています。パーシャル内の分岐は 2026-11-18 に分岐入りの probe で再測し、ギャップが残ることを
+確認しました（下の「0.6.1 再検証」）。
 
 デモ: `/ui`(client mode)。テスト: `test/controllers/ui_controller_test.rb`。
 操作を1本にまとめたGIF: [media/26-ui-kit.gif](media/26-ui-kit.gif)。
 
 ## 検証結果(ブラウザ実測)
 
-headless Chromium で全コンポーネントを操作した結果、**全操作でスロット往復 0**:
+headless Chromium で入力・開閉・切替をした結果、**スロット往復 0**。
+60字超えの over 警告も `hidden` の presence で表示され、0往復する（0.6.1 再測）:
 
 | コンポーネント | 実測した操作 | 往復 |
 |---|---|---|
 | Switch ×2 | 片方だけクリック → `checked` が `[true, false]`（インスタンス分離） | 0 |
 | Stepper | +1 ×3 → 行ごとの数量と fold 合計が即時更新、0の行の − は disabled | 0 |
-| Field | 入力 → 文字数・over判定・送信ゲートが即時追随 | 0 |
+| Field | 入力 → 文字数・over判定・送信ゲート・60字超え警告が即時追随（0.6.1 再測） | 0 |
 | Accordion | 開閉 → 本文と ＋/－ マーカーが切替 | 0 |
 | Tabs | パネル切替 → 選択強調(aria-pressed)とパネル表示 | 0 |
 | Dialog | 開く / Esc / 外側クリック / 閉じる | 0 |
@@ -83,6 +86,8 @@ occurrence index(`<!--herb-region:...:0-->` / `:1`)ごとに state が独立す�
 
 派生状態(`ready: draft != ""` / `over: draft.length > 60`)+ presence ゲート。
 textarea は `value=` でバインド(BINDABLE_ELEMENTS、reset が表示まで追従)。
+60字超えの警告は `hidden="<%= !over %>"` の presence バインディング。
+`bin/verify-reactionview run --feature ui-field-warning` で 61字の表示と 0 往復を確認する。
 
 ```erb
 <%= render "components/ui/field", label: "自己紹介", placeholder: "60字以内で…" %>
@@ -125,11 +130,27 @@ Esc / 外側クリックは `data-herb-set="keydown.esc@window->shown=false ..."
 
 ![dialog](media/ui-dialog.png)
 
-## 0.6.0 で実測した制約(このキットの設計規約)
+## 0.6.1 再検証(2026-11-18)
 
-1. **パーシャル内の分岐は materialize されない**: client mode でも分岐先は parked されず
-   (manifest の `fragments: {}`、`<template data-herb-region>` 自体が出ない)、
-   refetch 応答も `{"branch": null}` で statics が空。
+`/ui` の Field に direct state の分岐とサーバー読みを足した probe を headless Chrome で操作した。
+
+- 分岐の state はヘッダに載り、サーバーは `{"branch": 0, "slots": {"8": "<note>"}}` を返した。
+- それでもクライアントは分岐先を DOM に materialize しなかった(`.partial-branch-probe` は不在)。
+- 分岐の切替は slots 1 回。61字入力でもう1回（合計2、`partial_slots_delta` は1）。
+  dev でもパーシャルに `<template data-herb-region>` は出ず、parked statics がない。
+- probe 時点の `_field` は `over` 分岐で、61/60 でも警告が表示されなかった(derived state は
+  ヘッダに載らず、応答は `{"branch": null}`)。修正後は `hidden` の presence で表示され、0往復。
+
+証拠は `tmp/verify-reactionview/20261118T172712Z-26696-branch-probe/`(probe)と
+`tmp/verify-reactionview/20261118T182312Z-63357/`(修正後の `ui-field-warning`)。per-item 分岐の
+再測は AGENTS.md の「クライアント分岐の materialize」を参照。キットは分岐でなく presence で切り替える。
+
+## 0.6.0 / 0.6.1 で実測した制約(このキットの設計規約)
+
+1. **パーシャル内の分岐は materialize されない(0.6.1 でも)**: client mode でも分岐先は parked されず
+   (manifest の `fragments: {}`、dev でも `<template data-herb-region>` は出ない)、
+   サーバーが `{"branch": 0, "slots": {...}}` を返してもクライアントは DOM に置けない。
+   derived state を条件にするとヘッダにも載らず `{"branch": null}`。
    → パーシャルでは分岐でなく **presence(hidden)+ CSS で切替**する
 2. **パーシャル内の render-with-block は slots 再レンダで壊れる**
    (`TypeError: no implicit conversion of Hash into String`)→ 本文は `content:` ローカルで渡す

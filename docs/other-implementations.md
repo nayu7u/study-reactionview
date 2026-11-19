@@ -136,7 +136,7 @@ roll() {
 <div hidden="<%= !confirming %>">...確認フォーム...</div>
 ```
 
-**分岐ではなく `hidden` の presence** で、両方の UI を最初から DOM に置く。コメントにも「opening them never waits on the server」とある。partial 内の分岐が materialize されない 0.6.0 のギャップを避けつつ、開閉を即時にする実務的な形だ。
+**分岐ではなく `hidden` の presence** で、両方の UI を最初から DOM に置く。コメントにも「opening them never waits on the server」とある。partial 内の分岐が materialize されない 0.6.0 / 0.6.1 のギャップを避けつつ、開閉を即時にする実務的な形だ。
 
 `closing` のように3値を持つ state も、3つの `hidden` セクションで表現する。
 
@@ -231,7 +231,7 @@ GIF は、公開されている Grimwilder と公式デモ、ローカルで起�
    - 同じアプリ内で混在してよい。
 
 3. **小さな開閉は `hidden`、大きな切替は分岐**
-   - Runwell は partial 内の開閉をすべて `hidden` で表現する。即時で、partial の分岐ギャップも踏まない。
+   - Runwell は partial 内の開閉をすべて `hidden` で表現する。即時で、partial の分岐ギャップ（0.6.0 / 0.6.1）も踏まない。
    - 公式 Music の詳細や Components のタブは分岐。ただし full-page テンプレート側に置く。
    - 両方の UI を DOM に置くコストと、往復のコストを天秤にかける。
 

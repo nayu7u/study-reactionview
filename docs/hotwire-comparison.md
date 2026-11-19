@@ -73,7 +73,7 @@ import "outbox_retry"
 | **Client Lab** (`/lab`) | client | タブ・カウンタ・パレット | Stimulus ×3（tab / unread / palette） | `herb:state` 宣言＋`data-herb-set / -increment / -reset` |
 | | | ライブ入力・バリデーション | 文字数・妥当性・disabled 同期のコントローラ | 派生宣言（`ready_bio: bio != "" && bio.length <= 60`）＋presence の `disabled` |
 | | | ウィザード（3ステップ） | ステップ＋入力ゲートのコントローラ | `step` 状態の分岐（未描画の分岐先は `<template data-herb-region>` に格納済み） |
-| **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（実測） |
+| **UI Kit** (`/ui`) | client | switch・accordion 等 9コンポーネント | shadcn/ui 相当の Stimulus Data API と更新の配管 | パーシャル単位の `herb:state`（region スコープ）＋presence バインディング — **全操作 0 往復**（0.6.1 再測。60字超え警告も presence） |
 | | | 数量ステッパー | 行ごとの qty 管理と全体合計を Stimulus に | 行ごと `<%# herb:state (qty: 0) %>`＋カウントfold の `in_cart` |
 | **Tree** (`/tree`、ナビ外) | client | 深さ4のツリー、ノードごとの開閉 | 再帰 partial + Stimulus の open-set 管理 | レベル別テンプレート + `herb:state`（`open_root`/`open_l2`/`open_l3`）+ `hidden` presence（0往復） |
 | **Triage** (`/triage`、ナビ外) | client | 行の一括選択と一括更新 | Stimulus の選択集合 + 一括送信 | 行ごとの `selected` + `selected_count` fold（0往復）＋標準 PATCH フォーム |
@@ -484,11 +484,12 @@ window.HerbRuntime?.outbox?.discard(button);
     headless Chromium で各操作 **1 リクエスト**（`?format=slots`）を実測した。
   - **Hub のピン/星** は per-row `pinned` と `pinned_count` のカウントfold。星は presence、
     行の見た目は CSS `:has`。0 slots リクエストで行とリスト直後のサマリーが同時に変わる。
-- **client mode（`/lab`, `/ui`, `/settings`）**: 全操作 **0 往復**。未描画ブランチは初期レスポンスの
+- **client mode（`/lab`, `/ui`, `/settings`）**: 全操作は **0 往復**。未描画ブランチは初期レスポンスの
   `<template data-herb-region>` に格納済みで、`<template data-herb-manifests>`
   （states / reads / conditionals / presence / computed の命令書）に従って
   ブラウザ内で分岐の materialize・presence・fold が進む。
-  UI Kit の9コンポーネント全操作は slot 往復 0 を実測（`docs/ui-kit.md`）。
+  UI Kit の9コンポーネントは全操作 0 往復。Field の60字超え警告も
+  `hidden` の presence で表示される（0.6.1 再測、`docs/ui-kit.md`）。
   Settings のタブ・依存フィールド・dirty/save/reset も 0 往復で、タブは分岐でなく
   `hidden` の presence パネルで切り替える（後述の境界）。
   **Dashboard は client mode だが、遅延ブロックはサーバーに取りに行く**。`?slow=1` の実測は
@@ -503,7 +504,7 @@ window.HerbRuntime?.outbox?.discard(button);
 
 ---
 
-## ⑥ 正直な境界 — 0.6.0 時点の実測で書けないもの
+## ⑥ 正直な境界 — 0.6.0 / 0.6.1 時点の実測で書けないもの
 
 営業コピーではなく実測ノートなので、クライアント評価が届かない枠も並べます。
 どれも対処パターンが確立済み。
@@ -516,15 +517,20 @@ window.HerbRuntime?.outbox?.discard(button);
   コントローラから ivar（`@selected_id`）を渡し、per-row の属性スロットとして
   往復させる（patterns の実装）。
 - **per-item 分岐に置いたサーバー読みの値は空で届く** — statics は materialize
-  されるが値は乗らない（0.6.0 実測）。対処は「答えを分岐の中に置かない」:
-  `hidden="<%= !open %>"` の presence バインディング＋CSS `[hidden]` ガード
-  （lab 機能⑭、ui コンポーネント全体）。
+  されるが値は乗らない（0.6.0 / 0.6.1 実測）。自動 refetch は per-item state をヘッダに
+  載せないため `{"branch": null}` が返る。手で `"open": true` を載せればサーバーは
+  `{branch: 0, slots: {...}}` を返す。0.6.0 の記録ではクライアントが値を当てはめられなかった。
+  0.6.1 の自動 refetch は per-item state を載せず branch null なので、適用可否は今回分離できていない。
+  対処は「答えを分岐の中に置かない」: `hidden="<%= !open %>"` の presence バインディング＋
+  CSS `[hidden]` ガード（lab 機能⑭、ui コンポーネント全体）。
 - **分岐の中のサーバー読みは branch refetch をもう1回呼ぶ** — 分岐の切替後に
   値スロットを取りに行くため、年払い・サポートの切替が2リクエストになった（Pricing の実測）。
   金額は分岐の外に置き、`state` の表示属性（年払い・サポートは `data-active`、ボリュームは
   `hidden` の presence）で行を出し分けると1リクエストに収まる。分岐は static な表示の切替に使う。
 - **パーシャル内の分岐先は parked されない** — client mode でも region テンプレート
-  自体が出ない（ui-kit 実測）。パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
+  自体が出ない（0.6.0 / 0.6.1 実測）。direct state をステアリングするとサーバーは
+  `{branch: 0, slots: {...}}` を返すが、クライアントは DOM に materialize できない。
+  パーシャルでは分岐でなく presence（hidden）＋CSS で切替、が定石。
 - **トップレベルの parked 分岐でも、分岐内の boolean バインディングと入れ子の分岐は初期値で materialize される**
   — Settings のタブ分岐で、`digest: true` の switch が unchecked、入れ子の頻度分岐が false 側で出た
   （0.6.0 実測）。タブと依存フィールドは分岐でなく `hidden` の presence パネルに置き、DOM に残したまま
