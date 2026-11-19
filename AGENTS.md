@@ -62,14 +62,12 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   `Gemfile` は ReActionView 本体と同じ `marcoroth/prism` の ref
   `4691667e2215831ae855add71d9925c0b871a709` に固定した（リリース済み Prism 2.1.0 には
   ruby/prism#4334 が入っていない）。
-- **RuboCop はアプリの bundle に置けない**: `rubocop-ast` が prism `~> 1.7` を要求するため、
-  Prism 2.1 と同居できない。RuboCop は `gemfiles/rubocop.gemfile` の別 bundle に移し、
-  `bin/rubocop` は `BUNDLE_GEMFILE` を切り替えてから `bundler/setup` する。
-  `bin/setup` はアプリと lint の両方の bundle を入れる。
+- **RuboCop はアプリの bundle に置けなかった（2026-11-19 に解消）**: 当時は `rubocop-ast` が
+  prism `~> 1.7` を要求し、Prism 2.1 と同居できなかった。そのため `gemfiles/rubocop.gemfile` に
+  分けていた。rubocop-ast 1.53.0 が prism `>= 1.7` に緩和したので、いまはアプリの bundle に入っている。
 - **Bundler 4 の `BUNDLE_LOCKFILE` に注意**: `config/boot` を読むと `BUNDLE_LOCKFILE` がアプリの
-  `Gemfile.lock` に固定される。`bin/ci` の子プロセスで lint bundle を操作するときはこれを外さないと、
-  lint 側の解決結果がアプリの lock を上書きする（実際に prism 1.9 / rubocop 入りの lock に戻った）。
-  `bin/setup` の lint 環境と `bin/rubocop` はこれを外している。
+  `Gemfile.lock` に固定される。別 bundle を操作するときはこれを外さないと、その解決結果がアプリの
+  lock を上書きする（実際に prism 1.9 / rubocop 入りの lock に戻った）。
 - **Herb 0.11.2 は未描画コレクション分岐の item skeleton を `<template data-herb-region>` に残す**。
   `assert_select` は template の中も数えるため、0 件を確かめるテストは live な親にスコープする
   （`.catalog-list .catalog-row`、`.proposal-group .proposal-card`）。catalog の `q=%` / `q=_` と
@@ -84,6 +82,28 @@ poll を1画面に載せ、0.6.0 で動く範囲と動かない範囲を実測�
   141 runs / 1017 assertions）、主要プローブ
   （ui 0 / settings 0 / pricing 各1 / tree 0・refresh 1 / thread 1 / catalog 0 / forms 0 /
   outbox / apply / pin 0 / sync / no-JS）。Dashboard は viewport 1000x1000 で probe 通過。
+
+## 2026-11-19 の依存更新（Ruby 4.0.10 / bundle 更新）
+
+Ruby 4.0.10 は正規表現エンジンと文字列ケース変換の脆弱性7件を修正したリリース。
+アプリの実行系を 4.0.9 から 4.0.10 に上げ、アプリの bundle を更新した。
+
+- **Ruby 4.0.10**: `.ruby-version` / `Dockerfile` / `README.md` を更新。`config/deploy.yml` の
+  コメント例も 4.0.10 にした。`.devcontainer/Dockerfile` のベースイメージは
+  `ghcr.io/rails/devcontainer/images/ruby:4.0.10` が未公開（2026-11-19 時点で 404）なので 4.0.9 のまま。
+  `.ruby-version` が正で、イメージ公開後にタグを上げる。
+- **アプリ bundle**: bootsnap 1.26.1 / connection_pool 3.0.3 / irb 1.19.0 / net-scp 4.2.2 /
+  net-sftp 4.1.1 / net-ssh 7.3.10 / regexp_parser 2.13.4 / selenium-webdriver 4.53.0 /
+  solid_queue 1.7.2 / thruster 0.1.28 / websocket-driver 0.9.0 / websocket-extensions 0.2.0。
+  net-ssh 8.x は kamal の `~> 7.3`、marcel 2.x は activestorage の `~> 1.0` で入らない。
+  Rails 8.1.4.1 / ReActionView 0.6.1 / Herb 0.11.2 / Prism の git pin は最新のため据え置き。
+- **lint をアプリ bundle に統合**: rubocop 1.92.3 / rubocop-ast 1.53.0 / parser 3.3.14.0。
+  rubocop-ast 1.53.0 が prism `>= 1.7` に緩和したため、`gemfiles/rubocop.gemfile` と
+  `bin/rubocop` / `bin/setup` / CI の `BUNDLE_GEMFILE` 切替を削除した。
+- **検証**: `bin/ci` は 142 runs / 1021 assertions、0 failures。`bin/verify-reactionview run --all` は
+  8 feature すべて VERIFIED（slots: search 1 / row-state 0 / settings 0 / triage 0 / add 5 /
+  pricing 4 / ui 0 / lab 0）。証拠は `tmp/verify-reactionview/20261119T154015Z-21358/` の `result.json` と
+  スクリーンショット。
 
 ## クライアント分岐の materialize を 0.6.1 で再検証（2026-11-18）
 
@@ -146,8 +166,7 @@ headless Chrome で開閉・入力を駆動した。**どちらも 0.6.0 のギ�
   Sprint Hub の検索・行状態・楽観的追加・同期、Settings のタブ切替、Triage の一括選択、
   Pricing のプラン・席数・年払い・サポート、UI Field の60字超え警告、Lab FAQ の開閉を操作し、
   slots 数とスクリーンショットを `tmp/verify-reactionview/<run-id>/` に残す。機能別レシピは `features/`）
-- RuboCop: `bin/rubocop`（`gemfiles/rubocop.gemfile` の別 bundle。`bin/setup` が両方の bundle を入れる。
-  GitHub Actions の lint job も `BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle install` を先に実行する）
+- RuboCop: `bin/rubocop`（アプリの bundle。`bin/setup` が入れる）
 
 ## 実測済みのスロット・ワイヤ形式（0.6.0 / 0.6.1）
 
@@ -566,7 +585,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - **17-settings.gif は8フレーム**。Billing の Business 選択 → Profile の名前変更 → 保存 → リセットまで撮る。
 - **18-dashboard.gif は⑱〜㉑のタグ入り**。Async / Lazy / Fragment / poll の4タグが画面に出る。
 - **26-ui-kit.gif を追加**。`/ui` の Switch×2、Field、Stepper、Accordion、Tabs、Dialog を1本にし、通常操作は 0 slots。60字超え警告は GIF に含めず、`ui-field-warning` の run で確認する（0.6.1 再測）。
-- README の前提は Ruby 4.0.9 / Rails 8.1.4 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
+- README の前提は Ruby 4.0.10 / Rails 8.1.4.1 / SQLite。`bin/setup --skip-server`、`bin/ci`、`bin/rails test`
   （controller 14 / model 7 / generator 1、当時）を明記した。
 - README のスタイル説明は **`app.css` + `reactionview_ui.css` の2枚**に直した。Rails 標準の `turbo-rails` /
   `stimulus-rails` は Gemfile と importmap に残るが、`application.js` から import していない。
@@ -621,7 +640,7 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 ## やらないこと（Why not 付き）
 
 - Rails 8.2 / `config.action_view.html_erb_implementation` には手を出さない
-  → rubygems 上の最新リリースは 8.1.4 であり、8.1 では intercept_erb が Herb 経由化の正攻法だから
+  → rubygems 上の最新リリースは 8.1.4.1 であり、8.1 では intercept_erb が Herb 経由化の正攻法だから
 - Node/yarn の導入をしない → importmap で完結する。追加ツールはこの検証の主題と無関係な摩擦を増やすだけ
 - Tailwind / PostCSS / あらゆるビルドパイプラインをスタイルで導入しない
   → ビルドステップゼロがデモの前提。app.css に素のCSS（デザイントークン含む）で書く
@@ -633,8 +652,6 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - モーダルフォームをページURLにPOSTさせない → 送信先は `tasks_path`（正攻法の分離）。
   `data-herb-into` は差し込み先コレクションの名前指定に過ぎない。旧 `/board` GET 別名は
   `tasks_path` と重複していたので削除した
-- RuboCop をアプリの Gemfile に戻さない → `rubocop-ast` が prism `~> 1.7` を要求し、
-  Herb 0.11.2 が使う Prism 2.1 と同居できない。`gemfiles/rubocop.gemfile` に分けたままにする
 - Prism の git pin を外さない → リリース済み Prism 2.1.0 には ruby/prism#4334 が入っておらず、
   Herb 0.11.2 のパースと一致しない。修正版のリリースまで
   `4691667e2215831ae855add71d9925c0b871a709` に固定する

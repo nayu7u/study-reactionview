@@ -58,11 +58,10 @@ GIF は操作の見た目を示す。0往復/1往復の回数は headless Chromi
 
 ## セットアップ
 
-Ruby 4.0.9 / Rails 8.1.4 / SQLite で動く。Node / yarn は不要。
+Ruby 4.0.10 / Rails 8.1.4.1 / SQLite で動く。Node / yarn は不要。
 
 Herb 0.11.2 は Prism 2.1 系でビルドされているため、`prism` は ReActionView と同じ fork ref に固定している。
-`rubocop-ast` は Prism 1.x を要求するので、RuboCop は `gemfiles/rubocop.gemfile` の別 bundle で動く。
-`bin/setup` はアプリと lint の両方を入れる。
+RuboCop はアプリの bundle に含まれ、`bin/rubocop` で動く。`bin/setup` はアプリの bundle を入れる。
 
 ```console
 $ bin/setup --skip-server  # bundle install + db:prepare

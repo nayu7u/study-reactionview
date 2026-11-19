@@ -49,6 +49,9 @@ group :development, :test do
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
+
+  # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase]
+  gem "rubocop-rails-omakase", require: false
 end
 
 group :development do
@@ -65,7 +68,6 @@ end
 gem "reactionview", "~> 0.6.1"
 
 # Herb 0.11.2 is built against libprism 2.1.0 plus ruby/prism#4334. This is the
-# same ref ReActionView uses; a released Prism 2.1.0 lacks that fix. RuboCop
-# lives in gemfiles/rubocop.gemfile because rubocop-ast still pins Prism 1.x.
+# same ref ReActionView uses; a released Prism 2.1.0 lacks that fix.
 # TODO: Move back to a released prism once it includes ruby/prism#4334.
 gem "prism", github: "marcoroth/prism", ref: "4691667e2215831ae855add71d9925c0b871a709"
