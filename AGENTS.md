@@ -636,6 +636,8 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
   `screenHeight` も渡す。
 - **ナビとタイトル**: `nav_link` が現在ページに `aria-current="page"` を付け、各画面は
   `content_for(:title)` で `<title>` を名乗る。`test/controllers/navigation_test.rb` が固定する。
+- **no-JS のスモーク**: JavaScript を無効にしても14ルートはエラーページにならず、初期 HTML が
+  読める（`nojs.txt`）。
 - **メディア**: タグ色、ダークの金額表示、ナビの現在地表示が変わったため、`docs/media` の
   スクリーンショットは記録時と異なる。再撮影は別作業。
 
