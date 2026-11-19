@@ -11,8 +11,4 @@
 
 .ui-badge-soft { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--foreground); }
 
-.ui-badge-ok { background: color-mix(in srgb, #14934a 16%, transparent); color: #14934a; }
-
-@media (prefers-color-scheme: dark) {
-  .ui-badge-ok { color: #4ade80; }
-}
+.ui-badge-ok { background: color-mix(in srgb, var(--ui-ok) 16%, transparent); color: var(--ui-ok); }

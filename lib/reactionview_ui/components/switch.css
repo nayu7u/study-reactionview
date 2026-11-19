@@ -18,7 +18,7 @@
   width: 44px;
   height: 26px;
   border-radius: 999px;
-  background: var(--muted);
+  background: var(--ui-muted);
   border: 1px solid var(--border);
   transition: background 160ms ease, border-color 160ms ease;
 }
@@ -39,5 +39,5 @@
 .ui-switch:has(input:checked) .ui-switch-thumb { transform: translateX(18px); }
 
 .ui-switch:has(input:focus-visible) .ui-switch-track {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }

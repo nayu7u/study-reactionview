@@ -3,7 +3,7 @@
   align-items: center;
   gap: 0.4rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   padding: 0.5rem 1.1rem;
   font: inherit;
   font-weight: 600;
@@ -14,7 +14,7 @@
 
 .ui-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 .ui-btn:active { transform: translateY(1px); }
@@ -23,10 +23,10 @@
 .ui-btn-primary:hover { background: color-mix(in srgb, var(--primary) 86%, black); }
 
 .ui-btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
-.ui-btn-outline:hover { background: var(--muted); }
+.ui-btn-outline:hover { background: var(--ui-muted); }
 
 .ui-btn-ghost { background: transparent; color: var(--foreground); }
-.ui-btn-ghost:hover { background: var(--muted); }
+.ui-btn-ghost:hover { background: var(--ui-muted); }
 
 .ui-btn-danger { background: var(--destructive); color: var(--primary-foreground); }
 .ui-btn-danger:hover { background: color-mix(in srgb, var(--destructive) 86%, black); }
