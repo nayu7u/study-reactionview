@@ -52,9 +52,6 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Install lint dependencies
-        run: BUNDLE_GEMFILE=gemfiles/rubocop.gemfile bundle install
-
       - name: Prepare RuboCop cache
         uses: actions/cache@v6
         env:
