@@ -13,7 +13,7 @@
   background: var(--background);
   color: var(--foreground);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--ui-radius);
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
   padding: 1.3rem 1.4rem;
 }

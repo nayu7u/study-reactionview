@@ -9,7 +9,7 @@
 .ui-acc-item {
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   overflow: hidden;
 }
 
@@ -31,7 +31,7 @@
 
 .ui-acc-head:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 .ui-acc-marker { color: var(--muted-foreground); font-weight: 700; }

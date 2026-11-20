@@ -1,31 +1,35 @@
-/* reactionview-ui design tokens. shadcn-style variable NAMING (the
- * convention), scoped under .ui-root so it cannot collide with the host
- * app's :root tokens. Values are this app's own palette — nothing copied
- * from the shadcn theme (MIT would allow it with attribution; original
- * values keep the question closed). */
+/* reactionview-ui design tokens. shadcn-style variable ROLES (the
+ * convention), but names that would collide with the host app's :root
+ * tokens are prefixed with --ui-. Scoping under .ui-root is not enough on
+ * its own: a host rule such as `p { color: var(--muted) }` reads the
+ * nearest declaration, so an unprefixed --muted here silently turned the
+ * demo notes near-white (measured with axe on /ui). Values are this app's
+ * own palette — nothing copied from the shadcn theme. */
 .ui-root {
   --background: #ffffff;
   --foreground: #171a26;
-  --muted: #f1f2f7;
+  --ui-muted: #f1f2f7;
+  --ui-ok: #0b6b34;
   --muted-foreground: #646a7b;
   --primary: #5552d6;
   --primary-foreground: #ffffff;
-  --ring: #8b7bf0;
+  --ui-ring: #8b7bf0;
   --destructive: #c0392b;
   --border: #e4e6ee;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --ui-radius: 12px;
+  --ui-radius-sm: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   .ui-root {
     --background: #161923;
     --foreground: #e7e9f2;
-    --muted: #1e2230;
+    --ui-muted: #1e2230;
+    --ui-ok: #4ade80;
     --muted-foreground: #9aa0b4;
     --primary: #7a76f2;
     --primary-foreground: #10101f;
-    --ring: #9d8ffb;
+    --ui-ring: #9d8ffb;
     --border: #262a38;
   }
 }

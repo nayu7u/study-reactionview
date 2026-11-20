@@ -4,7 +4,7 @@
   color: var(--foreground);
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   padding: 0.6rem 0.8rem;
   min-height: 4.2em;
   resize: vertical;
@@ -12,8 +12,8 @@
 
 .ui-field:focus {
   outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 40%, transparent);
+  border-color: var(--ui-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 40%, transparent);
 }
 
 .ui-field-hint {

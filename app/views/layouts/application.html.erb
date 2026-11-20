@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ja">
   <head>
-    <title><%= content_for(:title) || "Study Reactionview" %></title>
+    <% page_title = content_for(:title) %>
+    <title><%= page_title ? "#{page_title} | Study ReActionView" : "Study ReActionView" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Study Reactionview">
+    <meta name="application-name" content="Study ReActionView">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -26,13 +27,13 @@
     <header class="site-header">
       <span class="site-brand">🌿 Study ReActionView</span>
       <nav class="site-nav" aria-label="メイン">
-        <%= link_to "Sprint Hub", root_path %>
-        <%= link_to "Dashboard", dashboard_path %>
-        <%= link_to "Patterns", patterns_path %>
-        <%= link_to "Pricing", pricing_path %>
-        <%= link_to "Settings", settings_path %>
-        <%= link_to "Client Lab", lab_path %>
-        <%= link_to "UI Kit", ui_path %>
+        <%= nav_link "Sprint Hub", root_path %>
+        <%= nav_link "Dashboard", dashboard_path %>
+        <%= nav_link "Patterns", patterns_path %>
+        <%= nav_link "Pricing", pricing_path %>
+        <%= nav_link "Settings", settings_path %>
+        <%= nav_link "Client Lab", lab_path %>
+        <%= nav_link "UI Kit", ui_path %>
       </nav>
     </header>
     <main class="page" id="main">

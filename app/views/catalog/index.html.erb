@@ -1,6 +1,8 @@
 <%# herb:slots client %>
 <%# herb:state (compact: false) %>
 
+<% content_for(:title) { "Talk Catalog" } %>
+
 <section class="hero">
   <div class="hero-badge">共有 URL の検索 — 検索は Rails、ページ内は ReactionView</div>
   <h1>Talk Catalog</h1>
@@ -32,6 +34,9 @@
       <span>概要を閉じる</span>
     </label>
 
+    <%# The rows are h3 inside an unnamed section; this hidden h2 keeps the
+        outline h1 -> h2 -> h3 without adding a visible heading. %>
+    <h2 class="visually-hidden">トーク一覧</h2>
     <div class="catalog-list">
       <% if @talks.empty? %>
         <p class="catalog-empty">該当するトークはありません。条件を変えてください。</p>

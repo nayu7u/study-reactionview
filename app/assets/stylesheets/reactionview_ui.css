@@ -1,31 +1,35 @@
-/* reactionview-ui design tokens. shadcn-style variable NAMING (the
- * convention), scoped under .ui-root so it cannot collide with the host
- * app's :root tokens. Values are this app's own palette — nothing copied
- * from the shadcn theme (MIT would allow it with attribution; original
- * values keep the question closed). */
+/* reactionview-ui design tokens. shadcn-style variable ROLES (the
+ * convention), but names that would collide with the host app's :root
+ * tokens are prefixed with --ui-. Scoping under .ui-root is not enough on
+ * its own: a host rule such as `p { color: var(--muted) }` reads the
+ * nearest declaration, so an unprefixed --muted here silently turned the
+ * demo notes near-white (measured with axe on /ui). Values are this app's
+ * own palette — nothing copied from the shadcn theme. */
 .ui-root {
   --background: #ffffff;
   --foreground: #171a26;
-  --muted: #f1f2f7;
+  --ui-muted: #f1f2f7;
+  --ui-ok: #0b6b34;
   --muted-foreground: #646a7b;
   --primary: #5552d6;
   --primary-foreground: #ffffff;
-  --ring: #8b7bf0;
+  --ui-ring: #8b7bf0;
   --destructive: #c0392b;
   --border: #e4e6ee;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --ui-radius: 12px;
+  --ui-radius-sm: 8px;
 }
 
 @media (prefers-color-scheme: dark) {
   .ui-root {
     --background: #161923;
     --foreground: #e7e9f2;
-    --muted: #1e2230;
+    --ui-muted: #1e2230;
+    --ui-ok: #4ade80;
     --muted-foreground: #9aa0b4;
     --primary: #7a76f2;
     --primary-foreground: #10101f;
-    --ring: #9d8ffb;
+    --ui-ring: #9d8ffb;
     --border: #262a38;
   }
 }
@@ -42,7 +46,7 @@
 .ui-acc-item {
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   overflow: hidden;
 }
 
@@ -64,7 +68,7 @@
 
 .ui-acc-head:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 .ui-acc-marker { color: var(--muted-foreground); font-weight: 700; }
@@ -92,11 +96,7 @@
 
 .ui-badge-soft { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--foreground); }
 
-.ui-badge-ok { background: color-mix(in srgb, #14934a 16%, transparent); color: #14934a; }
-
-@media (prefers-color-scheme: dark) {
-  .ui-badge-ok { color: #4ade80; }
-}
+.ui-badge-ok { background: color-mix(in srgb, var(--ui-ok) 16%, transparent); color: var(--ui-ok); }
 
 /* ---- button.css ---- */
 .ui-btn {
@@ -104,7 +104,7 @@
   align-items: center;
   gap: 0.4rem;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   padding: 0.5rem 1.1rem;
   font: inherit;
   font-weight: 600;
@@ -115,7 +115,7 @@
 
 .ui-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 .ui-btn:active { transform: translateY(1px); }
@@ -124,10 +124,10 @@
 .ui-btn-primary:hover { background: color-mix(in srgb, var(--primary) 86%, black); }
 
 .ui-btn-outline { background: var(--background); color: var(--foreground); border-color: var(--border); }
-.ui-btn-outline:hover { background: var(--muted); }
+.ui-btn-outline:hover { background: var(--ui-muted); }
 
 .ui-btn-ghost { background: transparent; color: var(--foreground); }
-.ui-btn-ghost:hover { background: var(--muted); }
+.ui-btn-ghost:hover { background: var(--ui-muted); }
 
 .ui-btn-danger { background: var(--destructive); color: var(--primary-foreground); }
 .ui-btn-danger:hover { background: color-mix(in srgb, var(--destructive) 86%, black); }
@@ -139,7 +139,7 @@
 .ui-card {
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--ui-radius);
   padding: 1.2rem 1.4rem;
   box-shadow: 0 1px 2px rgb(18 22 33 / 5%);
 }
@@ -173,7 +173,7 @@
   background: var(--background);
   color: var(--foreground);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--ui-radius);
   box-shadow: 0 24px 60px rgb(0 0 0 / 35%);
   padding: 1.3rem 1.4rem;
 }
@@ -201,7 +201,7 @@
   color: var(--foreground);
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   padding: 0.6rem 0.8rem;
   min-height: 4.2em;
   resize: vertical;
@@ -209,8 +209,8 @@
 
 .ui-field:focus {
   outline: none;
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 40%, transparent);
+  border-color: var(--ui-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 40%, transparent);
 }
 
 .ui-field-hint {
@@ -249,7 +249,7 @@
   padding: 0.6rem 0.85rem;
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
 }
 
 .ui-stepper-name { color: var(--foreground); font-size: 0.92rem; }
@@ -259,7 +259,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--muted);
+  background: var(--ui-muted);
   border-radius: 999px;
   padding: 0.2rem;
 }
@@ -314,7 +314,7 @@
   width: 44px;
   height: 26px;
   border-radius: 999px;
-  background: var(--muted);
+  background: var(--ui-muted);
   border: 1px solid var(--border);
   transition: background 160ms ease, border-color 160ms ease;
 }
@@ -335,14 +335,14 @@
 .ui-switch:has(input:checked) .ui-switch-thumb { transform: translateX(18px); }
 
 .ui-switch:has(input:focus-visible) .ui-switch-track {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 /* ---- tabs.css ---- */
 .ui-tabs {
   display: inline-flex;
   gap: 4px;
-  background: var(--muted);
+  background: var(--ui-muted);
   padding: 4px;
   border-radius: 999px;
 }
@@ -361,7 +361,7 @@
 
 .ui-tab:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 55%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-ring) 55%, transparent);
 }
 
 /* aria-pressed is a plain string attribute here (not a presence binding),
@@ -387,7 +387,7 @@
   padding: 0.55rem 0.85rem;
   background: var(--background);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--ui-radius-sm);
   font-size: 0.92rem;
   color: var(--foreground);
 }

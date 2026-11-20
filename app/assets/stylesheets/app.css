@@ -32,7 +32,8 @@
     --accent: #7a76f2;
     --accent-2: #9d8ffb;
     --accent-ink: #10101f;
-    --accent-soft: #1e1d39;
+    /* --accent text on this background clears 4.5:1 at #17162c. */
+    --accent-soft: #17162c;
     --ok: #4ade80;
     --ok-soft: #12271c;
     --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 12px 34px rgb(0 0 0 / 45%);
@@ -62,6 +63,22 @@ body {
     radial-gradient(900px 380px at 88% -18%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 55%),
     var(--bg);
   min-height: 100vh;
+}
+
+/* A bare link inherits the UA blue, which is unreadable on the dark
+ * surface. The brand accent passes AA in both schemes. */
+a { color: var(--accent); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 h1, h2 { letter-spacing: -0.02em; }
@@ -116,6 +133,7 @@ kbd {
 }
 
 .site-nav a:hover { color: var(--ink); background: var(--accent-soft); }
+.site-nav a[aria-current="page"] { color: var(--ink); background: var(--accent-soft); }
 
 .page {
   max-width: 52rem;
@@ -184,19 +202,46 @@ kbd {
   animation: rise 260ms ease both;
 }
 
-.feature[data-feature="server-reads"] .feature-tag { --tag: #2563eb; }
-.feature[data-feature="fine-grained"] .feature-tag { --tag: #0e9f6e; }
-.feature[data-feature="drawer"] .feature-tag { --tag: #d97706; }
-.feature[data-feature="tabs"] .feature-tag { --tag: #6d28d9; }
-.feature[data-feature="counter"] .feature-tag { --tag: #0891b2; }
-.feature[data-feature="palette"] .feature-tag { --tag: #c2410c; }
-.feature[data-feature="switch"] .feature-tag { --tag: #0d9488; }
-.feature[data-feature="inbox"] .feature-tag { --tag: #b45309; }
-.feature[data-feature="detail"] .feature-tag { --tag: #4338ca; }
-.feature[data-feature="wizard"] .feature-tag { --tag: #be185d; }
-.feature[data-feature="validate"] .feature-tag { --tag: #a16207; }
-.feature[data-feature="qty"] .feature-tag { --tag: #1d4ed8; }
-.feature[data-feature="accordion"] .feature-tag { --tag: #7c3aed; }
+/* Tag text is 0.74rem bold, so WCAG AA asks 4.5:1 against the 12% tint
+ * mixed over the card surface. */
+.feature[data-feature="server-reads"] .feature-tag { --tag: #1d4ed8; }
+.feature[data-feature="fine-grained"] .feature-tag { --tag: #047857; }
+.feature[data-feature="drawer"] .feature-tag { --tag: #92400e; }
+.feature[data-feature="tabs"] .feature-tag { --tag: #5b21b6; }
+.feature[data-feature="counter"] .feature-tag { --tag: #0e7490; }
+.feature[data-feature="palette"] .feature-tag { --tag: #9a3412; }
+.feature[data-feature="switch"] .feature-tag { --tag: #0f766e; }
+.feature[data-feature="inbox"] .feature-tag { --tag: #92400e; }
+.feature[data-feature="detail"] .feature-tag { --tag: #3730a3; }
+.feature[data-feature="wizard"] .feature-tag { --tag: #9d174d; }
+.feature[data-feature="validate"] .feature-tag { --tag: #854d0e; }
+.feature[data-feature="qty"] .feature-tag { --tag: #1e40af; }
+.feature[data-feature="accordion"] .feature-tag { --tag: #6d28d9; }
+.feature[data-feature="pricing"] .feature-tag { --tag: #115e59; }
+.feature[data-feature="pricing-summary"] .feature-tag { --tag: #92400e; }
+
+/* The tint is mixed over the dark surface, so every hue needs its own
+ * lighter value. One shared --tag cannot satisfy both schemes. */
+@media (prefers-color-scheme: dark) {
+  /* Tags with no per-feature --tag fall back to --accent, which is too
+   * dark on the dark tint. */
+  .feature-tag { --tag: #a78bfa; }
+  .feature[data-feature="server-reads"] .feature-tag { --tag: #60a5fa; }
+  .feature[data-feature="fine-grained"] .feature-tag { --tag: #34d399; }
+  .feature[data-feature="drawer"] .feature-tag { --tag: #fbbf24; }
+  .feature[data-feature="tabs"] .feature-tag { --tag: #a78bfa; }
+  .feature[data-feature="counter"] .feature-tag { --tag: #22d3ee; }
+  .feature[data-feature="palette"] .feature-tag { --tag: #fb923c; }
+  .feature[data-feature="switch"] .feature-tag { --tag: #2dd4bf; }
+  .feature[data-feature="inbox"] .feature-tag { --tag: #fbbf24; }
+  .feature[data-feature="detail"] .feature-tag { --tag: #818cf8; }
+  .feature[data-feature="wizard"] .feature-tag { --tag: #f472b6; }
+  .feature[data-feature="validate"] .feature-tag { --tag: #facc15; }
+  .feature[data-feature="qty"] .feature-tag { --tag: #93c5fd; }
+  .feature[data-feature="accordion"] .feature-tag { --tag: #c4b5fd; }
+  .feature[data-feature="pricing"] .feature-tag { --tag: #5eead4; }
+  .feature[data-feature="pricing-summary"] .feature-tag { --tag: #fbbf24; }
+}
 
 .feature-tag {
   display: inline-block;
@@ -998,6 +1043,8 @@ textarea.field-over { border-color: #b91c1c; }
   display: grid;
   gap: 0.2rem;
   background: var(--surface-2);
+  /* Buttons do not inherit color; the UA ButtonText is black. */
+  color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 0.8rem 0.9rem;
@@ -1063,9 +1110,6 @@ textarea.field-over { border-color: #b91c1c; }
 .price-lines dd { margin: 0; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .price-line-discount dd { color: var(--ok); }
 .price-line-note dd { color: var(--muted); font-weight: 500; }
-
-.feature[data-feature="pricing"] .feature-tag { --tag: #0f766e; }
-.feature[data-feature="pricing-summary"] .feature-tag { --tag: #b45309; }
 
 /* ---------- settings ---------- */
 
@@ -1574,6 +1618,9 @@ textarea.field-over { border-color: #b91c1c; }
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  /* The nowrap title sets a wide min-content size; without this the grid
+   * track follows it and the whole page overflows on a phone. */
+  min-width: 0;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);

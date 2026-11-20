@@ -611,6 +611,36 @@ shadcn/ui モデル（ソース配布+トークン+variant API）を ERB で再�
 - **メディア**: `triage-light.png` / `triage-dark.png`（1600x2400）と `33-triage.gif`
   （2行選択 → 優先度「低」 → 更新 → flash、4フレーム、1000x1300）。
 
+## アクセシビリティとレスポンシブの実測（2026-11-19）
+
+全16ルートを axe-core 4.10.2 でライト/ダークの2スキーム監査し、違反0を確認した。
+同時に 390x844 の mobile emulation で `scrollWidth - clientWidth` を測り、全ルート0にした。
+証拠は `tmp/verify-reactionview/20261119T164615Z-a11y/` の `axe-results.json` と
+`mobile-overflow.json`、監査スクリプトの `audit.rb`。
+
+- **`.ui-root` のスコープだけではトークン名の衝突を防げない**: ホストの `p { color: var(--muted) }` は
+  `.ui-root` の中でもキットの `--muted` を読む。`/ui` の説明文が `#f1f2f7` on `#ffffff`（1.11:1）に
+  なっていた。キット側の衝突する名前を `--ui-muted` / `--ui-radius` / `--ui-ring` に変え、
+  `test/lib/reactionview_ui_asset_test.rb` がホストとの衝突と集約 CSS の drift を検出する。
+- **タグ色はスキーム別に持つ**: `.feature-tag` は 0.74rem bold なので AA は 4.5:1。単一の `--tag` では
+  ライトとダークの両方を満たせない。15個のタグ色を `@media (prefers-color-scheme: dark)` で
+  上書きした。初回の測定ではライト9件・ダーク14件が不合格だった（axe）。
+- **`<button>` の `color` を忘れない**: `.plan-card` は UA の ButtonText（黒）を継承し、ダークで
+  金額が `#000000` on `#12141d`（1.14:1）になった。`color: var(--ink)` を足した。
+- **ダークの `--accent-soft` は `#17162c`**: `--accent` を文字に使う hero badge、押下中の chip、
+  選択中の plan / tab が 4.41:1 だった。背景を少し暗くして 4.8:1 にした。
+- **Triage は 390px で 208px はみ出していた**: `.triage-title` の `nowrap` が grid track の
+  min-content を押し広げる。`.triage-row { min-width: 0 }` で解消。
+- **mobile emulation は `screenWidth` も渡す**: `Emulation.setDeviceMetricsOverride` に
+  `width` だけ渡すと `clientWidth` が 980 のままになり、390px の判定を誤る。`screenWidth` /
+  `screenHeight` も渡す。
+- **ナビとタイトル**: `nav_link` が現在ページに `aria-current="page"` を付け、各画面は
+  `content_for(:title)` で `<title>` を名乗る。`test/controllers/navigation_test.rb` が固定する。
+- **no-JS のスモーク**: JavaScript を無効にしても14ルートはエラーページにならず、初期 HTML が
+  読める（`nojs.txt`）。
+- **メディア**: タグ色、ダークの金額表示、ナビの現在地表示が変わったため、`docs/media` の
+  スクリーンショットは記録時と異なる。再撮影は別作業。
+
 ## 外部実装の調査メモ（2026-11-08）
 
 公式デモ以外の ReActionView 公開実装を調査した。詳細は docs/other-implementations.md。
